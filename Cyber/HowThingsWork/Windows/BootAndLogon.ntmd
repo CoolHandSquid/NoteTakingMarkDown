@@ -1,0 +1,348 @@
+---
+tags:
+---
+{{{ ###Hard Disk Layout
+	> Partitioning: The process of dividing a hard drive's storage space into smaller segments.
+	- Bootable Partition Types:
+		> MBR (Master Boot Record):
+			- Contains Partition Table for the disk
+			- Contains Executable code called ==Master Boot Code==
+			- Always at consistant spot on disk so BIOS can find it.
+				- Stored On:
+					- First sector of the hard disk 
+					- with four partitions for each disk 
+				- Max Size: 2.2TB
+			- MBR Partition Types:
+				- Primary
+				- Extended
+				- Logical Drives
+			- During Startup:
+				- Computer examines the MBR to determine which partitions on the installed disks is marked as active
+				> Active Partition: Contains operating system startup files
+			* A disk cannot be both a GUID Partition Table disk and an MBR disk.
+			* All GUID Partition Table disks contain a protective MBR that is used for legacy programs that do not understand the GUID Partition Table disk structure
+		> GPT (GUID Partition Table): 
+			- Protective MBR
+				- Contains a legacy protective MBR
+				- Protective MBR contains one primary partition
+				- Legacy software reads protected MBR
+				- Protected MBR protects from legacy tools
+			> LBA 0: contains a legacy protective MBR before the GUID Partition Table.
+			> LBA 1: contains the Partition Table Header.
+	- Firmware Types:
+		> BIOS (Basic Input/Output System): 
+			- Requires MBR Structure
+		> UEFI (Unified Extensible Firmware Interface):
+			- Requires GPT Structure
+			- Version of Windows must match PC architecture
+				- Unless legacy Bios is supported.
+	- Required Architecture
+		- WIN 32 bit:
+			- UEFI only supports booting a 32-bit version of Windows if the PC architecture is also 32-bit.
+			- 32-bit legacy BIOS mode is required to boot a 32-bit version of Windows on 64-bit PC architecture.
+		- Win 64 bit (if UEFI is enabled):	
+			- Use GPT partitioning.
+			- read, write, and also boot from GPT disks.
+			- read and write MBR disks
+			- cannot boot from MBR disks.
+		- Both:
+			- Support GPT disks for data on BIOS enabled systems.
+
+}}} ###
+{{{ ###XP and 2003
+
+## Pre-Boot ProcessGeneric
+	1. Bios
+	2. MBR Boot Sector
+	3. BootLoader
+
+## XP and 2003
+	1. The power button is pressed,
+	2. BIOS begins execution,
+	3. BIOS reads in MBR (Master Boot Record and Partition table),
+	4. Master Boot Code reads in PBS (Partition Boot Sector), and
+	5. Partition Boot Sector Code reads in NT loader (NTLDR).
+
+### Boot Load Sequence (See picture in resources for order/chain)
+	> BIOS: (Basic Input/Output System) - Firmware that is stored in the computer's read-only memory. Its purpose is to initialize and test the hardware of the system, and locate and read into memory the Master Boot Record (MBR) code.
+	> MBR: (Master Boot Record) - Located at the first sector of the hard disk, contains boot code and a partition table.
+	> PBS: (Partition Boot Sector) - Reads in the OS Loader program (NTLDR).
+	> Ntldr: (Windows OS Loader) - The Windows OS Loader loads the boot.ini file and presents the boot select menu if necessary. In the interim NTLDR loads, but does not initialize, the kernel image, HAL images, and System registry hives into memory. (NTLDR initializes the kernel later in the boot process.)
+	> Boot.ini: Contains information defining the paths from which files are loaded for all installed operating systems.	> Ntdetect.com: Performs hardware detection. The information collected is stored in the HARDWARE hive later in the boot process.
+	> Ntoskrnl.exe: After being initialized by NTLDR, Ntoskrnl.exe starts the process of initializing Hal.dll. This gives Hal.dll temporary control before further system initialization.
+	> Hal.dll: (Hardware Abstraction Layer) - The HAL exists between the kernel and the hardware. It performs low-level function call translation to a form the actual hardware can interpret. It also hides any hardware dependencies from the kernel.
+	> Smss.exe: (Session Manager) - The Session Manager process is responsible for finalizing the initialization of the operating system and prepares the computer for user logon. Launches the Windows subsystem and Winlogon processes.
+	> Winlogon.exe: (Interactive Logon Manager) - Coordinates all user logon tasks, to include authentication, user token creation, and creating the user's session.
+	> LSASS: (Local Security Authority Subsystem) - Performs identification and creates the user's security access token.
+	> SCM: (Service Control Manager) - Responsible for loading auto-start devices drivers and services.
+
+### Logon Process (In this Sequence)
+	
+	> SAS: (Secure Attention Sequence) Process that starts when you hit Ctrl+Alt+Delete
+	> Winlogon: Creates the GINA (Graphical Identification and Authentication) component that 
+		- Obtains Username and password
+		- Creates a unique local logon SID for the user
+		- Passes the SID to LSASS
+	> LSASS: (Local Security Authority Subsystem)
+		- Authenticates the user 
+		- Verifies the users access
+		- Creates the users access token
+	> Drivers and Services:
+		- User drivers and services set to autorun are started
+	>Userinit:
+		- Loads the users profile and executes a shell (Explorer.exe by default)
+	> LastKnownGood:
+		- LastKnownGood is updated
+	> Exit Userinit:	
+		- Userinit exits.
+### Boot.ini editing
+{{{ #Attributes
+	$ attrib -H +R -S C:\boot.ini
+		- Minus Hidden, Plus Read-Only, Minus System
+}}} #
+{{{ #Boot Config Stuff
+	- NOTE: bootcfg does not come on xp by default. (You'll have to edit boot.ini manually)
+	- Set Attributes
+		$ attrib -H -R -S C:\boot.ini
+	- open file for editing (WinVimIsh)
+		$ edit C:\boot.ini
+	- Change Default Boot partition
+		$ bootcft /default /ID 2
+}}} # 
+
+## Post XP (Vista And Newer)
+	- (https://web.archive.org/web/20160926163436/http://social.technet.microsoft.com/wiki/contents/articles/11341.the-windows-7-boot-process-sbsl.aspx)
+
+}}} ###
+
+{{{ ###Vista and Windows 7
+	- Pre-Vista = Boot.ini
+	- Vista And Newer = BCD
+	
+	- BCD (Boot Configuration Database) Cycle
+		- Bootmgr (Boot Manager) Loads into BCD.
+		- BCD Loads WinLoad.exe (OS Loader)
+		- OS Loader initializes the Kernel
+	
+	- Why is BCD >: Pre-Vista:
+		- because if is future proof/os backwards compatible. 
+		- The boot process can be extended to support other applications (other operating systems or other versions on the OS). 
+		- Only non-version specific components are stored in the root of the active partition.
+		- With legacy Windows, installing an older version causes the newer version to fail on start-up. This is due to version-specific code improvements in NTLDR.
+		- Tool-oriented boot entries can be supported to offer maintenance options on boot when a previous start-up failed.
+		- Windows supported a menu provided by a target operating system. 
+		- This new structure makes tools available earlier in the boot process and means they are available even if all OS-specific boot entries are damaged. 
+			- The Windows Memory Diagnostic tool is provided in the boot menu this way.
+	
+	> BCD Store: (Boot Config Database Store) contains boot configuration parameters and controls how the operating system is started in Vista and newer systems.
+		- Parameters were previously in the 
+			- boot.ini file. (BIOS based Operating systems)
+			- or -
+			- NVRAM entries (UEFI based Operating systems)
+			- BCD Store Location:
+				- stored as %SYSTEMDRIVE%\boot\BCD on the active partition on BIOS systems, for example c:\boot\bcd
+				- located on the EFI System Partition on UEFI systems
+				- loaded but hidden from view in Regedit.exe within Windows
+				- a registry hive loaded to the following location: HKLM\BCD00000000
+
+		> BCD Object: A container for all BCD elements. 
+			- Each BCD object has a GUID, which represents the object in the BCD hive by naming a subkey of the Objects key. 
+			- There are 18 predefined BCD objects with a fixed GUID. 
+			- Every BCD object, whether pre-defined or not, has a type, actually stored as the DWORD data for the Type value in the object's Description subkey. 
+			- Broadly speaking, there are:
+				- application objects
+				- inherit objects
+				- device objects.
+			- The most common type of BCD object describes a boot environment application, such as an instance of the Windows boot loader.
+		> BCD Element: A singular item of data
+			- like: 
+				- a boot application name
+				- or -
+				- an operating system device. 
+			- Each BCD element is its own subkey. 
+			- The name of the subkey is a representation in hexadecimal digits of a DWORD, referred to as a datatype.
+		
+	- BCD Config Tool Purposes
+		- Simple Tasks:
+			- Setting a boot timeout
+			- Setting a default operating system
+			- Configuring boot options such as /SOS and /SAFEBOOT
+		- Repair-oriented
+			- provide automated mechanisms for correcting problems in the BCD, such as:
+				- Startup
+				- Repair
+				- Bootrec.exe
+	- BCD Tools
+		> Msconfig: Preferred UI tool for managing boot settings.
+			- Supports BCD and allows the user to enumerate all BCD objects in the system store.
+			- Allows certain elements to be altered for each OS object, including:
+				- debug settings
+				- safe mode settings
+				- other popular startup options
+
+		> Bcdedit.exe: Command line tool that can be used to manage BCD settings.
+			- Replacement for Bootcfg.exe.
+			- You can use Bcdedit.exe to modify the Windows code which runs in the pre-operating system environment by adding, deleting, editing, and appending entries in the BCD store.
+			- Designed to work on previous operating systems and in recovery environments.
+			- located in the %SYSTEMROOT%\system32 directory of the boot partition.
+			- You can view the BCD store manually in WinRE by loading the hive from the Boot folder.
+				- To obtain a copy of the hive on a running system, use:
+					 $ bcdedit /export filename
+						- exports the BCD store to a file called filename in the current directory.
+
+		> Bootrec.exe: is a tool that can be used in the Windows Recovery Environment (WinRE)
+			- Used to troubleshoot and repair the following items in Windows Vista or Windows 7:
+				- A Master Boot Record
+				- A Boot Sector
+				- A Boot Configuration Data (BCD) Store
+	
+	- Boot Process
+		- See Resources for flow chart
+		- Notes:
+			- Vista boot process differs from Windows XP in the way the operating system is located and initialized. 
+			- Start-up begins with the BIOS loading the MBR on the bootable disk. 
+			- The MBR in turn loads the Partition Boot Record (PBR) on the active partition. 
+			- So far, Windows Vista remains relatively unchanged.
+			- Vista, 2008, and Windows 7 are different in that the new PBR code looks for and runs Bootmgr, the new boot loader and not NTLDR.
+		- General Process
+			> BIOS: PC is turned on and BIOS initializes hardware
+			> MBR: Bios calls coded stored in the MBR at the start of disk 0
+			> Active Partition: MBR loads code from the bootsector of the active partition.
+			> Bootloader: Bootsector loads and runs the bootloader from the filesystem.
+		
+		- Pre-Boot
+			1. UEFI begins execution,
+			2. Hardware detection is completed
+			3. UEFI boot manager loads drivers and boot applications.
+
+		> UEFI Firmware: Contains boot loader code that is stored in the system's NVRAM. 
+			- Performs CPU and chipset initialization
+			- loads drivers
+			- reads the contents of the Boot Configuration Database
+			- stored in NVRAM
+			- Loads Bootmgfw.efi.
+
+		> Hardware Detection: During the boot process, the boot loader code used EFI interfaces to detect:
+			- Network adapters
+			- Video adapters
+			- Keyboards
+			- Disk controllers
+			- Storage devices
+
+		>UEFI Boot Manager: Loads UEFI device drivers. 
+			- Presents the Boot Selection Menu and its timeout
+			- Loads boot application (bootmgfw.efi).
+
+		> Winresume.efi: Contains information defining the paths from which files are loaded for all installed operating systems.
+
+		> BCD (Boot Configuration Database: Performs hardware detection. The information collected is stored in the HARDWARE hive later in the boot process.
+
+		> Bootmgfw.efi: Loads Windows OS loader (Winload.efi) selected by user.
+
+		> Winload.efi: Loads the Windows OS: 
+			- Loads all files need by the kernel to initialize
+			- sets up the kernel's execution environment
+
+		> Ntoskrnl.exe: This is the kernel image
+			- Performs executive subsystem initialization
+			- Loads and initializes BOOT_ and SYSTEM_START device drivers
+			- Launches Smss.exe.
+
+		> Hal.dll (Hardware Abstraction Layer): The HAL exists between the kernel and the hardware
+			- Performs low-level function call translation to a form the actual hardware can interpret
+			- Also hides any hardware dependencies from the kernel
+
+		> Smss.exe (Session Manager): The Session Manager process is responsible for finalizing the initialization of the operating system and prepares the computer for user logon. 
+			- Launches the Windows subsystem and Winlogon processes.
+
+		> Win32k.sys: Kernel-mode portion of the Windows subsystem.
+
+		> Wininit.exe: Windows initialization process used only in Session 0.
+
+		> LSASS (Local Security Authority Subsystem): Performs Identification and creates the user's security access token.
+
+		> Winlogon.exe (Interactive Logon Manager): Known as the Interactive Logon Manager
+			- Coordinates all user logon tasks to include:
+				- Authentication
+				- User token creation
+				- Creating the user's session
+
+		> LogonUI: Presents the Interactive logon Dialog box to collect user credentials.
+
+		> Services.exe (Service Control Manager): Responsible for loading auto-start device drivers and services.	
+# Logon Process Sequence
+	> SAS: (Secure Attention Sequence) is entered (Control+Alt+Delete)
+	> Logon: User enters username and password
+	> LSASS: (Local Security Authority Subsystem)
+		- authenticates the user
+		- verifies the user's accesses
+		- creates the user's access token
+	> Driver Services: User Drivers and services set to autorun are started
+	> Userinit: Loads users profiles and executes a shell (Explorer.exe by default)
+	> LastKnownGood: LastKnownGood is updated
+	> Userinit: Userinit exits
+	
+}}} ###
+
+{{{ ###Windows 8 and 10
+
+## Details of the Secure Logon process
+	1. The secure attention sequence is initiated by entering Control Alt Delete or secure attention sequence (SAS).
+	2. Winlogon or Logonui register the SAS during the boot process to prevent other programs and processes from using it. During secure logon Winlogon or Logonui receives the SAS then calls on the graphical identification and authentication (GINA) dll to process it.
+	3. GINA generates the logon dialog box, collects user credentials, and sends them to the LSA to start the authentication process.
+	4. The LSA evaluates the entered credentials to determine if the logon should be processed locally, by NT LAN Manager (NTLM), or by another authentication protocol like Kerberos, for domain authentication.
+	5. If credentials are valid, a token is generated for the user for access to Winlogon, and GINA which activates the user's shell and Winlogon switches to the desktop.
+	
+	- The secure logon cannot be deregistered by anyone because only the thread that registers the hotkey sequence can deregister it. When Windows keyboard input processing code sees SAS it disables keyboard hooks so that no one can intercept i
+
+## How old boot functioned/ why Platform and UEFI Secure Boot  is better
+
+	- assign the responsibility of loading the operating system to an unverified boot loader
+	- boot loader is undetected by the operating system and any anti-malware software that may be installed
+	- Due to this:
+		- malicious software could infect the boot loader to either launch a virus immediately, or redirect the boot path in order to load a piece of malicious code before the operating system is loaded
+
+	- Platform and UEFI Boot prevents these issues by adding additional security within the boot process
+
+## Isoloated User Modes
+
+	- Prior to Windows 10
+		- OS would communicate directly with the LSASS, which resided in the process memory.
+			- This created a security risk.
+	- Windows 10 fix
+		- Windows 10 introduced the Isolated User Mode (IUM), also known as Virtual Secure Mode (VSM)
+		> IUM: (Isolated User Mode) == VSMvirtualization-based
+		> VSM: (Virtual Secure Mode) is Virtualization-based technology that uses secure kernels to separate
+			- the operating system
+			- applications
+			- users' data
+			- from 
+			- more sensitive information, such as user credentials and hardware device drivers. 
+			- Security-related features, such as Credential Guard and Device Guard, rely on IUM to protect their data.
+## Windows Trusted Boot
+	- During startup, the UEFI Secure Boot verifies that the bootloader is trusted and proceeds to start Windows.
+	- To further secure the boot process
+		- the Windows Trusted Boot feature protects the rest of the startup process by verifying all Windows startup components are trustworthy.
+		- If a monitored file has been tampered with, Windows Trusted Boot will halt the boot sequence. 
+		- If required, the Windows Recovery Environment will recover the file in question. 
+		
+## Microsoft Passport/Windows Hello
+	> Microsoft passport: == Windows Hello
+	> Windows Hello: provides two-factor authentication on PCs and allows users to sign in to Windows 10 devices with just a look or a touch
+		- This provides enterprise-grade security without entering a password.
+
+	- The user's credential
+		- tied to a specific device and biometric and/or pin.
+		- Authentication can be linked to a:
+			- Microsoft online account
+			- Active Directory
+			- Azure
+			- or any provider who supports Fast ID Online (FIDO) 2.0 authentication.
+
+	- Windows Hello credentials
+		- based on a certificate or an asymmetrical key pair that includes a private key and a public key. 
+		- The credentials, as well as the token that is obtained from using the credentials, are bound to the device via Trusted Platform Module (TPM).
+
+	- The private key never leaves a device. The authenticating server has a public key which is mapped to the user account during the registration process.
+		
+}}} ###

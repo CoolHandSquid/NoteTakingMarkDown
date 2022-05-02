@@ -1,0 +1,32 @@
+     UID   PID  PPID   C    STIME TTY         TIME CMD
+    root     0     0   0 11:47:05 ?           0:17 sched
+    root     4     0   0 11:47:05 ?           0:00 kmem_task
+    root     1     0   0 11:47:05 ?           0:00 /sbin/init
+    root     2     0   0 11:47:05 ?           0:00 pageout
+    root     3     0   0 11:47:05 ?           0:01 fsflush
+    root     5     0   0 11:47:05 ?           0:00 vmtasks
+    root     9     1   0 11:47:06 ?           0:01 /lib/svc/bin/svc.startd
+    root    11     1   0 11:47:06 ?           0:04 /lib/svc/bin/svc.configd
+    root   269     1   0 11:47:15 ?           0:00 /usr/lib/picl/picld
+  daemon   360     1   0 11:47:19 ?           0:00 /usr/lib/nfs/lockd
+  daemon   434     1   0 11:47:19 ?           0:00 /usr/lib/nfs/nfs4cbd
+    root   124     1   0 11:47:10 ?           0:00 /usr/lib/sysevent/syseventd
+    root   430     1   0 11:47:19 ?           0:00 /lib/svc/method/iscsi-initiator
+    root   558     1   0 11:47:21 ?           0:00 /usr/lib/autofs/automountd
+    root    73     1   0 11:47:09 ?           0:00 /sbin/dhcpagent
+    root  1088     9   0 12:00:33 console     0:00 -sh
+  daemon   345     1   0 11:47:19 ?           0:00 /usr/lib/nfs/statd
+  daemon   432     1   0 11:47:19 ?           0:00 /usr/lib/nfs/nfsmapid
+    root   119     1   0 11:47:10 ?           0:00 /usr/lib/power/powerd
+  daemon   120     1   0 11:47:10 ?           0:00 /usr/lib/crypto/kcfd
+  daemon   342     1   0 11:47:19 ?           0:00 /usr/sbin/rpcbind
+    root   559   558   0 11:47:21 ?           0:00 /usr/lib/autofs/automountd
+    root   148     1   0 11:47:11 ?           0:00 /usr/sbin/nscd
+    root   449     1   0 11:47:20 ?           0:00 /usr/lib/inet/inetd start
+    root   379     1   0 11:47:19 ?           0:00 /usr/lib/utmpd
+    root   440     1   0 11:47:19 ?           0:00 /usr/sbin/cron
+    root   578     1   0 11:47:21 ?           0:00 /usr/sbin/syslogd
+    root   824     1   0 11:48:22 ?           0:00 /usr/lib/sendmail -bl -q15m
+    root  1063     9   0        - ?           0:00 <defunct>
+    root  1154  1088   0 12:01:50 console     0:00 ps -ef
+    root   674     1   0 11:47:23 ?           0:00 devfsadmd

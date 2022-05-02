@@ -1,0 +1,103 @@
+{{{ ###Routing Fundamentals
+	- Routing Vulneraiblities
+		> IP Hijacking: Illigeinimate route advertising. (Corrupting Internet Routing Tables)(also known as BGP hijacking, prefix hijacking, or route hijacking)
+		> IP Leasing: Leasing an IP that you own to another organization
+		> SLA: (Service Level Agreement) 
+		> ASN Spoofing: Using an ASN that is already actively in use and authorized by a registered party without regard for that party
+		> ASN Hijacking: Attacker seizes control of an RIR registration service account and thus gains control of all resources managed through this account
+		> ASN Squating: Ignores the customary RIR registration channels and uses a dormant or unregistered ASN to announce an IP prefix
+		
+	- Bogons: (Non-Routeable IP's)
+		- 10.0.0.0/8
+		- 172.16.0.0/12
+		- 192.168.0.0/16
+		- 169.254.0.0/16
+		- 127.0.0.0/8
+		- 169.254.0.0/16
+		- 192.0.2.0/24
+		- 198.51.100.0/24
+		- 203.0.113.0/24
+		- 255.255.255.255/32
+		- 100.64.0.0/10 		
+	
+	- Default Route Identifiers
+		- IPv4	= 0.0.0.0
+		- IPv6	= ::/0
+		
+	- ASN lookup
+		$ whois 
+	
+	- Dynamic route selection:
+		1. Verify next hop. (if fail; route is discarded )
+		2. if 2 routes are identical, lower AD is chosen
+		3. if 2 routes are advertised, choosed one with lowest AD
+			
+}}} ###
+{{{ ###BGP
+	- Path Vector Protocol
+	
+	> AS: (Autonomus System) Group of network devices (often a company)
+	> AS Path: Chain of asn's to get to destination
+	> AS Peers: Two AS's that connect directly to each otherand exchange info 
+
+	- Route Sharing Options 
+		> Full Routes: Shares everything the router knows about the internet
+		> Partial Routes: Shows Directly Connected Routes 
+		> No Routes: No Routes will be recieved from this peer (Often for DG)
+	
+	- Smallest advertiseable route = /24
+
+	- BGP Minimum Requirements:
+		- A router with at least 512 megabytes of RAM
+		- Two ISPs that are both willing to provide you with a BGP feed
+		- An IOS version that supports BGP version four
+		- A block of /24 IP addresses
+		- An ASN	(2 or 4 byte number)
+		- A routing registry entry for the network block
+
+
+}}} ###
+{{{ ###Cisco Router
+	- Modes
+		- Standard Exec:
+			- Only Diagnostic Commands (ping)
+			- prompt=>
+		- Privileged Exec: (enable)
+			- Configure Router and anything else
+			$ enable 
+			- prompt=#
+		- Confgiure:
+			$ conf t 
+			- prompt= router(config)#			
+		
+	- Memory locations
+		> RAM:		Running Config
+		> Flash:	Cisco IOS Software
+		> ROM:		Bootstrap Program
+		> NVRAM:	Startup Config 
+			
+	- Get Router Info
+		$ show version
+			- Loaded OS	= "System image file"
+			- Configuration Register:
+				- Example: Configuration register is 0x2002 (0x2102)
+					- 2002 = Current register value 
+					- 2102 = Next Boot register value 
+				- Last number = Boot Field = What system does after reset
+					> 0x1: Boot from first image on flash memory
+					> 0x2: Boot from first image on flash memory and read startup config file 
+	- Save Config 
+		$ copy running-config startup-config
+		$ write memory 
+		$ wr mem 
+	- Return to previous mode
+		$ ^z	
+	- Comment
+		$ !yeet
+	- Get running-config 
+		$ show running-config
+	
+		
+
+}}} ###
+

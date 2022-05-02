@@ -1,0 +1,113 @@
+{{{ ###Socket Categorization
+	- Categorizing Sockets
+		> Socket Domain: Network Protocol Carrying Traffic 
+		> Socket Type:
+		> Protocol Type: (Protocol ID)
+
+Domain Name		| Symbol			| Description			| Common Socket Type					| Common Protocol Type
+---				| ---				| ---					| ---									| ---
+Unix Socket 	| AF_UNIX, AF_LOCAL	| IPC					| 										| 
+IPv4			| AF_INET			| ICMP, TCP, UDP, IGMP	| SOCK_STREAM (TCP), SOCK_DGRAM (UDP)	| IPPROTO_TCP, IPPROTO_UDP, IPPROTO_ICMP
+IPv6			| AF_INET6 			| ICMPv6, TCP, UDP		| SOCK_STREAM (TCP), SOCK_DGRAM (UDP)	| IPPROTO_TCP, IPPROTO_UDP, IPPROTO_ICMP
+Low-level		| AF_PACKET 		| Custom packet creation| SOCK_RAW								| IPPROTO_RAW
+
+}}} ###
+{{{ ###TCP Socket Communication
+	- Server Side 
+		1. socket()		#Creating Socket		- socket domain + socket type + protocol type 	#protocol type often = 0
+		2. bind() 		# Assign IP and Port	- IP address + port 
+		3. listen() 	# Start Listening and putting recieved packets in Queue
+		4. accept()		# Pull connections from Queue
+		5. send()		# Send data
+		6. recv()		# Recieve data
+		7. close()		# Close Socket
+	- Client Side 
+		1. socket() 	- socket domain + socket type + protocol type 	#protocol type often = 0
+		2. connect()	# Initiate Connection to Server	- Servers IP address + Port 
+		3. send()		# Send data
+		4. recv()		# Recieve data
+		5. close()		# Close Socket		
+		
+}}} ###
+{{{ ###Example Python Scripts 
+{{{ #Server Side TCP
+from socket import *
+server=socket(AF_INET, SOCK_STREAM)
+server.bind(("192.168.11.11", 12345))
+server.listen(10)						#Up to 10 Connections 
+client,address=server.accept()
+client_data=client.recv(100)			#Up to 100 bytes from the network buffer
+print(client_data)
+client.send=("Hello World from Server")
+server.close()
+
+}}} #
+{{{ #Client Side TCP
+from socket import *
+client=socket(AF_INET, SOCK_STREAM)
+client.connect(("192.168.11.11", 12345))
+client.send("Hello World from Client")
+server_data=client.recv(100)				# Attempt to pull 100 bytes of data sent by server
+print(server_data)
+client.close()
+
+}}} #
+
+
+{{{ #UDP Listen 
+from socket import *
+server=socket(AF_INET, SOCK_DGRAM)
+server.bind(("192.168.11.11", 3232))		# Local IP 
+client_data,address=server.recvfrom(100)
+print(client_data)
+server.close()
+
+}}} #
+{{{ #UDP Send
+from socket import *
+client=socket(AF_INET, SOCK_DGRAM)
+client.sendto("Yeet for the Cannon", ("192.168.11.11", 3232))		#Target IP
+client.close()
+
+}}} #
+
+}}} ###
+{{{ ###Example scapy Scripts
+{{{ #Generic
+from scapy.all import *
+
+pkt = IP(dst = "203.0.113.12")/ICMP()/Raw("Helloworld")
+for ttl in range(1,30):
+	pkt.ttl	= ttl
+	resp 	= sr1(pkt)
+	if resp != None:
+		print resp.dst
+
+}}} #
+
+
+
+
+Command							| Purpose
+---								| ---
+ls()							| Get protocols 
+lsc() 							| Get functions
+IP()							| Create packet 
+pkt.show()						| Get fields
+pkt.dst="1.1.1.1"				| Set Destination
+pkt=IP(dst="1.1.1.1")			| Set Destination (at construction)
+pkt=pkt/TCP()					| Set Payload
+pkt=pkt/Raw("yeeet")			| Set Payload data
+pkt["TCP"].dport=8080			| Set dport
+pkt["TCP"].sport=3232			| Set sport
+pkt["Raw"].load = "Hoes"		| Set payload
+str(pkt)						| Get hexdump
+send(pkt)						| Send at layer 3
+sendp(pkt)						| Send at layer 2
+srloop(pkt, count=15)			| ?Something about a response?
+pkts=sniff(count=100,timeout=10)| Capture Traffic 
+pkts.show()						| Get all captured traffic
+pkts[5].show()					| Get 6th packet captured 
+print pkts[5]["IP"].dst			| Get captured packet fields
+
+}}} ###

@@ -1,0 +1,161 @@
+---
+tags:
+---
+{{{ ###Kernel
+	> Kernel: The kernel sits between individual running programs and the hardware itself performing various critical functions for the operating system and acting as a liaison between user-level programs and the hardware. 
+	- What it is:
+		- A set of functions, usually contained in a file written as an embedded computer program.
+		- Manages system resources, communicating between hardware and software by translating input/output (I/O) requests between applications and I/O devices, such as the Central Processing Unit (CPU) and memory. 
+		- Responsible for initializing device drivers at boot.
+	- Kernel mode driver levels
+		> Highest-level drivers: Always depend on support from underlying lower-level drivers, such as intermediate-level function drivers and lowest-level hardware bus drivers.
+			- Including...
+				- New Technology File System (NTFS)
+				- File Allocation Table (FAT)
+				- CD-ROM file system (CDFS)
+		> Intermediate-level drivers:  Include virtual disk, mirror, Windows Driver Model, or device-type-specific class and depend on support from underlying lower-level drivers.
+			- Including...
+				- Function drivers control specific peripheral devices on an I/O bus
+				- Filter drivers insert themselves above or below function drivers
+				- Software bus drivers present a set of child devices to which still higher-level class, function, or filter drivers can attach themselves
+		> Lowest-level drivers:  control an I/O bus to which peripheral devices are connected. Lowest-level drivers do not depend on lower-level drivers.
+			- Hardware bus drivers are system-supplied and usually control dynamically configurable I/O buses.
+			- Hardware bus drivers work with the Plug and Play manager to configure and reconfigure system hardware resources, for all child devices that are connected to the I/O buses that the driver controls.
+			- Hardware resources include mappings for device memory and interrupt requests (IRQs).
+			- Legacy drivers that directly control a physical device are lowest-level drivers.
+	- Kernel Responsibilities:
+		> Process and task managment:
+			- The kernel manages the computer's hardware and resources and allows other programs to run and use these resources. One of these resources is the CPU. This is the most central part of a computer system, responsible for running or executing programs. The kernel takes responsibility for deciding, at any time, which of the many running programs should be allocated to the processor or processors, each of which can usually run only one program at a time.
+		> Memory managment:
+			- The kernel code is usually loaded into a protected area of memory to prevent it from being overwritten by programs or other parts of the operating system. Memory is used to store both program instructions and data. Typically, both need to be present in memory in order for a program to execute. Often, multiple programs will want access to memory, frequently demanding more memory than the computer has available. The kernel is responsible for deciding which memory each process can use, and determining what to do when not enough is available. For example, if a program needs data which is not currently in RAM, the CPU signals to the kernel that this has happened, and the kernel responds by writing the contents of an inactive memory block to disk and replacing it with the data requested by the program. The program can then be resumed from the point where it was stopped. Virtual addressing also allows creation of virtual partitions of memory in two disjointed areas, one being reserved for the kernel space and the other for the applications or user space. The applications are not permitted by the processor to address kernel memory, thus preventing an application from damaging the running kernel.
+		> Device managment:
+			- To perform useful functions, processes need access to the peripherals connected to the computer, which are controlled by the kernel through device drivers. These peripherals can include the keyboard, mouse, disk drives, USB devices, printers, displays, and network adapters. For example, to show the user something on the screen, an application would make a request to the kernel, which would forward the request to its display driver, which is then responsible for actually plotting the character or pixel. A kernel must maintain a list of available devices. This list may be known in advance, configured by the user, or detected by the operating system at run time, normally called plug and play. In a plug and play system, the device manager first scans the different hardware buses, such as the Peripheral Component Interconnect (PCI) or Universal Serial Bus (USB), to detect installed devices, and then searches for the appropriate drivers.
+	- Modes
+		- The NT operating system protects system data from modification and/or corruption from user applications by implementing two processor access modes
+		> User Mode: Less Privileged
+			- Execututes in User Mode:
+				- Applications
+				- environment subsystems
+				- integral subsystems
+				- System support processes
+			- Code executing in User-mode cannot damage the integrity of the operating system. 
+		> Kernel Mode: More Privileged
+			- Direct access to all hardware and memory
+			- I/O operations and other system services run in Kernel-mode. 
+			- Executes in Kernel Mode:
+				- Executive subsystems
+				- Kernel
+				- Device drivers
+				- Hardware Abstraction Layer (HAL)
+				- Windows USER and graphics display interface (GDI) functions
+			- All code that runs in kernel-mode shares the private virtual address space that has been reserved for the execution of kernel-mode code.
+
+
+
+}}} ###
+{{{ ###Registry
+	- Registry Data read times
+		- Inital boot process
+			- the boot loader reads the list of boot drivers to load into the memory before initializing the kernel
+		- Kernel boot process
+			-  the kernel reads settings that specify which device drivers to load and how various subsystems configure themselves and tune system performance
+		- Logon process
+			-  the Explorer and other Windows components read per-user preferences
+		- Application startup
+			- applications read system-wide settings as well as per-user preference settings which include menu and toolbar placement, fonts, and most-recently accessed documents.
+	> Registry:  a hierarchical database that contains keys and values
+	> registry keys: 'like' folders
+	> registry values: 'like' files
+		- Information Types
+			- Value Name
+			- Value Data Type
+			- Value Data
+	> Top-Level key: root key
+	- 5 major root keys
+		> HKEY_CLASSES_ROOT: Stores file association and Component Object Model (COM) object registration information
+		> HKEY_CURRENT_USER: Stores data associated with the currently logged-on user
+		> HKEY_LOCAL_MACHINE: Stores system-related information
+		> HKEY_USERS: Stores information about all the accounts on the machine
+		> HKEY_CURRENT_CONFIG: Stores some information about the current hardware profile
+	> Hive: A discreet set of keys, subkeys, and values contained in the registry
+		- Each hive is stored in a single file in the %SystemRoot%\system32\config directory along with an associated .LOG file.
+	- **There are really only 2 root keys.** The rest are subsets or pointers for
+		- HKLM
+		- HKU
+	- Within the root key, the 'H' stands for handle
+	- Registry keys are accessed from a known root key handle mapped to the content of a registry key that is preloaded by the kernel from a stored hive.
+	- hives are links (not copies)
+	- links are also known as aliases
+	- users cannot create an alias in the registry (Microsoft-only created)
+	- Hive size limits:
+		- x86:		50% of memory	400MB
+		- x64		50% of memory	1.5GB
+		- Itanium	50% of memory 	1GB
+		- Hive limits are imposed since the hive is loaded during the boot process before paging is enabled.
+	> HKLM: root key that contains all system-wide configuration subkeys.
+		- Subkeys
+			- HKLM\BCD (Vista +)
+			- HKLM\COMPONENTS (Vista +)
+			- HKLM\HARDWARE
+			- HKLM\SAM
+			- HKLM\SECURITY
+			- HKLM\SOFTWARE
+			- HKLM\SYSTEM
+		- When Windows boots normally, it looks at HKEY_LOCAL_MACHINE\SYSTEM\Select
+		- Under this key are four REG_DWORD values: (Each of these numbers reference a ControlSet00x key under HKEY_LOCAL_MACHINE\SYSTEM:)
+			> Current:	REG_DWORD 0x00000001 Used to boot the system this time unless it differs from Default, indicating a system change was made before the last restart.
+			> Default:	REG_DWORD 0x00000001 Default is the one to use for the next boot when LastKnownGood needs updating.
+			> Failed: 	REG_DWORD 0x00000000 Failed is the last one which was Current when "LastKnownGood" was selected at boot.
+			> Last Known Good:	REG_DWORD 0x00000003 Indicates the one which was known to let the system boot correctly.
+				- LastKnownGood is a Windows startup option that uses the most recent system settings that worked correctly.
+				- Every time you turn your computer off and Windows shuts down successfully, important system settings are saved in the registry.
+	> Data Type: The type of data an entry can store.
+		- Most common:
+			- REG_SZ
+			- REG_DWORD
+		- Other Types:
+			- Binary
+			- DWORD
+			- String
+				- Strings get more spefic due to length (fixed, variable, 32-bit, or 64-bit)
+			- ?Others?
+	- Reg Tools
+		- regedit:
+			- Gui
+		- reg:
+			- CLI
+			- can manage **remote** machines
+				- HKLM and HKU are the only keys available for remote change
+				- Remote Registry Service Defaults
+					- ON:	Win NT & 2000
+					- OFF:	Win XP and later
+			- Capabilities
+				- Add or delete data or keys
+				- Import or export hives and keys
+				- Load and Unload keys to troubleshoot or conduct analysis
+				- Diff keys
+			- Syntax
+				$ reg add keyname[/v Valuename][/t Type][/d Data]
+				$$ reg add HKLM\Software\MyCo /v Data /t REG_BINARY /d fe340ead
+		- regfind:
+			- search for reg keys
+			- from windows 2000 resource kit
+			- case sensitive
+			
+			- Remote
+				$ regfind -m \\machinename
+			- Search Through key and value names 
+				$ regfind -n CompletionChar
+			- Search Through value data
+				$ regfind 192.168
+				
+			
+			
+			
+	- When Changes take placeme
+		- User settings			= Next Login
+		- Application Settings	= Next time application starts
+		- System settings		= Next system start or boot
+	> CurrentControlSet: Pointer to CurrentControlSet001 or CurrentControlSet002
+	> CurrentControlSet00x: Actual control set. One updates on changes, the other updates on successful boots. (In case of unsuccessful boot, it can be used)
+}}} ###

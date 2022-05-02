@@ -1,0 +1,193 @@
+---
+tags:
+---
+{{{ ### ACL's
+	> ACL: (Access Control List) The accumulation of access rights granted by individual ACEs
+		- specifies which user or system processes are granted access to objects,
+		- specifies what operations are allowed on given objects
+		- Each entry in a typical ACL also specifies a subject and an operation
+		- Made up of zero or more ACE's
+		- ACE order is important (Deny tumps Allow)
+		- The accumulation of access rights granted by individual ACEs forms the set of access rights that are granted by an ACL.
+		
+	> ACE: (Access Control Entry)
+		- have a Globally Unique Identifier (GUID) field that indicates that the ACE applies only to particular objects or sub-objects (those that have GUID identifiers). 
+		- Another optional GUID indicates what type of child object will inherit the ACE when a child is created within an Active Directory container that has the ACE applied to it. 
+		- The accumulation of access rights granted by individual ACEs forms the set of access rights that are granted by an ACL. 
+		- In ACEs
+			- they have a GUID field that indicateds what it applys to. (those objects will also have that GUID)
+			- they have a GUID field that indicateds what type of child object will inherit the ACE
+	> Security Descriptors: data structures of security information for objects that can be identified by a unique name
+		- Object types that can be defined by security descriptors
+			- files
+			- reg keys
+			- processes
+			- application-defined
+			
+	- Types of ACL's
+    > DACL : (Discretionary Access Control List) Identifies the security principals that are allowed or denied access and the level of access being allowed or denied.
+		- Each ACE Contains
+			- SID
+			- Access Mask (set of flags)
+		- Possible types of DACL ACEs
+			> access allowed: ACE grants access to a user
+			> access denied:  ACE denies the access rights specified in the access mask
+			> allowed object: (Only in Active Directory) ACE grants access to a user
+			> denied object: (Only in Active Directory) ACE denies the access rights specified in the access mask
+		- IF No DACl: (Null DACL) everyone has full access 
+		- IF Empty DACL: (No ACEs) no user has access 
+	> SACL:	(System Access Control List) Controls how object access will be audited.
+		
+	> Object namespaces: (which protect named objects from unauthorized access) have container objects and leaf objects (objects that have no child objects)
+	> Container:  can hold other container objects and leaf objects, which are its child objects
+
+	
+## User Accounts
+	
+	> User account: collection of information that tells Windows:
+		- which files and folders you can access
+		- what changes you can make to the computer
+		- your personal preferences		
+
+	> Local user accounts: Created in a local security database and gives the user access to log onto the local computer. 
+		- When an account is created, it exists only in the local security database on that computer and enables users to log on and access resources on a specific computer
+		- The local user account resides in the Security Accounts Manager (SAM).
+	 
+	> Domain user accounts: Enables users to log on to the domain to gain access to network resources.
+		- These accounts reside in an Active Directory.
+		- In a network environment, users need to access resources located anywhere on the network.
+		- To access these resources, you need to use a domain user account.
+
+	> Built-in user accounts: Enables users to perform administrative tasks or gain temporary access to network resources.
+		- They reside in SAM (local built-in user accounts) 
+		- or reside in an Active Directory (domain built-in user accounts).	
+
+
+## Groups
+	
+	> Group: Access permission that is assigned at one time to a collection of user accounts
+		- Rights and permissions are granted to the entire group versus to each user account.
+		- Once access has been provided to a group, appropriate users can be added. Members of a group can also be members of multiple groups.
+
+
+
+}}} ###
+
+{{{ ###Permissions
+
+## NTFS
+	- Primary File Types
+		- file
+			- Permission types:
+				- read
+				- write
+				- read and execute
+				- modify
+				- Full Control
+		- folder
+			- Permissions types:
+				- Read
+				- Write
+				- List folder contents
+				- Read and execute
+				- modify
+				- Full Control 
+		- share folders 
+			- You can't share individual files
+			- permissions aer assigned to the entire share folder only
+			- Default Permission when folder is shared = Everyone Group - Full Control 
+			- Default Permission when user is added = Read permissions
+			- When a share is moved, it is no longer shared 
+	
+	
+## Multiple NTFS Permissions 
+	- generally cumulitive
+	- Deny trumps allow 
+	- File permissions override Folder Permissions
+	- ACEs with explicit permissions take precedence over inherited permissions
+		-  even DENY (which would otherwise take precedence if both permissions were explicit)
+	- IF explicit permissions are set for a file/folder AND it is moved within a partitian, The permissons are kept
+
+
+## runas
+
+Parameter	| Description
+---			| ---
+/profile 	| Loads the users profile. (default)
+/no profile | Users profile is not loaded. Applications load faster but this option can cause some applications to malfunction.
+/netonly    | Indicates that the specified user information is for remote access only.
+/smartcard  | Indicates whether the credentials are to be supplied via a smartcard.
+/trustlevel | Specifies the level of authorization at which the application is to run.
+
+
+}}} ###
+
+{{{ ###Accounts
+
+	- Windows XP
+		- Administrators can:
+
+			- Install the operating system and components (such as hardware drivers, system services, and so on).
+			- Install Service Packs and Windows Packs.
+			- Upgrade the operating system.
+			- Repair the operating system.
+			- Configure critical operating system parameters (such as password policy, access control, audit policy, kernel mode driver configuration, and so on).
+			- Take ownership of files that have become inaccessible.
+			- Manage the security and auditing logs.
+			- Back-up and restore the system. 
+
+			- In practice, Administrator accounts often must be used to install and run programs written for multiple versions of Windows.
+
+		- Power Users can:
+
+			- Run legacy applications.
+			- Install programs that do not modify operating system files or install system services.
+			- Customize system wide resources including printers, date, time, power options, and other Control Panel resources.
+			- Create and manage local user accounts and groups.
+			- Stop and start system services which are not started by default. 
+
+			- Power Users do not have permission to add themselves to the Administrators group. Power Users do not have access to the data of other users on an NTFS volume, unless those users grant them permission.
+
+
+}}} ###
+
+{{{ ###Fun Facts 
+
+	- Inheritance rights (rexplained)
+		> NP: (No Propegate) This ACE will be inherited by objects and subcontainers one level deep – it will not apply to things inside subcontainers.
+		> IO: (Inherit Only) This ACE will be inherited (see OI and CI), but does not apply to this object itself.
+		> OI: (Object Inheritance) FILES will be able to inherit ACE
+		> CI: (Container Inheritance) Containers will be able to inherit ACE (Reg key and folder)
+		> I:  (Inherit) ACE was inherited (You would not use this argument when setting)
+		- https://superuser.com/questions/322423/explain-the-output-of-icacls-exe-line-by-line-item-by-item
+
+
+	- To create files, 
+		- the user account needs Write and Execute permissions on the directory. 
+		- ensure that the user account does not lack the advanced NTFS permission Append Data for the directory.
+	- To delete files, the user account needs Write and Execute permissions on the directory. 
+		- ensure that the user account does not lack the advanced NTFS permission Delete
+	- To list the files in a directory, 
+		- a user account needs Read and Execute permissions on the directory.
+	- To execute a script, 
+		- a user account will need both Read and Execute on the directory and file.
+	- To read a file, 
+		- a user account needs access to the directory with the Read & Execute permission
+	- To modify a file,
+		- a user account needs access to the directory with the Execute permission. The user account also needs to have Write permission on the file. 
+		
+		
+}}} ###
+
+
+
+
+
+
+
+
+
+
+
+
+

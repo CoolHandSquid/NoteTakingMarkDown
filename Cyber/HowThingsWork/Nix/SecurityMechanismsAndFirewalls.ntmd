@@ -1,0 +1,286 @@
+{{{ #firewalld 
+	{{{ #Arguments
+		--get-default-zone								Query the current default zone.
+		--set-default-zone={ZONE}						Set the default zone (In both runtime and permanent config)
+		--get-zones										List all zones.
+		--get-active-zones								List all zones currently in use. (Have an interface or source tied to them)
+		--add-source={CIDR} [--zone={ZONE}]				Route all incoming traffic from the IP or network to the specified zone. Use default zone if not specified.
+		--remove-source={CIDR} [--zone={ZONE}]			Remove the source rule from a zone.
+		--add-interface={INTERFACE} [--zone={ZONE}]		Route all traffic from {INTERFACE} to the specified zone.
+		--change-interface={INTERFACE} [--zone={ZONE}]	Apply the interface to a different zone.
+		--list-all [--zone={ZONE}]						List all configured interfaces, sources, services, and ports for {ZONE}.
+		--list-all-zones								Retrieve all information for all zones.
+		--add-service={SERVICE} [--zone={ZONE}]			Allow incoming traffic to the port associated with {SERVICE}.
+		--add-port={PORT/PROTOCOL} [--zone={ZONE}]		Allow incoming traffic to the {PORT/PROTOCOL}.
+		--remove-service={SERVICE}						Remove {SERVICE} from the allowed list in a zone.
+		--remove-port={PORT/PROTOCOL} [--zone={ZONE}]	Remove allowed port from a zone.
+		--reload										Reload the permanent config into the runtime config. This will keep state information and will not interrupt established connections.
+		--add-masquerade								Enables masquerade or NAT for a zone.
+	}}} #
+	{{{ #Notes
+			Zones	| Purpose
+		---		| ---
+		trusted	| Allows all incoming traffic
+		home	| Reject incoming traffic unless related to an already established connection or matches ssh, mdns, ipp-client, samba-client, or dhcpv6-client traffic.
+		internal| Reject incoming traffic unless it is related to an already established connection or matches ssh, mdns, ipp-client, samba-client, or dhcpv6-client traffic. (Same as home zone)
+		work	| Reject incoming traffic unless related to an established connection or matches ssh, ipp-client, or dhcpv6-client traffic.
+		public	| Reject incoming traffic unless related to an already established connection or matches ssh or dhcpv6-client traffic. (The default zone by default)
+		external| Reject incoming traffic unless related to an established connection or matches ssh traffic. Outgoing traffic forwarded through this zone is masqueraded to look like it originated from the address of the outgoing interface.
+		dmz		| Reject incoming traffic unless related to an established connection or matches ssh traffic.
+		block	| Reject incoming traffic unless related to an established connection.
+		drop	| Drop all incoming traffic unless related to an established connection.
+
+		- Order of Operations 
+			1. Source Address 
+			2. Incoming Interface
+			3. Default Zone (Public By Default)
+		
+		- Important Files 
+			- /usr/lib/firewalld/*				#Default Configs
+			- /etc/firewalld/					#User-Defined Configs
+			- /etc/firewalld/firewalld.conf		#User-Defined Config
+			- /etc/firewalld/services/*.xml 	#User-Defined Services 
+			- /etc/firewalld/zones/*.xml		#User-Defined Zones
+	}}} #
+	{{{ #Syntax		
+		- Get Configs 
+			$ firewall-cmd --list-all-zones 
+			$ iptables -nL -v 
+		- Get a zones rules 
+			$ firewall-cmd --list-all --zone=work 
+		- Read in Configs from Disk
+			$ firewall-cmd --reload
+		- Generic Rule add 
+			$ firewall-cmd --add-port53/udp 			#Edit Running Config  
+			$ firewall-cmd --add-port53/udp --permanent	#Edit Disk Config 
+		- Set Default Zone 
+			$ firewall-cmd --set-default-zone=dmz 
+		- Route Traffic from Network to Internal Zone 
+			$ firewall-cmd --permanent --zone=internal --add-source=192.168.1.0/24
+		- Allow MySql service into the internal zone 
+			$ firewall-cmd --permanent --zone=internal --add-service=mysql
+		- Rich 
+			- Block a Service
+				$ firewall-cmd --add-rich-rule 'rule family="ipv4" port port="22" protocol="tcp" reject'					#Default Zone 
+				$ firewall-cmd --zone=DMZ --add-rich-rule   'rule family="ipv4" port port="22" protocol="tcp" reject'		#Specified Zone 
+			- Remove a rule 
+				$ firewall-cmd --zone=DMZ --remove-rich-rule   'rule family="ipv4" port port="22" protocol="tcp" reject'
+			- Make temporary rule 
+				$ firewall-cmd --add-rich-rule='rule protocol value="icmp" accept' --timeout=60		#seconds
+			- Arguments 
+				- One Connection Per Minute 	$ limit value=1/m
+				- Match service file			$ service name=telnet
+				- Match Port 					$ port port="22"
+				- Log with prefix string		$ log prefix="SSH ACCESS" 
+				- Match ICMP					$ protocol value=icmp
+		- Direct 
+			- Get All direct rules 
+				$ firewall-cmd --direct --get-all-rules 
+			- Block Outgoing connection 
+				$ firewall-cmd --direct --add-rule ipv4 filter OUTPUT 0 -p tcp -d 192.168.7.125 -j DROP
+
+	}}} #
+
+}}} #		
+{{{ #iptables
+	{{{ #Arguments
+		- Tables 
+			-NAT 
+				> SNAT: (Source NAT) Rewrite Source IP 						#Output, PostRouting
+				> DNAT: (Destination NAT) Rewrite Destination IP			#PreRouting
+				> MASQUERADE: Rewrite Destination IP and Destination Port	#Output, PostRouting		#Often used with -i -o 
+		- Options
+			> -F: Flush all rules from the table 
+			> -X: Remove all user-defined chains from the filter table
+		- Actions:
+			> -L: View rules in the chain 
+			> -A: Add Rule 
+			> -I: Insert Rule 
+			> -R: Replace Rule 
+			> -D: Delete Rules
+			> -P: Set Default Policy					#Each Chain has a Default Policy (Accept or Drop)
+			> --line-numbers: Print with line numbers 
+			> -n: Don't resolve DNS
+		- Matching Rules 
+			> \!: Not next argument
+			> -p: Protocol		#icmp,tcp,udp,{1..255}
+			> -s: Source Address
+			> -d: Destination Address 
+			> -i: Local Interface for Inbound Traffic
+			> -o: Local Interface for Outbound Traffic 
+			> --sport: Souce Port 		#Must have -p tcp/udp also 
+			> --dport: Destination Port #Must have -p tcp/udp also 
+			> --icmp-type: 
+			> -m: Match
+				> --state: Stateful Relationship	#iptables -A INPUT -p tcp -m state --state ESTABLISHED, RELATED -j ACCEPT
+					> New: Starting a new Connection 						#Syn
+					> Established: Associated with Existing Connection 		#Syn/Ack
+					> Related: Starting a new Connection with an existing Connection (FTP)
+					> Invalid: Not Identified or was invalid given existing connection state
+				> --comment "Allow all loopback traffic": 
+		- Targets
+			> ACCEPT: Accept 
+			> DROP: Silently ignore
+			> REJECT: Drop with error message to the sending host
+			> LOG: Log 												#Processing Continues Afterwards
+			> CHAIN: Send to User Defined Chain	
+			> RETURN: Return to previous Calling Chain
+
+		}}} #
+	{{{ #Example 
+		- Allow SSH from a host 
+			$ iptables -A INPUT -s 192.168.11.13 -p tcp --dport 22 -j ACCEPT  
+			$ iptables -A OUTPUT -d 192.168.11.13 -p tcp --sport 22 -j ACCEPT
+		- Allow Firewall To communicate with itself
+			$ iptables -A INPUT -i lo -j ACCEPT
+			$ iptables -A OUTPUT -o lo -j ACCEPT
+		- Allow Established or Related Connections 
+			$ iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+		- Allow Two Networks to communicate
+			- Via interface 
+				$ iptables -A FORWARD -i eth0 -o eth1 -j ACCEPT
+				$ iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+			- Via Address Range
+				$ iptables -A FORWARD -s 192.168.11.0/24 -d 192.168.111.112/29 -j ACCEPT
+				$ iptables -A FORWARD -d 192.168.11.0/24 -s 192.168.111.112/29 -j ACCEPT
+		- Allow Access to Name Server 
+			$ iptables -A OUTPUT -d 192.0.2.2 -p udp --dport 53 -j ACCEPT
+		- Allow Access As a Name Server 
+			$ iptables -A INPUT -i eth2 -p udp --dport 53 -j ACCEPT
+			$ iptables -A OUTPUT -o eth2 -p udp --sport 53 -j ACCEPT
+		- Set Default Rule 
+			$ iptables -P INPUT DROP 
+			$ iptables -P FORWARD DROP
+			$ iptables -P OUTPUT DROP
+		- One-To-One NAT 
+			$ iptables -t nat -A POSTROUTING -s 192.168.111.116 -o eth2 -j SNAT --to-source 198.51.100.116
+			$ iptables -t nat -A PREROUTING -d 198.51.100.116 -i eth2 -j DNAT --to-destination 192.168.111.116
+		- Allow ping to/from a forwarded host 
+			$ iptables -A FORWARD -s 192.168.111.116 -p icmp -j ACCEPT
+			$ iptables -A FORWARD -d 192.168.111.116 -p icmp -j ACCEPT
+		- Allow Forward access to a FTP server 
+			$ iptables -A FORWARD -i eth2 -d 192.168.111.116 -p tcp --dport 21 -j ACCEPT
+		- Allow FORWARD ssh access to a host 
+			$ iptables -A FORWARD -s 192.168.11.13 -d ras.fatdeer.lab -p tcp --dport 22 -j ACCEPT
+			$ iptables -A FORWARD -d 192.168.11.13 -s ras.fatdeer.lab -m state --state ESTABLISHED,RELATED -j ACCEPT
+		- PAT (Port Address Translation)
+			$ iptables -t nat -A POSTROUTING -s 192.168.11.13 -o eth2 -j MASQUERADE
+	
+	}}} #
+	{{{	#Notes
+		Table 	| Chanins						| Purpose 
+		---		| ---							| ---
+		filter 	| Input,Forward,Output			| Accepting or rejecting packets
+		nat 	| PreRouting,Output,PostRouting	| NAT
+		mangle 	| INPUT, FORWARD, POSTROUTING	| Packet ReWriting
+		raw		| PREROUTING, OUTPUT			| Circumventing the kernel's connection tracking mechanism
+		security| INPUT, FORWARD, OUTPUT		| Implementing Mandatory Access Control networking rules
+			
+		Chain		| Purpose
+		---			| ---
+		INPUT		| for packets destined to the local system
+		FORWARD		| for packets being routed through the system
+		OUTPUT		| for packets generated by local processes
+		PREROUTING	| for packets arriving via any network interface
+		POSTROUTING	| for packets as they are about to go out of the system
+	
+	}}} #
+	{{{ #Syntax 
+		- Generic Syntax 
+			$ iptables -t [table][options][action][matching rules][target]
+		- Get iptables rules
+			$ iptables -t [table] -nL --line-numbers
+			$ iptables -t [table] -nL --line-numbers -v
+		- Examples
+			$ iptables -A INPUT -p tcp -j REJECT --reject-with tcp-reset
+			$ iptables -t filter -A FORWARD -p udp -j REJECT --reject-with icmp-net-prohibited
+			$ iptables -A INPUT -p icmp -j DROP
+			$ iptables -A INPUT -d 192.168.11.13 \! -i eth0 -j DROP
+			$ iptables -t filter -A FORWARD -s 192.168.0.0/24 -d 192.168.1.0/24 -i eth0 -o eth1 -j ACCEPT
+		- Set Default Policy 
+			$ iptables -t filter -P INPUT DROP
+			$ iptables -t filter -P OUTPUT DROP
+		- Allow SSH 
+			$ iptables -t filter -A INPUT -s 10.18.80.64/26 -p tcp --dport 22 -j ACCEPT 
+			$ iptables -t filter -A OUTPUT -d 10.18.80.64/26 -p tcp --sport 22 -j ACCEPT
+		- Allow SSH Statefully 
+			$ iptables -t filter -A INPUT -s 10.18.80.64/26 -p tcp --dport 22 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT 
+			$ iptables -t filter -A OUTPUT -d 10.18.80.64/26 -p tcp --sport 22 -m state --state ESTABLISHED,RELATED -j ACCEPT 
+		- Allow LoopBack connections
+			$ iptables -A INPUT -i lo -j ACCEPT 
+			$ iptables -A OUTPUT -o lo -j ACCEPT 
+		- Reset Rules 
+			$ iptables -t filter -F 
+			$ iptables -t nat -F
+			$ iptables -t filter -X 
+			$ iptables -P INPUT ACCEPT 
+			$ iptables -P OUTPUT ACCEPT 
+			$ iptables -P FORWARD ACCEPT
+		- Delete Rule 
+			$ iptables -D INPUT 3
+		- Insert Rule 
+			$ iptables -I INPUT 23 -p tcp --dport 5222 -j ACCEPT
+		- NAT 1 to 1
+			$ iptables -t nat -A POSTROUTING -s 192.168.111.116 -o eth2 -j SNAT --to-source 198.51.100.116
+			$ iptables -t nat -A PREROUTING -d 198.51.100.116 -i eth2 -j DNAT --to-destination 192.168.111.116
+		- Port Address Translation
+			$ iptables -t nat -A POSTROUTING -s 192.168.11.13 -o eth2 -j MASQUERADE
+			$ iptables -t filter -A FORWARD -s 192.168.11.13 -d ras.fatdeer.lab -p tcp --dport 22 -j ACCEPT
+			$ iptables -t filter -A FORWARD -d 192.168.11.13 -s ras.fatdeer.lab -m state --state ESTABLISHED,RELATED -j ACCEPT
+		- FORWARD 
+			$ iptables -A FORWARD -i eth2 -d 192.168.111.116 -p tcp --dport 21 -j ACCEPT
+	}}} #
+		
+}}} #
+{{{ ###IDS
+	- Tools
+		- Network Based
+			- SNORT		
+				- Important Files 
+					- /etc/snort/snort.conf 
+						- To Include a Rule 
+							$ include $RULE_PATH/{name}/rules 
+					- /etc/snort/rules/*.rules
+				- Writing Rules 
+					- Action 
+						> Alert: Generates an alert using a system-wide defined method
+						> Log: Logs the packet, but otherwise takes no action
+						> Pass: Nothing
+					- @(Network|Transport) layer information 	(can use ! (not) operator)
+						> Protocol: 		OPTIONS: TCP, UDP, ICMP, IP 
+						> Source IP: 		OPTIONS: host IP, network IP with CIDR, "any", $EXTERNAL_NET, $INTERNAL_NET, $SOMEOTHER_VARIABLE 
+						> Source Port:		OPTIONS: Single Port Number, Port Range (20:389), "any"
+						> Direction: 		OPTIONS: "->":One-Way, "<>":bi-direction
+						> Destination IP:	OPTIONS: host IP, network IP with CIDR, "any", $EXTERNAL_NET, $INTERNAL_NET, $SOMEOTHER_VARIABLE 
+						> Destination Port:	OPTIONS: Single Port Number, Port Range (20:389), "any"
+					- Rule Options
+						- Non-Payload Characheristics
+							> Flags: matches TCP flags
+							> Flow: established vs new connections
+							> TTL: time-to-live of the packet
+						- Payload Charachteristics
+							> Content:
+								$ content:"known sting here"	#String Matching
+								$ content:"|00 45 ab dc ef|"	#Binary Matching
+							> Depth: Limits how far into a packet to look for a Content String 
+							> HTTP elements: limit the content matcher to specific HTTP message segments (http_client_body, http_cookie)
+		- Host-Based
+			- tripwire
+				- Important file baseline comparrisson
+			- OSSEC
+				- Log Analysis
+				- File Integrity checking
+				- Policy Monitoring
+				- Rootkit Detection
+				- Real Time Alerting
+			- BART
+				- Detect alterations to files and file metadata
+				- Available on Solaris 10 and newer
+		- Security Scanners
+			- Nessus
+			- OpenVas
+			
+			
+			
+}}} ###
+	

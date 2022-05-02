@@ -1,0 +1,104 @@
+---
+tags:
+---
+{{{ ###SIDs
+	> Access Token: Contains info about owner/user and network privleges assigned to them.
+		- Contains
+			- Security ID
+			- Groups IDS
+			- User Rights
+			- Privileges
+	> SID: unique value of variable length
+		- produced when the account is first created
+		- identifies: (any one of)
+			- Users
+			- Groups
+			- Domains
+			- Computers
+		
+		- Sids consist of:
+			- A revision level,
+			- An identifier-authority value,
+			- One or more subauthority values, and
+			- A Relative ID (RID
+## Well Known SIDs
+	> Everyone: Goup that includes all users
+	- or -
+	> Users: Goup that includes all users
+	> CREATOR_OWNER: used as a placeholder in an inheritable Access Control Entry (ACE). 
+		- When the ACE is inherited, the system replaces the CREATOR_OWNER SID with the SID of the object's creator
+	> Administrators: Group for the built-in Domain on the local computer
+	> S-1-5-18: LocalSystem: Windows loads this account's profile when a program or service runs in the LocalSystem account.
+	> S-1-5-19: LocalService: Service Control Manager uses this account to run local services that don't need to run as the LocalSystem account.
+	> S-1-5-20: NetworkService: Service Control Manager uses this account to run network services that don't need to run as the LocalSystem account.
+	> S-1-5-21: (Non-Unique Authority Name)
+
+## SID Locations
+	- SID Reg Key: HKLM\SAM\SAM\Domains\Account
+		- Values
+			> F:  maintains an incremental record of RIDs
+			> V:  binary value that contains the computer SID within the last 12 bytes of data.
+	
+	- SAM (Security Account Manager) file: C:\Windows\System32\config\SAM
+	- SAM Backup:
+		- Last 12 bytes of HKEY_LOCAL_MACHINE\SECURITY\Policy
+		- or -
+		- C:\Windows\System32\config\SECURITY
+		
+## Decoding a machine SID 
+	1. Divide the bytes into 3, four-byte sections,
+    2. Reverse the order of bytes in each section,
+    3. Convert each section into decimal, and
+    4. Add the machine SID prefix.
+
+## RID
+	> RID: (Relative ID) Variable length number that is assigned to objects at creation
+		- Becomes the end of the sid 
+		- uniquely identifies an account or group (within a domain)
+		- RID's < 1000 are reserved (used for special accounts)
+		- RID 500 == Built-in administrator account
+		- Not reused when a user is deleted
+		- Next RID to be used:
+			- Locaiton: HKLM\SAM\SAM\Domains\Account\F
+			- Offset: 	0x48
+			- Length: 	4 Bytes
+			- Order:	Little Endian (Byte order is Reversed)
+		- If RID gets higher than 0xFF 0XFF 0XFF 0XFF (4294967295) it rolls over to 0
+
+## When a user account is created
+	- Keys are created 
+		- HKLM\SAM\SAM\Domains\Account\Users\Names\%username%
+			- this key determines the login name
+			- The (Default) values holds a number which matches up to an 8-digit number located here 
+				- (nulls are prefixed to the number if they are less than 8)
+		- HKLM\SAM\SAM\Domains\Account\Users\00000XXX
+			- This key contains two binary values: F and V
+
+			
+70 55 82 EC - E6 14 B4 00 - 9F E4 F4 83
+EC825570 - 00 B4 14 E6 - 83 F4 E4 9F
+
+3F 8F E9 8A - 64 DA 68 8F - 54 0D D8 4E
+8AE98F3F - 8F68DA64 - 4ED80D54
+
+
+
+}}} ###
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

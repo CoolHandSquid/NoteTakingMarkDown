@@ -1,0 +1,102 @@
+---
+tags:
+---
+{{{ ###MAC population and general switching theory
+	- Most switch logic relates to the source and destination MAC addresses inside the Ethernet frame headers of the frames sent through the LAN. 
+	- Switch logic is also dependent on the type of MAC addresses used. 
+	- Three general categories of MAC addresses on Ethernet:
+		> Unicast address: An address that is assigned to a single host. It must be unique within the network and is usually globally unique.
+		> Broadcast address: The broadcast address is a special multicast address, for example, this address in hex, which indicated the frame is intended to be processed by every host on the network.
+		> Multicast address: A multicast address is used to send traffic to a subset of the network. When a multicast address is used as the destination MAC address of a frame, that frame must be delivered to all hosts on the network, and each host can choose whether or not to process the frame based on the multicast destination MAC address.
+	- The switch learns MAC addresses by examining the source MAC address of each frame the switch receives.
+	> Frame filtering: If the destination mac address is known (in the cam table) that frame is sent out only that port.
+# If a hub is connected to a switch:
+	- If one of the switch ports has a hub connected to it instead of a single host, there would be multiple MAC addresses related to that port. If one of the hosts connected to that hub wants to communicate with another host on the same hub, the switch will do the destination MAC address comparison and see that the outgoing interface is the same as the incoming interface. At this point, the switch would not forward the frame
+	- AKA: The frame gets dropped if the dst mac interface is the same as the src mac interface.
+	> Flood: Frame is sent out all ports accept the one it was received on. (broadcast, uknown unicast)
+	- Default mac timeout (flushing of a known entry from the cam table)
+		> Cisco Switches: 300 Seconds
+	
+	- If a Mac table gets full. It'll act like a hub and not add entries.
+	- Mac Flooding Attack:
+		- the attacker sends frames to the switch with a continuous stream of new source MAC addresses, forcing the switch to learn these MAC addresses. As the legitimate entries age out, they are replaced with bogus data allowing the attacker to sniff everyone's traffic on the LAN.
+	- Mac Spoofing:
+		- An attacker can bombard a switch with frames containing another machine's source MAC address, convincing the switch to send any frames destined for that MAC address to the attacker instead of the real machine.
+
+
+}}} ###
+{{{ ###Loop Avoidance
+	- STP
+		- STP uses the 802.1D IEEE algorithm by exchanging Bridge Protocol Data Unit (BPDU) messages with other switches to detect loops
+		- This algorithm guarantees that there is only one active path between two network devices
+		- STP blocks some ports from forwarding frames so that only one active path exists between any two switches.
+		- This does prevent the use of redundant links for load balancing
+		- States
+			> Blocking:		Blocking is when the interface cannot forward or receive data frames, 
+			> Forwarding:	Forwarding is when the interface can send and receive data frames.
+			> Transitional: ...There are many... Check out the docs in resources.
+}}} ###
+{{{ ###Vlans and Trunking
+## Vlans
+	- Every switch port that is to be included in a VLAN is assigned to the VLAN, and is called an access port. 
+	- Static Vlans: Configured port-by-port
+	- Dynamic Vlans: can be created by...
+		- Intelligent managment software
+		- hardware (macs)
+		- protocols
+		- applications
+	- Within a single switch, the switch knows which ports belong to which VLANs.
+	- When a frame transits from one switch to another, the second switch has no idea what VLAN the frame belongs to.
+	> Vlan Tagging: Encoded vlan information in the frame.
+## Trunking
+	> Trunk: A connection between two devices that carry multiple VLANs. 
+	> Trunk Ports: The switch ports that terminate the trunk. 
+	> Native Vlan: Untagged traffic defaults to the Native Vlan
+		- *Each trunk port is assigned a native vlan*
+		- Native vlan must be the same on both sides of a trunk.
+	- Trunks are often associated with switch-to-switch links, but may also exist
+		- between a switch and a router, 
+		- or even a switch and a server.
+## 802.1Q Tagging
+	- 802.1Q is the standard that defines the mechanism
+	- Header
+		- To add an 802.1Q tag to a frame, the sending switch inserts a 4-byte tag (officially the 802.1Q header) into the frame. This is done between the source MAC and EtherType
+		- The first two bytes of the tag are always 0x8100, the EtherType of an 802.1Q tag,
+		- The last two bytes contain four bits of priority information and then 12 bits that define the VLAN number.
+	- Once the receiving switch receives the frame and determines its intended destination, it strips the tag from the frame before sending it to the recipient.
+	> Once the receiving switch receives the frame and determines its intended destination, it strips the tag from the frame before sending it to the recipient. If the intended recipient is not a host on the switch, or is a multicast or a broadcast address, the switch forwards the tagged frame to the next switch attached to its trunking port. Because of this, it is generally rare to see 802.1Q tags in captured traffic.
+	- **The Tag is stripped if it is going to a host. It is kept on if it is going to through another Trunk**
+
+## Private VLANs
+	- layer 2 isolation between ports within the same broadcast domain. 
+	- Three types of private vlans
+		1. Promiscuous Port: (Think Router interface)
+			- can communicate with all interfaces, including the isolated and community ports within a PVLAN.
+		2. Isolated port: (Think Workstation Vlan)
+			- has complete Layer 2 separation from the other ports within the same PVLAN, but not from the promiscuous ports. 
+			- PVLANs block all traffic to isolated ports except traffic from promiscuous ports.
+			- Traffic from an isolated port is forwarded only to promiscuous ports.
+		3. Community ports: (Think server Vlan where servers need to communicate with one another)
+			- can communicate among themselves and with their promiscuous ports. 
+			- These interfaces are separated at Layer 2 from all other interfaces in other communities or isolated ports within their PVLAN. 
+	- PVLANS can be used efficiently because the number of subnets is greatly reduced.
+
+## Port Security
+	> Port security: Restrits access to a switch based on MAC addresses
+	- Enabling Port Security:
+		- Must Be an Access Port
+		` switchport port-security
+			- set port security parameters
+				` switchport port-secuirty violation shutdown
+	- Showing Port Security 
+		` show port-security interface
+		` show running-config
+	- **This is a Cisco specific example**
+
+## Important logic!!
+	- **Each vlan has it's own mac table**
+	- **If the mac tables says to send the frame out the port it came in on, it'll drop it**
+	
+}}} ###
+    
+	

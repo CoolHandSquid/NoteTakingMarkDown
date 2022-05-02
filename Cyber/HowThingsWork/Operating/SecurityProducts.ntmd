@@ -1,0 +1,92 @@
+{{{ #AntiVirus Lists	
+Binary			| Assosiation
+---				| ---
+MsMpEng.exe		| Microsoft Security Essentials
+MSASCuiL.exe	| Windows Defender
+MpCmdRun.exe	| Windows Defender
+NisSrv.exe		| Windows Defender 
+Taumon.exe		| Rootkit Detector
+ClamTray.exe	| Clam AntiVirus
+zclient.exe		| Zone Alarms Firewall
+vsmon.exe		| Zone Alarms Firewall
+SpybotSD.exe	| Spyware/Adware Removal Tool
+ssscheduler		| Mcafee
+avastui			| Avast
+AvastSvc		| Avast
+WSCStup			| Norton
+ccSvcHst		| Norton
+BavSvc			| Baidu
+BavTray			| Baidu
+BHipsSvc		| Baidu
+Bavhm			| Baidu
+rkhunter		| Nix
+chkrootkit		| Nix 
+Fail2Ban		| Nix
+logcheck		| Nix
+
+	- Also Important
+		- Taskmgr.exe 
+		- logon.scr
+	- Config files
+		- *.ini
+		- *.cfg
+		- *.xml
+	- grep 
+		$ egrep -i "msseces.exe|avp.exe|ALMon.exe|ALsvc.exe|AvastSvc.exe|BHipsSvc.exe|BHipsSvc.exe|BavSvc.exe|BavTray.exe|Bavhm.exe|ClamTray.exe|MSASCuiL.exe|McsAgent.exe|McsClient.exe|MpCmdRun.exe|MsMpEng.exe|NisSrv.exe|SAVAdminService.exe|SDRservice.exe|SavService.exe|SntpService.exe|SpybotSD.exe|Taskmgr.exe|Taumon.exe|WSCStup.exe|avastui.exe|bavhm.exe|ccSvcHst.exe|hmpalert.exe|ssp.exe|ssscheduler.exe|swc_service.exe|swi_service.exe|vsmon.exe|zclient.exe"
+	
+}}} #
+{{{ #Reference Sheet
+	- Things to be aware of
+		- Software Version
+		- Engine Version
+		- Latest Signature Dates
+
+	- Questions
+		- Is the AV regularly Updated?
+		- Real-Time?
+		- Schedule?
+		- Will it catch my Tools?
+		- What Dir?
+		- Settings
+		- Log Locations (and am I in there?)
+		- pop-ups to user?
+		- Is the ESP a threat?	
+
+		- Determine the Product Name
+		- Determine the Specific version of the product/software
+		- Determine the date the latest signature were installed
+		- Determine the security capabilities of the installed product (real time scan, scheduled scans, spyware/adware detection, email scan, heuristic detection, signature detection, cloud or sand boxing, memory scans etc.) 
+		- You may be able to run handle.exe or handle64.exe (depending) against the ESP related processes
+		- to gather info such as the location of logs that are being written to.
+		- Determine when the last scan occurred and the next scan will occur
+		- Determine if the product logs locally, remotely or both
+		- Determine if the product has the ability to ship off detected malware remotely and if that capability is enabled
+		- Determine the location of any quarantine location on the local host
+		- Determine if your activities have been detected by the ESP
+
+}}} #
+
+
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

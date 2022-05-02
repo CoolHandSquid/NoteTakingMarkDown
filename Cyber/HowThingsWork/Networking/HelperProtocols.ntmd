@@ -1,0 +1,159 @@
+{{{ ###Arp
+{{{ #Fun Facts
+- RFC 826
+- ARP's main purpose is to discover the MAC address associated with a destination IPv4 address.
+- Default time in cache
+	- Linux/Unix	= 60 Seconds
+	- Windows		= 2 Minutes
+		- if cache entry is used (windows), the time is reset to 10 minutes
+-  Routers can implement a feature called proxy ARP that cause some ARP traffic to transit the router
+}}} #
+{{{ #When is the arp cache updated?
+	- The algorithm in the RFC specifies that a receiver must update its ARP cache if it receives an ARP frame in two situations:
+		1.the host already has an entry for the sender protocol (IP) address of the ARP frame, or
+		2. the host matches the target protocol address of the ARP frame. 
+	- Since we cannot control whether or not the target already has an entry for the machine we're spoofing, we need to
+		- make sure that the target of our attack matches the target protocol address of the ARP frame. 
+		- Note: It does not matter whether the frame is an ARP request or an ARP reply.
+}}} #
+}}} ###
+{{{ ###ICMP
+{{{ #fun facts
+- Used primarily by network devices to relay query messages and send error messages
+- rfc 792
+- protocol number 1
+- Not typically used to exchange data between systems
+- Not regularly employed by end-user network applications except for diagnostic tools
+  like ping and traceroute
+- Header
+	- offset 0 	= Type
+	- offset 1	= code
+	- offset 2:2= Checksum
+	- offset 4:4= other message information
+- ICMP Error Messages are never generated in response to
+	- Another ICMP Error Message
+    - A message with a broadcast address (either Data link or Network layer) as the source or destination
+    - A fragment that is not the first.
+}}} #
+{{{ #Types and Codes
+> Type: Defines what kind of message is being sent
+	- Type 3:Unreachable
+		0. Net Unreachable							:May be received from gateway
+		1. Host Unreachable							:May be received from gateway 	< ip address doesn't esit on network you are trying to reach
+		2. Protocol Unreachable						:May be recived from Host		< The machine is online, but does not have the protocol specified in the IP header enabled
+		3. Port Unreachable							:May be recived from Host		< TCP or UDP port is not open
+		4. Fragmention needed and df bit was set	:May be received from gateway
+		5. source Route Failed						:May be received from gateway	
+		[More Codes]( https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml )
+	- Type 8:Echo Request (ping)
+	- Type 0:Echo Reply
+	- Type 11: Time Exceed 
+		0. Time to Live (ttl) exceeded in Transit
+		1. Fragment Reassembly Time Exceeded
+	
+> Code: Identifies the reason for the message
+	
+}}} #
+{{{ #Ping
+	- The payload of an Echo request packet is generally filled with ASCII alpha numeric characters
+		- "abcdefghijklmnopqrstuvw" is the windows default
+		- UNIX use different default 
+		- pattern is configurable
+	- The client can use the identifier and sequence number of the Echo reply to determine which Echo requests are associated with the incoming replies. 
+	- The reply sent must include all of the data contained in the Echo request. 
+## Find first hop of tracert
+	-look for an icmp response in the same network with a ttl of 64 (full) 
+
+
+
+	
+}}} #
+{{{ #Broadcast Ping
+## Default behavior
+	> Windows: 		Configured by default to not respond to broadcast ping
+	> Older Linux:	Will often respond
+	> Newer Linux:	Generally will not respond
+	> Solaris:		Will often respond
+	> Network Devices:	Will often respond
+}}} #
+}}} ###
+{{{ ###DHCP 
+{{{ #Fun Facts
+	-  Application Layer network protocol
+	- Enables a server to assign IP addresses to all computers on the local network from a defined range of numbers configured for the given network. 
+	- Also distributes client configuration information, such as 
+		- default gateway
+		- domain name
+		- name
+		- time servers
+	- RFC
+		- Old RFC 1531 (was part of another protocol)
+		- New RFC 2131
+	- UDP 
+}}} #
+{{{ #Stages
+## Initalizing stage
+	- When a device has no IP address and needs to request one from a DHCP server
+	- Process (DORA)
+		> Discover (DHCPDISCOVER)
+			- usually happens when a machine first turns on.
+			- TO: 	255.255.255.255
+			- FROM:	0.0.0.0
+			- Configuration paramaters
+				- can request a prefered IP.
+				- **subnetmask (1), domain name (15), router (3)...**
+		> Offer
+			- When a DHCP server receives a DISCOVER message from a client
+				- The server reserves an IP address for the client
+				- Makes the client a lease offer
+			- Contents
+				- Offered IP address
+				- offerEE's MAC
+				- Offered subnet mask
+				- lease duration
+				- DHCP servers IP
+		> Request
+			- Is a broadcast message because the offerEE does not have an official IP yet
+			-  In response to the DHCP offer, the client replies with a DHCPREQUEST requesting the offered address.
+			- A client can receive IP address offers from multiple DHCP servers
+			- Only one offer will be accepted.
+			- unaccpeted offers will be withdrawn.
+			- Servers are informed whose offer the client accepted
+		> Acknowledgment
+			- the server sends a DHCPACK packet directly to the client. 
+			- DHCPACK includes
+				- The lease duration
+				- any other info the client may have requested.
+				- The protocol dictates that the client configure its network interface with the negotiated parameters
+				- After the client obtains an IP address, the client will typically use ARP to prevent address conflicts
+## Renewing state
+	- The “Renewing State” occurs when 50% of the lease time has expired
+		- Will occur at hour 12 of a 24 hour lease
+		- Will occur several times after if lease is not renewed
+		- Process
+			- DHCPREQUEST
+				- REQUEST is not sent to broadcast from 0.0.0.0
+				- sent directly to the DHCP server from which it obtained the lease
+			- DHCPACK
+				- Contents include
+					- New Lease duration
+					- Configuraiton information (so settgings can be updated)
+## Rebinding state
+	- Occurs after 87.5% of the lease time has expired
+	- The client will move to a rebinding state
+	- The client will try to connect to any available DHCP server by sending DHCPREQUEST messages to broadcast from its currently assigned IP address
+	- At this point, any DHCP server on the network can respond with a DHCPACK message, thereby renewing the lease
+## Bound state
+	- Machine is in a lease
+## INIT State
+	- Occurs if
+		- The Lease Expires
+		- A DHCPNACK is recieved from any DHCP server.
+	- The client will cease using an IP address
+	- The client will return to the initializing state.
+}}} #
+
+
+}}} ###
+
+

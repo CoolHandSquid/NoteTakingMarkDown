@@ -1,0 +1,163 @@
+---
+tags:
+---
+
+{{{ ###
+	> MAC Time: (File Time)
+	
+	- Time Storage
+		- NTFS
+			- UTC
+		- FAT
+			- localtime
+
+	- TimeStamp Types
+		> Create Time: Updated Anytime a file or directory is created (or a copy is made)
+		
+		> Modify Time: Updated Anytime a File or Dir is changed
+		
+		> Access Time: Updated Anytime the contents (or metadata) of a dir or file is touched to perform an action
+		
+		> Entry Modify Time: When the MFT (master file table) entry was modified
+			- It is important to note that not all file systems can record creation and last access times, and not all file systems record them in the same manner. Resolution of create time on FAT is ten (10) milliseconds, while write time has a resolution of two (2) seconds and access time has a resolution of one (1) day, which means it is really the access date. The NTFS file system delays updates to the last access time for a file by up to one (1) hour after the last access, while Modify Time is two (2) minutes.
+
+	- Syntax with dir 
+		- Show Written time
+			$ dir /t:w
+		- Show Creation time 
+			$ dir /t:c
+		- Show Access time
+			$ dir /t:a
+
+			
+	- The Fucking Times Tables
+		- Key
+			- First Column
+				- M:Modify
+				- A:Access 
+				- C:Create
+			- Second Column
+				- U:Updated
+				- NU:Not Updated
+				- ND:Not Displayed
+		- Operations
+			- Copy/Move
+				- To Local Drive (Same partition)
+					- Copy: 
+						- M:NU
+						- A:U
+						- C:U
+					- Move:
+						- M:NU 
+						- A:U
+						- C:NU
+				- To Network Drive (different partition)
+					- Copy:
+						- M:NU
+						- A:U
+						- C:U
+					- Move:
+						- M:NU
+						- A:ND
+						- C:U
+			- Dirs	
+				- Dir is created
+					- M:U
+					- A:U
+					- C:U
+				- File is Created In Dir
+					- M:U
+					- A:U
+					- C:NU
+				- File is Moved From Dir 
+					- M:U
+					- A:U
+					- C:NU
+				- File is Copied From Dir 
+					- M:NU
+					- A:U
+					- C:NU
+				- File is Copied To Dir 
+					- M:U
+					- A:U
+					- C:NU			
+			- Files
+				- File is Created
+					- M:U
+					- A:U
+					- C:U				
+				- File is Changed
+					- M:U
+					- A:U
+					- C:NU
+				- File is Moved 
+					- M:NU
+					- A:U
+					- C:NU
+				- File is Created From Copy
+					- M:NU
+					- A:U
+					- C:U
+		
+		- IN The GUI
+			- Drag and Drop
+				- TO Same Partition
+					- Move
+				- TO Different partition
+					- COPY
+			
+			
+			
+			
+			
+
+## Fun Facts
+
+	- Access time in Vista+ is disabled by default 
+		- HKLM\System\CurrentControlSet\Control\File system\NtfsDisableLastAccessUpdate = 1			#(0 would turn it back on)
+		- AccessTime=00:00 if turned off
+	- FAT32 and VFAT volumes store only the date (not the time) of the last access.
+	- A file time is a 64-bit value that represents the number of 100-nanosecond intervals that have elapsed since 12:00 A.M. January 1, 1601 Coordinated Universal Time (UTC)
+
+	}}} ###
+
+
+
+
+
+
+cd \
+mkdir dir1
+cd \dir1
+echo "This is example file number 1" > example1.txt
+cd \
+mkdir dir2
+cd \dir2
+echo "This is example file number 2" > example2.txt
+cd \
+echo "this is a silly way to add text" >> \dir1\example1.txt
+echo "this is even more silly" >> \dir2\example2.txt
+move \dir2\example2.txt \dir1
+copy \dir1\example1.txt \dir2 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,134 @@
+---
+tags: #TCP #UDP
+---
+{{{ ###Fundamentals
+- TCP Features
+	- Message acknowledgement
+	- Timeout
+	- Retransmission
+- TCP packets will be reordered upon arrivail
+- Headers
+	- UDP
+		- 8 bytes (4 fields of 2 bytes)
+			- source port
+			- destination port
+			- Length
+			- checksum: This is the error-checking field. The checksum is calculated by using ones’ complement to sum the UDP data and what’s known as an IP “pseudo-header.” This “pseudo-header” consists of the source address, destination address, protocol (padded with a zero byte) and UDP length. The data will be divided into 16-bit quantities and added together, then taking the ones’ complement of that sum. The receiver will apply the same calculation and will then compare it to the value in the checksum field. The application data or message will follow the header
+	- TCP = 20 bytes **minimum**
+		- Source port 		0-2
+		- Destination Port	2-4
+		- Sequence number	4-8
+			- If the SYN flag is set, then this is the inital sequence number. The sequence number of the actual first data byte will then be this sequence number plus 1.
+			- If the SYN flag is not set, then this is the sequence number of the first data byte
+		- Ack Number		8-12
+			- If the ACK flag is set then the value of this field is the next sequence number that the receiver is expecting.
+			- A SYN packet should have this value set to 0.
+		- Offset			12 (First 4 bits)
+			- Specifies the size of the TCP header in 32-bit words (multiples of 32-bit chunks). The minimum size header is 5 words and the maximum is 15 words thus giving the minimum size of 20 bytes and maximum of 60 bytes. This field gets its name from the fact that it is also the offset from the start of the TCP segment to the actual data.
+		- Reserved			12 (last 4 bits)
+			- For future use and should be set to zero.
+			- Note: RFC 3168 (The Addition of Explicit Congestion Notification (ECN) to IP) has taken two bits from the Reserved field and added them to the flags field.
+		- TCP Flags			13
+			0. C CWR
+			1. E ECE (ENC-Echo
+			2. U URG
+			3. A ACK
+			4. P PSH
+			5. R RST
+			6. S SYN
+			7. F FIN
+		- Window			14-16
+			- The size of the receive window, which specifies the number of bytes that the receiver is currently willing to receive. 
+			- For more efficient use of high bandwidth networks, a larger TCP window size may be used (through the window scale option). 
+			- The TCP window size field controls the flow of data and its value is limited to between 2 and 65,535 bytes.
+			- Access the TCP header reference from the Resources section for a complete description of the Window field. 
+		- Checksum			16-18
+			- The 16-bit checksum field is used for error-checking of the header and data.
+		- Urgent Pointer	18-20
+			- If the URG flag is set, then this 16-bit field is an offset from the sequence number indicating the last urgent data byte.
+		- TCP Options (optional)	20-24
+			- The total length of the option field must be a multiple of a 32-bit word and the data offset field adjusted appropriately.
+			- Options
+				1. Option-Kind (1 byte)
+				2. Option-Length ( 1 byte)
+				3. Option-Data (Variable)
+- UDP datagrams are individually checked for integrity at the receiving host through examination of the UDP checksum, which is the complement of a 16-bit one's compliment sum of data and header information.
+- Multicast is usually UDP
+
+}}} ###
+{{{ ###Ports
+- Iana assigns port numbers
+- Ranges
+	- 0-1023 = Well Known Ports 
+		- info located in C:\windows\system32\drivers\etc\services and /etc/services
+	- 1024-49151 = Registered 
+		- for applications
+	- 49152-65535 = Dynamic/ephemeral
+	- Source ports (modifiable defaults)
+		- Pre vista windows 		= 1025-5000 
+		- Vista and newer windows 	= 49152-65535
+		- FreeBSD					= 49152-65535
+		- Linux						= 32768-61000
+		- Solaris					= 32768-65535
+}}} ###
+{{{ ###TCP Data Transfer
+	> ISN (Inital Sequence number): Used to identify each byte of data
+		- First number is arbitrary (to reduce risk of ISN prediction attack)
+	- Cumulitave acknowledgement scheme
+		- Reciever sends ack in recipt of data preceding the acknowledged sequence number
+		- Sender sets sequence number field to the first payload byte in the segments data field.\
+		- Reciever sends acknowledgment specifying sequence number of next byte they expect to recieve.
+		 > Example: If a sending computer sends a packet containing four payload bytes with a sequence number field of 100, then the sequence numbers of the four payload bytes are 100, 101, 102, and 103. When this packet arrives at the receiving computer, it sends back an acknowledgment number of 104 since that is the sequence number of the next byte it expects to receive in the next packet.
+		- In addition to cumulative acknowledgments, TCP receivers can also send selective acknowledgments to provide further information (as discussed in TCP options).
+		- if the sender infers that the data has been lost in the network, it retransmits the data.
+}}} ###
+{{{ ###Netstat breakdown
+	> Proto: The transport protocol associated with the socket.
+	> Local Address: This item is most important for listening services, since it defines what interface the service is listening on.
+		> 127.0.0.1: Service is only accessible from the local machine (also true for any address in the loopback range: 127.0.0.0/8)
+		> 0.0.0.0: Service is listening on all network interfaces (this is often called "quad zip").
+		> Other: Service is listening only on the network interface to which the given address is assigned.
+	> Foreign Address: This item describes the IP address and port of the peer at the other end of the socket connection. If this is 0.0.0.0:0, or *:*, or *.*, this indicates that the socket is listening for new connections.
+	> State: Defines the state of the connection, from a TCP perspective. The most important and commonly seen states are:
+		> LISTENING: port is bound and can respond
+		> ESTABLISHED: three-way handshake complete
+		> SYN_SENT: often, tried to connect to closed port
+		> TIME_WAIT: session closed
+
+}}} ###
+{{{ ###Passive OS Fingerprinting
+- TCP Options
+	- TCP options start at offset ether[54]
+	1. The options layout, that is, the order of the options in the datagram.
+	2. The value of the maximum segment size.
+	3. The value of the window scaling factor. And
+	4. The value of the window size. (You should note whether or not this is a multiple of the maximum segment size.)
+	- example
+	> 02 04 05 b4 | 01 | 01 | 04 02 | 01 | 03 03 00 | 01 | 01 | 08 0a f4 3c 12 56 00 00 00 00
+	> mss,nop,nop,sok,nop,ws,nop,nop,ts
+	> Maximum segment size: 0x05b4 = 1460; Window scale: 0x00 = 0
+	> offset 14: 0x4000 = 16384
+- P0f (this will be written as an example)
+	> sig = ver:ittl:olen:mss:wsize,scale:olayout:quirks:pclass
+		> ver: four (4), since you are using IPv4;
+		> ittl: 64, the initial TTL of the packet;
+		> olen: zero (0), which is the length of the IP options. It is almost always zero (0).
+		> mss: 1460. This is the maximum segment size.
+		> wsize,scale: 16384,0, the window size and scale.
+		> olayout: written as it is displayed here (mss,nop,nop,sok,nop,ws,nop,nop,ts).
+		> quirks and payload class (pclass): usually only used when deciding between versions of some core OS. Don't ignore them, but usually you only need to look for them if you need to distinguish between two candidate signatures.
+	- **Options layout is probably the most important field to match, with TTL and window size/scaling the next most significant.**
+- P0f Example
+	- Scenario
+	> 	label = s:other:Nintendo:3DS
+		sig = *:64:0:1360:32768,0:mss,nop,nop,sok:df,id+:0
+	- Response
+	> ip[8] <= 64 and TCP[13] & 0x12 = 0x02 and tcp[14:2] = 32768 and tcp[22:2] = 0x0550 and tcp[24:2] = 0x0101 and ip[6] & 0x40 = 0x40 and ip[4:2] != 0
+# Methodology
+	- source port
+	- ttl
+	- options(order)
+	- window size/scaling
+	> .*ttl.*optionsorder.*windowsize.*window scale.*
+	
+}}} ###

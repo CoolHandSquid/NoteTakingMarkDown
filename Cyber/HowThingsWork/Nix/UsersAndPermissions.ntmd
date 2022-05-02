@@ -1,0 +1,136 @@
+{{{ ###Good TO Know Commands
+	- Unix
+		> groups: 	Get Group Memberships
+		> getfacl: 	Get File Permissions
+		> chgrp:  	Edit Group Ownership
+		> chmod:   	Edit Access Permissions
+		> usermod: 	Edit User options
+		> chown: 	Edit Owner 
+		> newgrp: 	Edit current GID (group ID) during a login session.
+		> setfacl: 	Edit File Permissions 
+		> umask: 	Edit File Permissions			
+		> groupadd:	Create Group
+		> useradd: 	Create User 
+		> groupdel:	Delete Group 
+		> userdel: 	Delete User 
+
+	- Solaris
+		> listusers:Get user logins belonging to group
+		> ppriv:	Get Process Privilieges (why not in ptools?)	
+	- Linux
+		> getcap: 	Get name and capabilities of file
+		> chage:	Edit number of days between password changes and the date of the last password change
+		> gpasswd:	Edit /etc/group, and /etc/gshadow
+		> setcap:	Edit  name and capabilities of file
+		
+}}} ###
+{{{ ###File Permissions and Ownership
+	- General	
+		- Classes of Users
+			> User: (Owner)
+				- Usually the file Creator
+			> Group:  
+				- Only one Group can own a file
+				- Usually the GID of the Creating User 
+			> Other: (World)
+				- Everyone on the system
+		- File/Dir Creation Default Permissions
+			> umask: Default Access Permisions = Default Access Permissions - umask 	
+			- Permission Defaults:
+				- Dir:777
+				- File:666
+			- Example1: 
+				- Dir:777 
+				$ umask 022
+				- Dir:055
+			- Example2:
+				- File:666
+				$ umask u=rw,go=rx #:655 inverse:122 666-122:644 #Fo-Real doe
+				- File:644	
+	
+	- Change Rules:	
+		> chown: Only root can chown a file 
+			$ chown NewOwnerUser Filename
+			$ chown NewOwnerUser Dirname -R	#Recursive
+			$ chown NewOwnerUser:NewOwnerGroup Dirname 
+		> chgrp: Only file owner or root can chgrp a file 
+			- Owner can only change to a group he is a member of 
+			$ chgrp yeetgroup FileName 
+		> chmod:
+			- root can change all file permissions
+			- Users can only change permissions of files they own.
+			- SUID:4 SGID:2 Sticky:1
+			- Read:4 Write:2 Execute:1
+			$ chmod u+rw,g=x,go-wx /home/yeet.sh	#applies left to right
+			$ chmod u+rw,g=,o=u /home/yeet.sh		#"g=":---
+			$ chmod 653 /home/yeet.sh				#
+			$ chmod u+s /home/yeet.sh				#set SUID flag
+			$ chmod g+s /home/yeet.sh				#set SGID flag 	#o+s does nothing
+			$ chmod +t /home/						#set sticky bit
+			$ chmod o+t /home/						#set sticky bit (exactly the same)(sticky is only set to Other)
+			
+			
+
+	- Access Permissions 
+		- Order of Operations 
+			- USER >: Group >: Other
+			- Example:
+				- IF: User:Access UsersGroup:DeniedAccess Other:NoAccess Access:Successful
+				- IF: User:NoAccess UsersGroup:DeniedAccess Other:Access Access:NotSuccessful 
+		> Read:
+			- DIR: 	Access the names of files in that directory
+			- File: Review or display the content of the file
+		> Write:
+			- DIR:
+				- Modify information about the directory itself, such as its name and attributes, 
+				- Add/Delete files to the directory
+				- Rename files in the directory
+			- File:
+				- Modify the file content
+		> Execute:
+			- DIR: Enter or traverse the directory to perform actions on its files and subdirectories
+			- File: Execute the file when it is a script or a program
+		> SUID: 
+			Dir: Nothing
+			File: When Executed, Files UID becomes the Processes EUID
+		> SGID:
+			Dir: group that owns the directory to be assigned as the owning group of all files created within that directory
+			File: When Executed, Files GID becomes the Processes EGID 
+		> Sticky: (Restricted Deletion Flag)
+			Dir: Stops UnPrivilieged users from removing/renaming files in the dir (unless they own the file or the directory)
+			File: Nothing
+			
+}}} ###
+{{{ ###Advanced Permisions
+	> DAC: Discretionary Access Control
+		- Allows the owner of a file to grant access permissions to that file to specific users
+			$ getfacl yeet.sh
+			$ setfacl yeet.sh
+	> MAC: Mandatory Access Control
+		- Assigns security attributes to users and files and defines an authorization rule.
+		- Kernel uses the authorization rule to determine if the access should be granted.
+		- Implementations:
+			- Linux: AppArmor, SELinux 
+			- Solaris10+:Solaris Trusted Extension
+	> RBAC: Role Based Access Control 
+		- "Privileges-Based" Security Model 
+		- Solaris (10 and up) and Linux (kernel 2.2 and up) 
+		- Normal user accounts are assigned to roles in order to be able to perform various tasks on the system
+		$ man capabilities	#Linux 
+		$ man privileges	#Solaris
+
+
+}}} ###
+{{{ ###Fun Facts
+	- PAM is basically an API for creds
+	- The sticky bit was Previoulsy used when you could attach to an executable in memory 
+		- (this is no longer possible due to private memory space)
+	- Ownership and permission information is stored in the inode of the file.
+
+
+
+
+
+
+
+}}} ###

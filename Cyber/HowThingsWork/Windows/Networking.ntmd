@@ -1,0 +1,311 @@
+{{{ ###Windows Networking Services
+
+
+## Port Ranges
+
+	- Well Known = 1-1023
+	- Ephemeral
+	
+Ranges		| OS
+---			| ---
+49152-65535	| Vista And Later
+1025-500	| XP and 2003 (and older)
+1025-65535	| XP and 2003 SP2 (Until vista)
+
+## Common Services
+
+L4P	| Port	| Name 
+---	| ---	| ---
+TCP	| 135	| End Point Mapper for RPC
+TCP	| 445	| SMB
+TCP	| 1027	| RPC-DCOM
+TCP	| 139	| NetBIOS Session Service 
+UDP	| 500	| IPSEC-IKE
+UDP	| 4500	| IPSEC-NAT-T
+UDP	| RHP	| RPC
+UDP | 445	| SMB
+UDP	| 1900	| UPNP
+UDP	| 123	| NTP
+UDP	| 137	| NetBIOS Name Service
+UDP	| 138	| NetBIOS Datagram
+
+## RPC
+
+	> RPC: (Remote Procedure Call) ensures developers do not need to dedicate the time and effort into developing their own solutions. 
+	- RPC run-time operations:
+		- Binding-related operations,
+		- Name service operations,
+		- Endpoint operations,
+		- Security operations,
+		- Stub memory management operations,
+		- Management operations, and
+		- Universal Unique Identifier (UUID) operations.
+	
+### End Point Mapper
+
+	> EPM: (End Point Mapper) Function of the RPC service on port 135 that facilitates the RPC bind to the application. 
+		- can be queried to determine an operating system type and determine which services are using RPC. 
+		- used to remotely manage:	
+			- DHCP
+			- DNS
+			- WINS
+			- DCOM
+	
+#### How End Point Mapper Works
+
+	1. When a computers RPC Service initializes, it registers with **RPC End Point Mapper Service** (epmapper).
+	2. Client Connect to emapper service on TCP 135, Querying for a specific RPC service
+		if the service is not available
+			3. client terminates the connection
+		if the service is available
+			3. client sends a request to connect to the desired service
+			4. server responds to the connection request with the protocols to be used to connect to the RPC service.
+			Now the client can 
+				5. connect using one of the specified protocols, ( and RPC continues )
+				-- OR --
+				5. Client attempts to connect using a protocol not specified. (generally fails or is rejected)
+
+## SMB
+
+	> SMB: (Server Message Block) Allows a client application can read, create, and update files on the remote server.
+
+	- Can communicate over:
+		- Standalone TCP 445
+		- via NetBios API, (UDP 137,UDP 138, TCP 137, TCP 139)
+
+## Mailslots and Named Pipes
+
+	> Mailslot: a simple way for a process to broadcast messages to multiple processes.
+		- No recipt verification
+		- good for broad/multicast
+		- Use datagrams
+	
+	> Named Pipes: a simple way for two processes to exchange messages
+		- Recipt verification
+		- one to one communicaiton
+
+## NetBIOS
+	
+	> NetBIOS: (Network Basic Input/Output System) NetBIOS frees an application from needing to understand the details of a network. (like DNS hostnames)
+		- RFC 1001 and RFC 1002
+		- Outdated because it was created for Non-Routeable LANS
+		- Replaced by DNS Host Names
+
+	> NetBT: (NetBIOS over TCP IP) Allows compatibility for older systems still running NetBIOS.
+
+### NetBIOS Services (modes?)
+
+	> Datagram Distribution Service:
+		- Connectionless
+		- Messages sent independently
+		- Messages must be smaller
+		- app is respnsible for error handling
+		- Datagram service and mailslot run on UDP 138
+	
+	> Session Service:
+		- 2 Computer "Conversation"
+		- Larger messages
+		- Provieds error handling
+		- in NetBT session service and Named Pipes run on TCP 139 
+	
+	> Name Managment Service:
+		- Think name resolution (shittier DNS)
+		- Applications register their NetBIOS name using name service 
+		- in NetBT name service operates on UDP 137 (rarly TCP 137) 
+	
+## Tools
+
+### Show Configs
+	- ipconfig 
+		$ ipconfig /all						#Full Config for all interfaces
+		$ ipconfig /displaydns				#Display data from hosts file and recent reccords
+		
+	- hostname
+		$ hostname							#Prints name of local machine		
+	
+	- Display Domain Name
+		$ systeminfo | findstr /C:"Domain
+		$ wmic computersystem get domain
+		$ echo %userdomain%					# If not in a domain, systemname is returned
+
+###	Add/Delete/Edit Configs 
+	- Release/Renew DHCP config 	
+		$ ipconfig /release					#Release all DHCP Configs from all interfaces (a single interface can be specified)
+		$ ipconfig /renew					#Renews all DHCP Configs from all interfaces (a single interface can be specified)
+		
+	- Change IP Address
+		$ netsh interface ipv4 set address name="Local Area Connection 2" source=static address=192.168.1.2 mask=255.255.255.0 gateway=192.168.1.1
+		
+	- Add a new DNS Server 	
+		$ netsh dnsclient add dnsserver "Local Area Connection 2" 8.8.8.8			# success if no output
+	
+	- Delete a DNS Server
+		$ netsh dnsclient delete dnsserver "Local Area Connection 2" 8.8.8.8		# success if no output
+	
+	- Change hostname
+		$ wmic computersystem where name="%computername%" call rename name=PC_06	#No change until reboot
+		
+	- Add a static route 
+		$ route add -p 192.168.103.0 mask 255.255.255.0 192.168.15.1 metric 1	#-p makes it persistant across reboots
+		$ netsh interface ipv4 add route 192.168.103.0/24 "Local Area Connection 2" 192.168.15.1 
+		
+	- Remove a static route 
+		$ route delete 192.168.103.0
+		$ netsh interface ipv4 delete route 192.168.103.0/24 "Local Area Connection" 192.168.15.1
+		
+	- Add static arp table entry
+		$ arp -s 192.168.1.2 AB-CD-EF-00-11-22
+		
+	- Remove arp table entry
+		$ arp -d 192.168.1.2
+		$ arp -d *								#Delete all entries in table
+		$ netsh interface ip delete neighbors	#Delete all entries in table
+		
+	- Discard DNS Entries
+		$ ipconfig /flushdns				
+	
+	- Initiate dynamic DNS registration 
+		$ ipconfig /registerdns	
+
+	- Allow Inbound connection to port 3232 via powershell
+		$ New-NetFirewallRule -DisplayName 'nc remote connect' -profile Any -Direction Inbound -Action allow -Protocol TCP -localport 3232		
+	
+### Enumerate Tables and Status
+	- Display all active and Listening Connections
+		$ netstat -anob 
+		
+	- Display connections via protocol 
+		$ netstat -napo TCP
+		$ netstat -napo UDP
+	
+	- Display routing Table
+		$ route print
+		$ netstat -r 
+		
+	- Display arp cache
+		$ arp -a
+		
+	- Query DNS Server 
+		$ nslookup www.google.com
+		
+## Fun Facts
+	
+	> DNS Suffix: Domain portion of a DNS Address.
+		- Example: In xp.ops.local 		DNS_Suffix == ops.local 		Hostname == xp		
+
+
+
+
+
+
+
+
+
+
+
+
+}}} ###
+
+{{{ ###Name Resolution
+
+	> Name Resolution: Successfully mapping a machine name to an IP address.
+		- Two types of Names:
+			> Hostname: An alias that is assigned to an IP node to identify it as a TCP/IP host.
+				- Up To 255 Chars long
+				- Can Contain Alphabetic, Numeric Chars, and hyphens (-)
+				- Form of Alias or Domain Name 
+			
+			> NetBIOS Name: a 16-byte address used to represent a single computer or a group of computers.
+				- first 15 characters may be used for the name
+				- 16th Char is reserved for use by the services that a computer offers to the network. 
+				- Netbios names cannot contian: \ / * ? " < > : |
+				- Can contain . but cannot start with it 
+				- min length = 1 char
+				- https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/naming-conventions-for-computer-domain-site-ou
+
+## HostName Resolution Process 
+	
+	0. ping Yeet.Cannon
+	1. Queries Local DNS client resolver cache (Hosts file)
+	2. Queries Configured DNS Server 
+	3. Queries NetBIOS name cache 
+	4. Queries Configured WINS Server 
+	5. Broadcasts NetBIOS name Query Server requests (As many as 3)
+	6. Queries local LMHosts file 
+	7. If no IP is found for the Name it fails (Must communicate via IP or another hostname)
+
+## NetBIOS Resolution Process 
+
+	0. net view \\YeetCanonn
+	1. Queries NetBIOS name cache (local)
+	2. Queries each Configured WINS Server (NBNS (Netbios Name Server)) (Up to 3 trys)
+	3. Broadcasts NetBIOS name Query Server requests (As many as 3)
+	4. Queries local LMHosts file 
+	5. NetBIOS name is converted to an Unqualified Domain Name
+	6. Queries local Hostname
+	7. Queries Local Hosts file (DNS client resolver cache)
+	8. Queries Configured DNS Server 
+
+## Netbios Name
+
+	- Name types  describe the functionality of each name entry.
+	- NetBIOS Suffix Table 
+		- KEY
+			- U = Unique (Only one machine can have a name 
+			- G = Group (many machines can have the same name)
+	
+Name			| Suffix	| Type	| Usage
+---				| ---		| ---	| ---
+<computername>	|: 00		| U		| Workstation
+<computername>	|: 01		| U     | Messenger
+<\\--_MSBROWSE_>|: 01		| G     | Master Browser
+<computername>	|: 03		| U     | Messenger
+<computername>	|: 20		| U     | File Server 
+<domain>		|: 00		| G     | Domain Name
+<domain>		|: 1B		| U     | Domain Master Browser
+<domain>		|: 1C		| G     | Domain Controllers
+<domain>		|: 1D		| U     | Master Browser
+<domain>		|: 1E		| G     | Browser Service Elector
+<username>		|: 03		| U     | Messenger Service 
+                                    
+	
+	> WINS: (Windows Internet Name Service) Responds to a name query on a group name with the limited broadcast address (255.255.255.255).
+		- Designed to stay in LANS
+		- Internet Group was designed to service communication between lans.
+
+	> When a NetBios Host Initalizes: The Host registers its NetBIOS names using a NetBIOS name registration request message. Name registering is done by sending a broadcast message on the local subnet or a unicast message to the NetBIOS name server (NBNS).
+
+## Tools 
+	> Arp: Displays and modifies the IP-to-Physical address translation tables used by Address Resolution Protocol (ARP).
+
+	> Ping: Verifies IP-level connectivity to another TCP/IP computer by sending Internet Control Message Protocol (ICMP) Echo Request messages. The receipt of corresponding Echo Reply messages are displayed, along with round-trip times. Ping is the primary TCP/IP command used to troubleshoot connectivity, reachability, and name resolution.
+
+	> Pathping: A route-tracing tool that combines features of the ping and traceroute commands with additional information that neither of those tools provides. The pathping command sends packets to each router on the way to a final destination over a period of time, and then computes results based on the packets returned from each hop.
+
+	> Tracert: A route-tracing utility used to determine the path that an IP packet has taken to reach a destination.
+
+	> Route: Displays and modifies the entries in the local IP routing table. Used without parameters, route displays help.
+
+	> Nbtstat: Displays NetBIOS over TCP/IP (NetBT) protocol statistics, NetBIOS name tables for both the local computer and remote computers, and the NetBIOS name cache. Nbtstat allows a refresh of the NetBIOS name cache and the names registered with Windows Internet Name Service (WINS). Used without parameters, nbtstat displays help.
+	
+	> Netstat: Displays active TCP connections, ports on which the computer is listening, Ethernet statistics, the IP routing table, IPv4 statistics (for the IP, ICMP, TCP, and UDP protocols), and IPv6 statistics (for the IPv6, ICMPv6, TCP over IPv6, and UDP over IPv6 protocols). Used without parameters, netstat displays active TCP connections.
+		- a adds all listening ports
+		- n provides numeric information
+		- o lists the owning PID
+		- b displays the name of the executable associated with the port
+		- r shows the routing table
+		- e can help identify if there is an irregular amount of traffic
+		- s can be used with -e to provide more detail about the traffic
+		- p shows connections or statistics for protocol specified
+
+## Fun Facts		
+	- A Windows machine may have only one NetBIOS name.	
+	
+	
+}}} ###
+
+
+
+
+
+

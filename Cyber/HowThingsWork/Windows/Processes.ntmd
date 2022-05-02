@@ -1,0 +1,410 @@
+---
+tags:
+---
+{{{ ###What is a process?
+	> Program: Sequence of instructions written to perform a specific task. 
+		- Once a program has been launched, it is represented as a process 
+		- each instance of a program will be represented by a process.
+		> Process: Representation of a program in an active (executed) state.
+	> Process: A container for a set of thread resources.
+		- each process has its own assigned virtual address space.
+			- This address space is independent to the virtual address space assigned to other processes.
+			- The processes' threads and allocated resources are also stored within this virtual address space. 
+		- Process Components:
+			- One or more threads,
+			- One or more code segments,
+			- One or more data segments,
+			- Global variables,
+			- Environmental information,
+			- A process heap, and
+			- Other resources such as open handles and other heaps.
+	> File Handle: A temporary reference (typically a number) assigned by the operating system to a file that an application has asked it to open.
+		- The handle is used throughout the session to access the file.
+	> Binary File: A computer file that a computer reads or interprets.
+	> Process Memory: The virtual address space allocated to a process at the time the process is created.
+	> Virtual Address Space: Set of virtual addresses the process can use.
+		- This address space is private and cannot be accessed by other processes unless it is shared. 
+	> Windows Max Physical Memory: 2GB - 2TB
+	- Fun Fact: A process' virtual address space may be greater than or less than the total physical memory available to the system.
+	> Page: The physical memory and the virtual address space for each process is organized into units of memory called pages
+	> Page: A unit of physical memory and virtual address space.
+	- Because a system's physical memory is shared by all running processes and the functions of the Windows kernel...
+		- paging is implemented in order to move page files to disk when they are not in use.
+	
+	- Process' virtual address space contents...
+		> Working Set:  The working set is the amount of memory physically mapped to a process at a given time.
+			- What you got
+		> Paged Pool: Memory in the paged pool can be transferred to the paging file on the disk, referred to as > paged out:, when it is not being used.
+			- What can be used
+		> Non-Paged Pool: Memory in the non-paged pool cannot be transferred to the paging file on the disk as long as its corresponding objects are allocated.
+			- What cannot be used
+		> Pagefile: The pagefile monitors memory usage and how much memory is set aside for the process in the system paging file.
+			- page database
+	> IPC: (Inter-Process Comunications) mechanisms that allow applications and processes to communicate and exchange data. 
+		- IPC's are either clients or servers
+		> Pipes: Windows implements two types of pipes for two-way communications:
+			> Anonymous Pipes: Used to transfer information between related processes.
+				- An efficient way to redirect standard input or output to child processes on the same computer
+				- Example: Redirecting the standard input or output of a child process, so that it communicates with its parent process. 
+				- only support communication in a single direction.
+				- only in local computer
+				- Only one way (if you want to communicate both ways, you need two anonymous pipes)
+			> Named Pipes: A simple programming interface for transferring data between two processes, whether they reside on the same computer or over a network.
+				- Similar to TCP in that they provide reliable, connection-oriented, duplex communication paths to transfer data between unrelated processes or processes on different computers.
+				- The Process:
+					1. A named-pipe server process creates the named pipe with a well-known name. 
+					2. A named-pipe client process that knows the well-known name can connect to the open end of the named pipe.
+					3. Once the connection is established, data can be exchanged both ways.
+		> Mailslots: Similar to UDP in that they provide an unreliable, connectionless, one way communication path.
+			- The Process:
+				1. A mailslot is created by a mailslot server.
+				2. Mailslot clients send messages to the mailslot server by writing messages to its mailslot. 
+				3. Incoming messages are appended to the mailslot.
+					- Because a mailslot is actually a pseudo-file, 
+				4. Messages are saved in the mailslot until the mailslot server has read them.
+				5. The handle for the mailslot is required to read the messages in the mailslot. 
+					- This handle can be delegated to another application.
+		> RPC: (Remote Procedure Call) allows applications to call functions remotely (remote=outside application).
+			- The remote function being called by the application executes on the local or a remote computer, but external to the calling application.
+		> Window Sockets: An application that uses sockets can communicate with other socket implementations on other systems.
+			- protocol-dependent interface that takes advantage of the communication capabilities of other underlying protocols, and is capable of supporting current and emerging networking capabilities.
+		> Clipboard: When performing copy and paste operations between applications, the clipboard acts as a central repository for the data to be shared. 
+			- The Process:
+				1. Copied or cut data in an application is placed on the clipboard.
+				2. Once this data is placed on the clipboard, any other application can retrieve it.
+	> DEP: (Data Execution Prevention) a security feature that is implemented through a set of hardware and software technologies that prevent malicious code from executing on a computer system.
+		- Implemented by marking memory pages and other areas of memory as either executable or non-executable.
+		- Common DEP enabled Structues:
+			- default heap pages
+			- various stack pages
+			- memory pool pages 
+			- (code does not typically execute from these locations)
+		- Code cannot execute from memory that has been marked as non-executable. 
+		- The Benefit of DEP:
+			- Helps prevent the execution of code from affecting protected areas of memory. 
+			- Most effective against malicious software that takes advantage of buffer overflows or has injected a process with additional code, and attempts to run that code. 
+		- only enabled by default for core operating system binaries and applications that are explicitly configured to use it.
+	> ASLR: (Address Space Layout Randomizaiton) Randomizes the memory locations used by the system processes and other applications.
+		- forces the attacker to guess the correct memory locations used by any given process
+		- ASLR is very effective against buffer overflow and many zero-day attacks.
+		- only enabled by default for core operating system binaries and applications that are explicitly configured to use it
+	- 32bit and 64bit coexisting
+		- DLL Arch Mapping
+			arch 	| 	object	|	Location
+			--- 	| 	---		| 	---
+			x64 	| Programs	| Program Files
+			x86		| Programs	| Program Files (x86)
+			x64		| DLL's 	| System32
+			x86		| DLL's 	| SysWOW64
+		- When a 32-bit application is launched and calls for DLLs to be loaded:
+			- the >file system redirector: intercepts the request to load the DLL's
+			- recognizes that the applicaiton as 32 bit
+			- redirects the request to loacd the DLL from the SysWOW64 folder (not system32)
+	- Registry Redirection:
+		- windows stores separate 32-bit and 64-bit logical views of the registry
+		- If a 32bit application makes a registry call, the > Registry Redirector: intercepts the call and redirects it to the Wow6432Node subkey
+			>>: a registry call to HKLM\Software is redirected to HKLM\Software\Wow6432Node
+	- Process Enumeration Tools
+		> PsList: Provides a listing of the running processes on a system.
+			- sysinternals
+			- Output includes details about each running process
+			- Can be used locally and remotely
+			- x86 and x64
+		> TaskList: Provides a listing of the system’s currently running processes.
+			- Bulit-In 
+			- x86 and x64
+		> PsKill: Allows process termination.
+			- Sysinternals
+			- x86 and x64
+		> TaskKill: Allows process termination.
+			- Built-In
+			- x86 or x64
+		> PsSuspend: Provides the capability to suspend a running process or resume a suspended process. 
+			- Sysinternals
+			- x86 or x64
+		> Handle: Provides a list of all the open file references on the system for each running process. 
+			- Sysinternals
+			- x86 or x64 
+		> ListDlls: Provides a listing of all DLLs that are loaded by the running processes. 
+			- Sysinternals
+			- x86 or x64
+		> Pmon: (Process Resource Monitor) displays several measures of the CPU and memory use of processes running on the system.
+			-  command-line tool
+			- Windows Resource Kit
+			- x86 Only 
+	- Integrity Levels:
+		- The component store uses NTFS hard links between itself and other Windows directories to increase the robustness of the Windows platform. ??
+		- Integrity Levels 
+			- Extends security by restricting access between objects running under same account.
+			- Enforces security using integrity levels (MAC - Mandatory Access Control).
+			- A lower-level subject cannot modify a higher-level object.
+			- Uses Access Control Lists to maintain integrity levels.
+			- The different Integrity Levels include:
+				- Untrusted
+				- Low
+				- Medium
+				- High
+				- System
+		- Major parts to Integrity Levels:
+			- Predefined integrity levels and their representation.
+			- Integrity policies that restrict access permissions.
+			- Integrity level assigned to the security access token.
+			- Mandatory label access control entry.
+			- Mandatory labels assigned to objects.
+			- Integrity restrictions within the AccessCheck and kernel-mode SeAccessCheck APIs.
+		- Mandatory access token policies
+			- The default policy that is assigned to all access tokens. The policy restricts write access by this subject to any object at a higher integrity level.
+			- New process min
+				- Controls the behavior of assigning the integrity level to child processes. Normally, a child process inherits the integrity level of the parent process when the parent process access token is assigned to the child. With the NEW_PROCESS_MIN policy, the integrity level of the child process will be the minimum integrity level of either the parent access token, or the object integrity level of the executable file for the new process. This policy is set by default in all access tokens.
+		- Mandatory label policies
+			- the same as the access token policies.
+		- Virtualization Based Security
+			- Introduced in Windows 10 and Server 2016, it is a system protection mechanism that uses a "Virtual Secure Mode", a process by which the Windows hypervisor is used to create and isolate a secure region of memory.
+			- Provides an added layer of system security by enforcing restrictions that protect critical system resources and other local assets.
+			- Because of its ability to create and isolate sections of memory, it helps mitigate and contain malware even if it has gained access to the OS kernel.
+
+	
+	
+	
+	
+	
+}}} ###
+
+{{{ ###Threads Heaps and Stacks
+# Thread 
+	- Basic Unit of CPU Utilization
+	- Smallest sequence of programmed instructions that can be managed independently
+	- Component of a process that is actually scheduled for execution on a processor
+	- Normally consists of a:
+		- Program counter
+		- a stack
+		- a set of registers
+		- a thread ID
+
+# Heap 
+	- Area of pre-reserved memory that a program or process uses to store data in varying amounts
+	- These amounts will not be known until runtime
+	
+# Stack 
+	- Data structure used to store a collection of objects
+	- LIFO (Last-In, First-Out) abstract data type
+	- Two principle operations that can be performed on the objects in the stack:
+		1. Push operation adds an object to the top of the stack
+		2. Pop operation removes an object from the top of the stack
+
+# Security Context and definitions
+	> Context: resources and environment of a process.
+	> Security Context: privileges or permissions associated with a process.
+	> Threads: The threads of a process execute in the security context of its parent process.
+	> Impersonation: Ability of a Thread to execute in the security context of a Process that is different from it's Parent Process.
+	- Impersonation in a Client/Server Relationship
+		- In client/server applications, a service running in the security context of the client application represents the client application to the server application. The service accomplishes this by creating a worker thread and associating it with the client's security token. This worker thread is now impersonating the client application when requesting a service from the server application.
+
+# Thread Scheduling
+	- priority driven
+	- preemptive scheduling
+	- Meaning:  at least one of the highest priority threads, that are ready to be dispatched to a processor, will be executing (running) on a processor.
+	- scheduling occurs throughout the Kernel (no single module)
+	> Kernel Dispatcher: Collective Kernel scheduling Routines.
+	> Quantum: The length of time a thread is allowed to run on a processor before being preempted, to allow another thread of the same priority to run.
+		-  a thread may not be allowed to run to the end of its quantum because another thread of higher priority becomes ready to execute.
+		- In this case, the currently running thread is preempted, removed from the processor, and the higher priority thread is dispatched to the available processor to run.
+	
+# Process and Thread Priorities	
+	- Threads with higher priorities will be dispatched to a processor and allowed to run before other lower priority threads. 
+	- Levels
+		- 32 Priority levels (0-31)
+		- 16-31	= Real-Time Levels
+		- 0-15	= Variable Levels
+		- 0		= Reserved for the zero page thread 
+	- Thread scheduling priorities are assigned from two different perspectives:
+		- API 
+		- Kernel 
+	> Priotiry Class: Threads are organized according to the priority class to which its parent process is assigned at the time the process is created
+		- Priority Classes	
+			- REALTIME_PRIORITY_CLASS
+			- HIGH_PRIORITY_CLASS
+			- ABOVE_NORMAL_PRIORITY_CLASS
+			- NORMAL_PRIORITY_CLASS
+			- BELOW_NORMAL_PRIORITY_CLASS
+			- IDLE_PRIORITY_CLASS
+	- Relative Priotiry Classes
+		- THREAD_PRIORITY_TIME_CRITICAL
+		- THREAD_PRIORITY_HIGHEST
+		- THREAD_PRIORITY_ABOVE_NORMAL
+		- THREAD_PRIORITY_NORMAL
+		- THREAD_PRIORITY_BELOW_NORMAL
+		- THREAD_PRIORITY_LOWEST
+		- THREAD_PRIORITY_IDLE
+	- **The process priority class and the thread priority level are combined to form the base priority of each thread. **
+	
+# Windows Side By Side (SxS)
+	> Windows Component Store: (C:\windows\winsxs) used during servicing operations within Windows
+		- Example Operations:
+			- Windows Update
+			- Service Pack
+			- Hot fix installations
+		- The component store contains all the files that are required for a Windows installation.
+		- any updates to those install files are also held within the component store as the updates are installed. 
+		- the component store continues to grow over time.
+	
+# DLL's 
+	> DLL: (Dynamic Link Library) A library of functions that can be used by an application.
+		- Each DLL normally represents a specific function
+		-  can be used by more than one program at the same time.
+		- using DLLs allows a program to be modularized and more easy to update.
+		- Windows API is implemented as a set of DLLs
+		- DLL Extensions:
+			> DLL: (Dynamic Link Library) binary files that are shared among running processes, allowing programs to interact with the operating system.
+				- Each DLL is written to perform a specific function
+			> OCX: (Object Linking and Embedding (Control Extension)) interface behaviors that are triggered by users of programs; such as scroll bar movements and windows resizing. 
+				- commonly referred to as > Active X Controls:
+			> DRV: (Drivers) associated with legacy device driver files. 
+				- A device driver is the software that interacts with a specific device or other specific software.
+				- Device driver files have specific knowledge about its associated device or the device’s software interface that enable other programs to communicate with the device.
+	- DLL Advantages:
+		- use fewer resources
+		- reduce code duplication on the disk and within physical memory
+	- DLL DisAdvantages:
+		-  vulnerable to DLL hijacking
+			- Also known as:
+				- DLL preloading attack 
+				- binary planting attack 
+		> DLL Hijacking: occurs when programs load and execute a malicious DLL that has been preloaded onto the system.
+	
+# WDAC (Windows Defender Application Control) 
+	> WDAC: (Windows Defender Application Control) Set of features that work together to protect the system by preventing untrusted and malicious code from executing. 
+		- Formally known as Device Guardian
+		- Primary Concepts:
+			> CCI: (Configurable Code Integrity) Enforces policies that require software to be signed and trusted before executing
+			> VSM Protected Code Integrity: Moves the > Kernel Mode Code Integrity (KCMI): and > Hypervisor Code Integrity (HVCI): security solutions into a protected area to guard them against attacks associated with malware and malicious code.
+			> Platform and UEFI Secure: helps defend the system against known vulnerabilities that are associated with the boot up process.
+
+# PE (Portable Executable)
+	> PE (Portable Executable):  file format for executables, object codes, DLLs, and font files
+		- data structure that encapsulates the information necessary for the Windows OS loader to manage the wrapped executable code
+		- for a PE file, the executable file on disk is very similar to what the module will look like after Windows has loaded it into system memory.
+			- PE file == Prefabricated
+			- reduces the amount of work the loader program needs to perform, in order to create a process from the file on disk.
+	- Headers
+		> DOS Header: allows DOS to identify the file as a valid executable.
+			- first 64 Bytes
+			- Contains:
+				- Signature
+				- offset to the PE Header
+			- If loaded from DOS, the DOS stub, stored immediately after the header, is executed. 
+				- The DOS stub normally prints out the error message, “This program cannot be run in MS-DOS mode.”
+		> PE Header: defines what the rest of the file looks like.
+			- Contains:
+				- signature field
+				- processor information and type
+				- the number of sections
+				- the relative offset of the section table
+				- the characteristics of the file, such as:
+					- File type
+					- File extension.
+			- Not in the begginning (located a few hundered bytes in following the DOS header)
+		> Optional header: most meaningful information about the executable image
+			- Contains:
+				- initial stack size
+				- program entry point location
+				- preferred base address
+				- operating system version
+				- section assignment information
+				- etc
+		> Data Directories: a data array of 16 IMAGE_DATA_DIRECTORY structures.
+			- Location = Last 128 Bytes of Optional Header 
+			- Each > data directory: specifies the size and relative virtual memory address relating to an important data structure in the PE file. 
+			- List of Data Directoriy Structures:
+				- IMAGE_DIRECTORY_ENTRY_EXPORT
+				- IMAGE_DIRECTORY_ENTRY_IMPORT
+				- IMAGE_DIRECTORY_ENTRY_RESOURCE
+				- IMAGE_DIRECTORY_ENTRY_EXCEPTION
+				- IMAGE_DIRECTORY_ENTRY_EXPORT
+				- IMAGE_DIRECTORY_ENTRY_SECURITY
+				- IMAGE_DIRECTORY_ENTRY_BASERELOC
+				- IMAGE_DIRECTORY_ENTRY_DEBUG
+				- IMAGE_DIRECTORY_ENTRY_COPYRIGHT
+				- IMAGE_DIRECTORY_ENTRY_SECURITY
+				- IMAGE_DIRECTORY_ENTRY_GLOBALPTR
+				- IMAGE_DIRECTORY_ENTRY_TLS
+				- IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG
+				- IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT
+				- IMAGE_DIRECTORY_ENTRY_IAT
+				- IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT
+				- IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR
+				- IMAGE_DIRECTORY_ENTRY_ENTRIES
+		> Section Table: Array of data structures. Each data structure containing information about one section in the PE file.
+			- Each Structure containing:
+				- section name
+				- virtual size
+				- virtual address size of raw data
+				- pointer to raw data
+				- characteristics (whether the section contains executable code, initialized or uninitialized data, or whether it can be written to or read from)
+			- The sections follow the ordering presented in the section table.
+	- File Section
+		- Following the header section of a PE file is the PE file section
+		- Common Data Sections:
+			> .text: file's executable code. 
+				- The code resides in a single section. Having one large code section makes it easier for the operating system and the application developers to manage.
+			> .bss: represents uninitialized data used by the applications.
+				- It includes the variables declared as static within a function or the source module.
+			> .rdata: represents read-only data, such as the constants, literal strings, and debug directory information.
+			> .data: used to store all other variables, to include the application and module global variables.
+			> .rsrc: used to store resource information for a module.
+			> .edata: contains the application or DLL's export directory, which contains information about the names and addresses of exported functions.
+			> .idata: contains the information about various imported functions including the Import Directory and Import Address Table.
+			> Imports/exports: contain information on the functions that have been imported and exported by the executable from DLLs.
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+}}} ###
+
+{{{ ###Common System Processes
+	- The Common System Processes are present across multiple instances of the OS regardless of the computer's role or set of services it offers to the network
+	- Common System Process LIST
+		> Idle: Though not a real process, its purpose is to count the number of cycles where the processor(s) are not doing anything.
+		> System: This process represents the kernel process (ntoskrnl.exe).
+		> smss: The smss process creates and manages the various sessions on the system as well as finalizing system initialization and starting wininit.exe and winlogon.exe.
+		> csrss: This is the user-mode portion of the Windows subsystem.
+		> wininit: This is the session 0 initialization process. This process runs in session 0 (OS's session) only. It starts any auto-start devices and drivers applicable to session 0 and launches lsass.exe.
+		> winlogon: This is the Interactive Logon Manager. An instance of it runs in all sessions above 0. Its purpose is to coordinate all logon activities and security-related functions within its session, and to launch services.exe.
+		> services: The SCM is responsible for starting all auto-start devices and drivers applicable to its session.
+		> lsass: The lsass runs in session 0. It performs all logon functions to include user authentication, verifying the user's access and creating the user's access token.
+		> lsm: The lsm also runs in session 0 only. Its purpose is to manage all connections related to the terminal server and monitor all other sessions. If it detects an unstable state in any of the system's sessions above session 0, it signals smss to terminate the session.
+		> svchost: a process on your computer that hosts or contains other individual services that Windows uses to perform various functions.
+			- an SVCHOST instance might host several services related to Windows
+			- Each instance can contain a group of services groups
+				- Location = HKLM\Software\Microsoft\Windows NT\CurrentVersion\Svchost
+			- Taskmanager can be used to view services under each svchost instance.
+	> Server Mode Processes: a process that provides a service to the local computer or to the network. 
+		- Can be used to determine:
+			- The role of the computer,
+			- If the computer is a server or a workstation, and
+			- What services it is providing.
+	> Client Mode Processes: Processes that are directly related to the user logged on to the computer.
+	> PMIE: (Protected Mode Internet Explorer) a feature that makes it much more difficult to install malicious software or destroy data by significantly restricting user privileges
+		- IE 7+ (Vista and Later)
+		- On By default on:
+			- internet
+			- intranet
+			- restricted sites
+		- Runs in Low integrity level (to limit damage)
+		- "Cannot affect/create any object at higher level."
+
+
+
+}}} ###
+
+
+
+

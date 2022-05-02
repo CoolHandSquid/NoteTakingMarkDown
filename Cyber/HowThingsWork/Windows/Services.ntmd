@@ -1,0 +1,272 @@
+---
+tags:
+---
+{{{ ###Device Drivers
+# Device Drivers
+	> Kernel Drivers: kernel-mode processes that Windows uses to interact with hardware devices
+	> I/O Manager:  calls functions in the device driver to get the mouse, network card, etc. to carry out the actions to perform its job. 
+	- Possible outcomes for An I/O request:
+		- Queue for later process,
+		- Send to hardware port, or
+		- Send to another device driver.
+	> Plug and Play: Automatically loads and configures many device drivers
+	> Power Manager: handles all power settings 
+	> Device Manager: stores configuration information for the devices.
+		- Example: HAL.dll  stores platform specific functions and hardware details.
+	
+	> Driver.cab: Where Windows device drivers included on the Setup CD are stored 
+		- used by Setup and other system components as a driver file source. 
+
+	-  Driver Components (Sweet pic in resources)
+		> Win32 API: 32-bit application programming interface for Windows operating systems that initiates I/O operations through Ntdll
+		> Ntdll: Function library that exposes stubs that invoke Windows system calls (like NtReadFile below) as exported functions
+		> NtReadFile: I/O Manager system call that creates an I/O request packet and directs it to the appropriate driver
+		> I/O Manager: Subsystem that controls and interacts with all devices on the system and provides routines that drivers can call to have the I/O Manager insert IRPs into the associated device queue
+		> IRP: (I/O Request Packet) sent by I/O Manager to request services from a driver
+		> IoCallDriver: Routine that sends an IRP to the driver associated with a specified device object 
+
+
+	> .inf files: (Information Files) Files that provide the names and locations of driver-related files and the initial settings required for new devices to work
+	- During setup, Driver.cab is copied from the installation CD to the WINNT\Driver Cache\platform directory of the local hard disk. 
+	- Device drivers are installed with no user intervention when: (all have to pass)
+		- Installing the driver does not require showing a user interface.
+		- The driver package contains all files needed to complete the installation.
+		- The driver package is available on the system in the Driver.cab file or was previously installed.
+		- The driver package is digitally signed.
+		- No errors occur during installation.
+	
+		- If any condition is not met, the device installation restarts and the user might need to respond to dialog boxes or messages. 
+## Installing
+	- Manual installation of a driver requires that the person installing the driver be a member of the Administrators group.
+	-  devices that are set up and configured in the same way are grouped into a device setup class.
+		- Example: SCSI media changer devices are grouped into the MediumChanger device setup class.
+	
+	
+## Driver Loading Logic
+	- Driver ranking schemes
+	- Driver search location policies
+	- Windows Driver Protection
+	- Windows Update
+
+}}} ###
+
+{{{ ###Services
+	> Services: long running applications that run in their own Windows sessions.
+	- Actions:
+		- Start
+		- Paused
+		- restarted
+		- Stopped
+	- Service programs do not display a user interface.
+	- What Security Context?
+		-  the system account or the Service Control Manager (SCM)
+		- A specific user 
+	- Config Info Location: 
+		- HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services
+	- Service applications conform to the interface rules of the Service Control Manager (SCM). 
+	- Driver services:
+		- A driver service conforms to the device driver protocols
+		- Similar to service applications, but they do not interact with SCM
+
+## Programs using SCM (Service Control Manager)
+    > Service Program: contains executable code for one or more services, and can be configured to execute in the context of a user account from either a local, primary, or trusted domain.
+	> Service Configuration Program: queries or modifies the services database
+    > SCP: starts and controls services.
+
+	- ** These programs are important to understand because services need to be understood in the context of the system environment. **
+
+## How to know when a service starts??
+	- In HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\[service name] each service is assigned a start value.
+
+Start Value	|	Value		| Meaning
+---			|	---			| ---
+0x0			| (BOOT_START)	| service is started at boot by ntldr or winload.exe.
+0x1 		| (SYSTEM_START)| Started when the system loads by ntoskrnl.
+0x2			| (AUTO_START) 	| Started automatically by the SCM.
+0x3 		| (DEMAND_START)| manually on demand.
+0x4 		| (DISABLED) 	| means the service is disabled.
+
+
+## Service Loading Order
+    - Order of Services within a group (ServiceGroupOrder)
+    - Load Ordering Group list (GroupOrderList)
+    - Dependencies listed under each service
+
+	- The values ServiceGroupOrder and GroupOrderList are located at HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control.
+
+## Service Loading Accounts (Vista Plus) 
+
+Account Name	| 	SID			| 	Priviliges						| Acts as ..
+---				|	---			|	---								| ---	
+LocalSystem		|	S-1-5-18	| Has extensive local privileges.	| Acts as the computer on the network.
+LocalService	| 	S-1-5-19	| Has minimum local privileges.		| Has anonymous credentials on the network.
+NetworkService	| 	S-1-5-20	| Has minimum local privileges. 	| Acts as the computer on the network.
+
+- If these do not meet your requirements, then you can specify a user account.
+
+## Windows Service Hardening Components (Vista Plus)
+
+	> WSH: (Windows Service Hardening) Service Containment
+		- Prevents code injection
+		- Prevents servic from altering the config of other services.
+	> Service Hardening: (Vista+ Specific)
+		- Service Resource Isolation
+		- Least Privilege Services
+		- Restricted Network Access
+		- Session 0 Isolation
+		- Kernel Mode Code Signing (KMCS)
+	> Service Resource Isolation: Service specific SIDS
+		- Primary and Secondary SIDS
+		- Secondary SIDS are S-1-5-80-{SHA1 hash of short svcname}
+		- ACLs on files and registry keys can be locked down to only the SID attributed to the service
+		- Restricted SIDS
+		- Write restricted SIDs added
+		- Now both SIDs are checked, Service SID and Restricted SID for access
+		- The combination prevents access to other services if they are not explicitly granted access
+	> Least Privilege Services: Services are now able to provide the SCM (Service Control Manager) with a list of required privileges.
+		- SCM uses LSA to remove permissions not required
+		- Runs services under lower-privileged accounts
+		- Moved eight services out of SYSTEM and into LocalService
+		- Moved Four services to NetworkService
+		- Six new svchosts have been implemented
+	> Restricted Network Access: Firewall Policies can now be applied to individual services Filtering Capabilities:
+		- Direction
+		- Protocol
+		- Principal
+		- Interface
+	> Session 0 Isolation: Prevents shattering attack (privilege-escalation)
+		- Previous versions of Windows users logged on with session ID of zero
+		- This session was shared with services
+		- Now when users log in the session ID is incremented
+		- This prevents users from being able to send messages to services
+		- Session 0 does not allow interactive
+
+## Driver Signature Checking
+	- Signature checking verifies if a driver should be loaded, or if it's a security and/or stability risk. 
+	> KMCS: (Kernel Mode Code Signing) 
+	- x64 Vista+ 				Use KMCS 				(Driver must have DIGITAL signature)
+	- 32 and 64 bit windows		Use Boot-Start Drivers	(Driver must contain an embedded signature)
+	- ?? ^^This does not make sense (from the slides)^^
+	
+	- Driver Signature Checking Levels
+		- Defined at  "HKEY_LOCAL_MACHINE\Software\Microsoft\Driver Signing"
+		> Level 0: system silently checks and logs unsigned drivers, and allows their installation
+		> Level 1: system displays a warning message. The driver can be installed by the user, but it is not recommended.
+		> Level 2: user is notified that the driver installation is blocked.
+
+## CLI Tools
+	> Services Controller (SC): The SC tool is an interface that communicates with the Windows Services Controller and the installed services. This tool can be used to start and stop services, as well as view and modify the properties and configuration of a service.
+
+	> Net (Start/Stop): Although the net command has a number of sub-functions, the start and stop commands can be used to start and stop specific services on the system. These commands do not provide any additional functionality to interact with the computer's services.
+
+	> Drivers: This tool is part of the Windows Resource Kit tools for performing administrative tasks and allows you to list the drivers that are installed on the system and view the characteristics associated with the drivers.
+
+	> Driverquery: This tool is native to Windows and comes as part of the internal commands included with cmd.exe. It performs the same function as drivers.exe, providing a list of the installed drivers and properties associated with each.
+
+	> Sigcheck.exe: Sigcheck is a command-line utility that shows file version number, timestamp information, and digital signature details, including certificate chains. It also includes an option to check a file's status on VirusTotal, a site that performs automated file scanning against over 40 antivirus engines, and an option to upload a file for scanning.
+
+	> Signtool.exe: Sign Tool is a command-line tool that digitally signs files, verifies signatures in files, and time-stamps files. This tool is automatically installed with Visual Studio. To run the tool, use the Developer Command Prompt (or the Visual Studio Command Prompt in Windows 7). For more information, see Visual Studio Command Prompt.	
+		
+		
+		
+
+}}} ###
+
+{{{ ###Charachterization
+
+## System PID
+	
+PID | OS
+---	| ---
+2	| WindowsNT
+8	| Windows 2000
+4	| WindowsXP (and newer)
+
+## Other Charachterization Processes
+	
+	> MsMpEng: Windows Defender Anti-Spyware services
+	
+	> NisSrv: Microsoft Network Real-time Inspection Services (Microsoft Security Essentials)
+	
+	> msseces: Client Interface to MSE (Microsoft Security Essentials)
+	
+	> wininit: Introduced in Windows Vista
+	
+	> csrss: User mode portion of Windows Susbsystem
+		- 2 (or more) instances = Vista+
+		- 1 instances			= No higher than WindowsXp\2003
+	
+	> dwm: Desktop Windows Manager
+		- First Introduced in windows vista
+		- provides transparency effects (neat visual stuff)
+
+## Determine System Uptime
+
+	- Look at Smss Elapsed time
+		$ ps> New-TimeSpan -Start (get-process smss).StartTime
+		$ pslist
+
+## Hardware Config
+	
+	- Number of CPU Cores = 
+		- ( Idle CPU Time \ smss elapsed Time) 	OR	Idle Thread Count
+		$ pslist 
+	
+	- Audio Processes:
+		- ati2evxx	= Not high end
+		- smax4pnp	= Not high end
+		
+	- Hosting VM's? = 
+		- Look for vmware processes
+		
+## User Logon Time
+
+	- How long has the user been logged in? = 
+		- Elapsed time of explorer.exe 
+			$ pslist
+
+## Role of the Box
+
+	- Common User workstaion Processes:
+		- explorer
+		- smax4pnp
+		- jusched
+		- DVDLauncher
+		- issch
+		- tfswctrl
+		- wuauclt
+		- ISUSPM
+		- agent
+		- IEXPLORE
+		
+	- Common Server Processes
+		- Microsoft.ActiveDirectory.WebServices
+		- dfsrs (Distributed File System Replication Service)
+		- dns (Microsoft Windows DNS Server)
+		- ismserv (Inter-Server Messaging Service)
+		- dfssvc (Distributed File System Service)
+		- vds (Virtual Disk Service).
+	
+	- Common HID or AV Products
+		- nortonav << Is not. Norton normall runs out of \Symantec\
+		- ClamTray
+	
+## Nature of the user
+
+	- Poionts of an Advanced user 
+		- Command shells
+		- Kernel Debuggers (KdLive)
+		- Network Traffic analysis (WireShark)
+
+## Suspicious Process Identification
+
+	- Strange names
+	- Out of the ordinary
+	- Lots-O-Resources
+
+
+		
+
+}}} ###
+
+
