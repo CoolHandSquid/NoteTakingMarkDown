@@ -1,4 +1,4 @@
-# Note Taking Flavored MarkDown
+# Note-Taking Flavored MarkDown
 Organized thoughts are the only thing standing between you and homelessness
 
 ## Contents
@@ -9,7 +9,7 @@ Organized thoughts are the only thing standing between you and homelessness
   	- [Vim](#Vim)
 
 ## Purpose
-- Simple Syntax Language Optimized for Cyber Note Taking
+- Simple Syntax Language Optimized for Cyber Note-Taking
 - Futureproof Notetaking Technique
 - Language Packs Available for Notepad++ and Vim
 
