@@ -1,4 +1,4 @@
-# NoteTakingMarkDown
+# Note Taking Flavored MarkDown
 Organized thoughts are the only thing standing between you and homelessness
 
 ## Contents
