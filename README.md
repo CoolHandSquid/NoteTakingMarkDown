@@ -5,8 +5,10 @@ Organized thoughts are the only thing standing between you and homelessness
   - [Purpose](#purpose)
   - [NTMD Syntax](#NTMD-Syntax)
   - [Getting Started](#Getting-Started)
+ 
   	- [NotePad Plus Plus](#NotePad-Plus-Plus)
-  	- [Vim](#Vim)
+ 
+    - [Vim](#Vim)
 
 ## Purpose
 - Simple Syntax Language Optimized for Cyber Note-Taking
@@ -32,12 +34,14 @@ Organized thoughts are the only thing standing between you and homelessness
 
 ### Table
 - Traditional markdown tables seem to be the most convenient to maintain aswell as remaining visably appealing
+
 ![Table_Example](KMS_Setup/Notepad/Images/NP_09.png)
 
 ### Folding
 - Top folds with `###` and Second folds with `#` still on the first tab (To minimize the amount of tabs needed overall)
 - Bottom of folds Tabbed properly and with the corresponding `###` or `#` to easily keep track of relationship 
 <!--- ![TopFolds](https://github.com/CoolHandSquid/NoteTakingMarkDown/blob/main/KMS_Setup/Notepad/Images/NP_06.png) -->
+
 ![TopFolds](KMS_Setup/Vim/Images/Vim_01_Folds.png)
 
 ## Getting Started
@@ -57,10 +61,14 @@ Organized thoughts are the only thing standing between you and homelessness
 <summary>Example Setup Images</summary>
 
 ![Create_Workspace](KMS_Setup/Notepad/Images/NP_01.png)
+
 ![Define_Your_Language](KMS_Setup/Notepad/Images/NP_02.png)
+
 ![Create_New_Language](KMS_Setup/Notepad/Images/NP_03.png)
+
 ![Define_Folds_and_Ext](KMS_Setup/Notepad/Images/NP_04.png)
-![Define_HighLighting](KMS_Setup/Notepad/Images/NP_05.png)
+
+  ![Define_HighLighting](KMS_Setup/Notepad/Images/NP_05.png)
 
 
 </details>
