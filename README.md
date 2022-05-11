@@ -2,9 +2,9 @@
 Organized thoughts are the only thing standing between you and homelessness
 
 ## Contents
-  * [Purpose](#purpose)
-  * [NTMD Syntax](#NTMD-Syntax)
-  * [Getting Started](#Getting-Started)
+  - [Purpose](#purpose)
+  - [NTMD Syntax](#NTMDSyntax)
+  - [Getting Started](#Getting-Started)
   - [NotePad Plus Plus](#NotePad-Plus-Plus)
   - [Vim](#Vim)
 
@@ -13,7 +13,7 @@ Organized thoughts are the only thing standing between you and homelessness
 - Futureproof Notetaking Technique
 - Language Packs Available for Notepad++ and Vim
 
-## NTMD Syntax
+## NTMDSyntax
 ### Command
 - `$` At the beginning of a line to start a command
 - Optional `#` in the middle to end a command and a note 
