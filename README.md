@@ -14,23 +14,23 @@ Organized thoughts are the only thing standing between you and homelessness
 - Language Packs Available for Notepad++ and Vim
 
 ## NTMD Syntax
-### Command
+### ForCommands
 - `$` At the beginning of a line to start a command
 - Optional `#` in the middle to end a command and a note 
 ![Command_Example_and_Structure](KMS_Setup/Notepad/Images/NP_07.png)
 
-### Definition
+### Definitions
 - `>` At the beginning of a line to define a word
 - `:` To end the word and begin the definition
 ![Definition_Example](KMS_Setup/Notepad/Images/NP_10.png)
 
-### Code Block
+### Code Blocks
 - `` ```O `` At the beginning of a line to start a code block
 - `` ```C `` At the end of a line to end a code block
 
 ![Code_Block_Example](KMS_Setup/Notepad/Images/NP_08.png)
 
-### Table
+### Tables
 - Traditional markdown tables seem to be the most convenient to maintain aswell as remaining visably appealing
 
 ![Table_Example](KMS_Setup/Notepad/Images/NP_09.png)
