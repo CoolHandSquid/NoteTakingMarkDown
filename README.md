@@ -2,9 +2,9 @@
 Organized thoughts are the only thing standing between you and homelessness
 
 ## Contents
-  - [Purpose](#purpose)
-  - [NTMD Syntax](#NTMD-Syntax)
-  - [Getting Started](#Getting-Started)
+  * [Purpose](#purpose)
+  * [NTMD Syntax](#NTMD-Syntax)
+  * [Getting Started](#Getting-Started)
   - [NotePad Plus Plus](#NotePad-Plus-Plus)
   - [Vim](#Vim)
 
