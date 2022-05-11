@@ -13,7 +13,7 @@ Organized thoughts are the only thing standing between you and homelessness
 - Futureproof Notetaking Technique
 - Language Packs Available for Notepad++ and Vim
 
-## NTMDSyntax
+## NTMD Syntax
 ### Command
 - `$` At the beginning of a line to start a command
 - Optional `#` in the middle to end a command and a note 
