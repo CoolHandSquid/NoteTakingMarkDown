@@ -22,23 +22,23 @@ Organized thoughts are the only thing standing between you and homelessness
 ### Definition
 - `>` At the beginning of a line to define a word
 - `:` To end the word and begin the definition
-![Definition_Example](https://github.com/CoolHandSquid/NoteTakingMarkDown/blob/main/KMS_Setup/Notepad/Images/NP_10.png)
+![Definition_Example](KMS_Setup/Notepad/Images/NP_10.png)
 
 ### Code Block
 - `` ```O `` At the beginning of a line to start a code block
 - `` ```C `` At the end of a line to end a code block
 
-![Code_Block_Example](https://github.com/CoolHandSquid/NoteTakingMarkDown/blob/main/KMS_Setup/Notepad/Images/NP_08.png)
+![Code_Block_Example](KMS_Setup/Notepad/Images/NP_08.png)
 
 ### Table
 - Traditional markdown tables seem to be the most convenient to maintain aswell as remaining visably appealing
-![Table_Example](https://github.com/CoolHandSquid/NoteTakingMarkDown/blob/main/KMS_Setup/Notepad/Images/NP_09.png)
+![Table_Example](KMS_Setup/Notepad/Images/NP_09.png)
 
 ### Folding
 - Top folds with `###` and Second folds with `#` still on the first tab (To minimize the amount of tabs needed overall)
 - Bottom of folds Tabbed properly and with the corresponding `###` or `#` to easily keep track of relationship 
 <!--- ![TopFolds](https://github.com/CoolHandSquid/NoteTakingMarkDown/blob/main/KMS_Setup/Notepad/Images/NP_06.png) -->
-![TopFolds](https://github.com/CoolHandSquid/NoteTakingMarkDown/blob/main/KMS_Setup/Vim/Images/Vim_01_Folds.png)
+![TopFolds](KMS_Setup/Vim/Images/Vim_01_Folds.png)
 
 ## Getting Started
 ### NotePad-Plus-Plus
@@ -56,11 +56,11 @@ Organized thoughts are the only thing standing between you and homelessness
 <details>
 <summary>Example Setup Images</summary>
 
-![Create_Workspace](https://github.com/CoolHandSquid/NoteTakingMarkDown/blob/main/KMS_Setup/Notepad/Images/NP_01.png)
-![Define_Your_Language](https://github.com/CoolHandSquid/NoteTakingMarkDown/blob/main/KMS_Setup/Notepad/Images/NP_02.png)
-![Create_New_Language](https://github.com/CoolHandSquid/NoteTakingMarkDown/blob/main/KMS_Setup/Notepad/Images/NP_03.png)
-![Define_Folds_and_Ext](https://github.com/CoolHandSquid/NoteTakingMarkDown/blob/main/KMS_Setup/Notepad/Images/NP_04.png)
-![Define_HighLighting](https://github.com/CoolHandSquid/NoteTakingMarkDown/blob/main/KMS_Setup/Notepad/Images/NP_05.png)
+![Create_Workspace](KMS_Setup/Notepad/Images/NP_01.png)
+![Define_Your_Language](KMS_Setup/Notepad/Images/NP_02.png)
+![Create_New_Language](KMS_Setup/Notepad/Images/NP_03.png)
+![Define_Folds_and_Ext](KMS_Setup/Notepad/Images/NP_04.png)
+![Define_HighLighting](KMS_Setup/Notepad/Images/NP_05.png)
 
 
 </details>
@@ -70,4 +70,4 @@ Organized thoughts are the only thing standing between you and homelessness
 git clone git@github.com:CoolHandSquid/NoteTakingMarkDown
 cp KMS_Setup/Vim/vimrc ~/.vimrc
 ```
-![Define_HighLighting](https://github.com/CoolHandSquid/NoteTakingMarkDown/blob/main/KMS_Setup/Vim/Images/Vim_02_Example.png)
+![Define_HighLighting](KMS_Setup/Vim/Images/Vim_02_Example.png)
