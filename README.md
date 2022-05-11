@@ -25,7 +25,6 @@ Organized thoughts are the only thing standing between you and homelessness
 ![Definition_Example](https://github.com/CoolHandSquid/NoteTakingMarkDown/blob/main/KMS_Setup/Notepad/Images/NP_10.png)
 
 ### Code Block
-- 
 - `` ```O `` At the beginning of a line to start a code block
 - `` ```C `` At the end of a line to end a code block
 
