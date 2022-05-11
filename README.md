@@ -6,7 +6,7 @@ Organized thoughts are the only thing standing between you and homelessness
   - [NTMD Syntax](#ntmd-syntax)
   - [Getting Started](#getting-started)
   - [NotePad Plus Plus](#notepad-plus-plus)
-  - [Vim](#Vim)
+  - [Vim](#vim)
 
 ## Purpose
 - Simple Syntax Language Optimized for Cyber Note-Taking
