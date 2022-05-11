@@ -66,8 +66,10 @@ Organized thoughts are the only thing standing between you and homelessness
 
 ![Define_Folds_and_Ext](KMS_Setup/Notepad/Images/NP_04.png)
 
-  ![Define_HighLighting](KMS_Setup/Notepad/Images/NP_05.png)
+![Define_HighLighting](KMS_Setup/Notepad/Images/NP_05.png)
 
+<img src="KMS_Setup/Notepad/Images/NP_05.png" alt="Define_HighLighting">
+  
 
 </details>
   
