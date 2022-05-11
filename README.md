@@ -17,7 +17,7 @@ Organized thoughts are the only thing standing between you and homelessness
 ### Command
 - `$` At the beginning of a line to start a command
 - Optional `#` in the middle to end a command and a note 
-![Command_Example_and_Structure](https://github.com/CoolHandSquid/NoteTakingMarkDown/blob/main/KMS_Setup/Notepad/Images/NP_07.png)
+![Command_Example_and_Structure](KMS_Setup/Notepad/Images/NP_07.png)
 
 ### Definition
 - `>` At the beginning of a line to define a word
