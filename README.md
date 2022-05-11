@@ -58,19 +58,16 @@ Organized thoughts are the only thing standing between you and homelessness
 <details>
 <summary>Example Setup Images</summary>
 
-![Create_Workspace](KMS_Setup/Notepad/Images/NP_01.png)
+  <img src="KMS_Setup/Notepad/Images/NP_01.png" alt="Create_Workspace">
 
-![Define_Your_Language](KMS_Setup/Notepad/Images/NP_02.png)
-
-![Create_New_Language](KMS_Setup/Notepad/Images/NP_03.png)
-
-![Define_Folds_and_Ext](KMS_Setup/Notepad/Images/NP_04.png)
-
-![Define_HighLighting](KMS_Setup/Notepad/Images/NP_05.png)
-
-<img src="KMS_Setup/Notepad/Images/NP_05.png" alt="Define_HighLighting">
+  <img src="KMS_Setup/Notepad/Images/NP_02.png" alt="Define_Your_Language">
   
-
+  <img src="KMS_Setup/Notepad/Images/NP_03.png" alt="Create_New_Language">
+  
+  <img src="KMS_Setup/Notepad/Images/NP_04.png" alt="Define_Folds_and_Ext">
+  
+  <img src="KMS_Setup/Notepad/Images/NP_05.png" alt="Define_HighLighting">
+  
 </details>
   
 ### Vim
